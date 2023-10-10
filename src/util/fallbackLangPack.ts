@@ -18,6 +18,7 @@ export default {
   NewGroup: 'New Group',
   'Common.Close': 'Close',
   FilterAllChats: 'All Chats',
+  FilterInbox: 'Inbox',
   MarkAsUnread: 'Mark as unread',
   UnpinFromTop: 'Unpin from top',
   'ChatList.Mute': 'Mute',

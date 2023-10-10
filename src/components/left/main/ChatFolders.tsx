@@ -112,17 +112,29 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
     } satisfies ApiChatFolder;
   }, [orderedFolderIds, lang]);
 
+  const inboxFolder: ApiChatFolder = useMemo(() => {
+    return {
+      id: INBOX_FOLDER_ID,
+      title: lang('FilterInbox'),
+      includedChatIds: MEMO_EMPTY_ARRAY,
+      excludedChatIds: MEMO_EMPTY_ARRAY,
+    } satisfies ApiChatFolder;
+  }, [lang]);
+
   const displayedFolders = useMemo(() => {
     return orderedFolderIds
       ? orderedFolderIds.map((id) => {
         if (id === ALL_FOLDER_ID) {
           return allChatsFolder;
         }
+        if (id === INBOX_FOLDER_ID) {
+          return inboxFolder;
+        }
 
         return chatFoldersById[id] || {};
       }).filter(Boolean)
       : undefined;
-  }, [chatFoldersById, allChatsFolder, orderedFolderIds]);
+  }, [chatFoldersById, allChatsFolder, inboxFolder, orderedFolderIds]);
 
   const allChatsFolderIndex = displayedFolders?.findIndex((folder) => folder.id === ALL_FOLDER_ID);
   const inboxFolderIndex = displayedFolders?.findIndex((folder) => folder.id === INBOX_FOLDER_ID);

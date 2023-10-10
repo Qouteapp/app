@@ -15,6 +15,7 @@ import {
   ARCHIVED_FOLDER_ID,
   CHAT_HEIGHT_PX,
   CHAT_LIST_SLICE,
+  INBOX_FOLDER_ID,
 } from '../../../config';
 import buildClassName from '../../../util/buildClassName';
 import { getOrderKey, getPinnedChatsCount } from '../../../util/folderManager';
@@ -76,7 +77,10 @@ const ChatList: FC<OwnProps> = ({
 
   const isArchived = folderType === 'archived';
   const resolvedFolderId = (
-    folderType === 'all' ? ALL_FOLDER_ID : isArchived ? ARCHIVED_FOLDER_ID : folderId!
+    folderType === 'all' ? ALL_FOLDER_ID
+      : folderType === 'inbox' ? INBOX_FOLDER_ID
+        : isArchived ? ARCHIVED_FOLDER_ID
+          : folderId!
   );
 
   const shouldDisplayArchive = folderType === 'all' && canDisplayArchive;
