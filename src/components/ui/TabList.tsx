@@ -3,7 +3,7 @@ import React, { memo, useEffect, useRef } from '../../lib/teact/teact';
 
 import type { MenuItemContextAction } from './ListItem';
 
-import { ALL_FOLDER_ID } from '../../config';
+import { ALL_FOLDER_ID, INBOX_FOLDER_ID } from '../../config';
 import animateHorizontalScroll from '../../util/animateHorizontalScroll';
 import { IS_ANDROID, IS_IOS } from '../../util/windowEnvironment';
 
@@ -83,7 +83,7 @@ const TabList: FC<OwnProps> = ({
         <Tab
           key={tab.id ?? tab.title}
           // TODO Remove dependency on usage context
-          title={(!areFolders || tab.id === ALL_FOLDER_ID) ? lang(tab.title) : tab.title}
+          title={(!areFolders || tab.id === ALL_FOLDER_ID || tab.id === INBOX_FOLDER_ID) ? lang(tab.title) : tab.title}
           isActive={i === activeTab}
           isBlocked={tab.isBlocked}
           badgeCount={tab.badgeCount}

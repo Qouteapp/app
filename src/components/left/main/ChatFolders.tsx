@@ -11,7 +11,7 @@ import type { LeftColumnContent, SettingsScreens } from '../../../types';
 import type { MenuItemContextAction } from '../../ui/ListItem';
 import type { TabWithProperties } from '../../ui/TabList';
 
-import { ALL_FOLDER_ID, IS_STORIES_ENABLED } from '../../../config';
+import { ALL_FOLDER_ID, INBOX_FOLDER_ID, IS_STORIES_ENABLED } from '../../../config';
 import { selectCanShareFolder, selectTabState } from '../../../global/selectors';
 import { selectCurrentLimit } from '../../../global/selectors/limits';
 import buildClassName from '../../../util/buildClassName';
@@ -125,7 +125,9 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
   }, [chatFoldersById, allChatsFolder, orderedFolderIds]);
 
   const allChatsFolderIndex = displayedFolders?.findIndex((folder) => folder.id === ALL_FOLDER_ID);
+  const inboxFolderIndex = displayedFolders?.findIndex((folder) => folder.id === INBOX_FOLDER_ID);
   const isInAllChatsFolder = allChatsFolderIndex === activeChatFolder;
+  const isInInboxFolder = inboxFolderIndex === activeChatFolder;
   const isInFirstFolder = FIRST_FOLDER_INDEX === activeChatFolder;
 
   const folderCountersById = useFolderManagerForUnreadCounters();
@@ -168,7 +170,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
         });
       }
 
-      if (id !== ALL_FOLDER_ID) {
+      if (id !== ALL_FOLDER_ID && id !== INBOX_FOLDER_ID) {
         contextActions.push({
           title: lang('FilterEdit'),
           icon: 'edit',
@@ -286,7 +288,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
   function renderCurrentTab(isActive: boolean) {
     const activeFolder = Object.values(chatFoldersById)
       .find(({ id }) => id === folderTabs![activeChatFolder].id);
-    const isFolder = activeFolder && !isInAllChatsFolder;
+    const isFolder = activeFolder && !isInAllChatsFolder && !isInInboxFolder;
 
     return (
       <ChatList

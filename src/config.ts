@@ -287,6 +287,7 @@ export const CHANNEL_ID_LENGTH = 14; // 14 symbols, including -100 prefix
 export const DEFAULT_GIF_SEARCH_BOT_USERNAME = 'gif';
 export const ALL_FOLDER_ID = 0;
 export const ARCHIVED_FOLDER_ID = 1;
+export const INBOX_FOLDER_ID = -1;
 export const DELETED_COMMENTS_CHANNEL_ID = '-100777';
 export const MAX_MEDIA_FILES_FOR_ALBUM = 10;
 export const MAX_ACTIVE_PINNED_CHATS = 5;

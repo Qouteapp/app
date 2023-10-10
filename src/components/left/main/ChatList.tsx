@@ -37,7 +37,7 @@ import Chat from './Chat';
 import EmptyFolder from './EmptyFolder';
 
 type OwnProps = {
-  folderType: 'all' | 'archived' | 'folder';
+  folderType: 'inbox' | 'all' | 'archived' | 'folder';
   folderId?: number;
   isActive: boolean;
   canDisplayArchive?: boolean;
