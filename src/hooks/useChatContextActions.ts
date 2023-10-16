@@ -88,8 +88,22 @@ const useChatContextActions = ({
         handler: handleMute,
       };
 
+    const actionOnlyMentions = isMuted
+      ? {
+        title: 'Enable only @mentions',
+        icon: 'unmute',
+        handler: () => updateChatMutedState({ chatId: chat.id, isMuted: false }),
+      }
+      : {
+        title: 'Disable only @mentions',
+        icon: 'mute',
+        handler: handleMute,
+      };
+
     if (isInSearch) {
-      return compact([actionOpenInNewTab, actionPin, actionAddToFolder, actionMute]) as MenuItemContextAction[];
+      return compact(
+        [actionOpenInNewTab, actionPin, actionAddToFolder, actionMute, actionOnlyMentions],
+      ) as MenuItemContextAction[];
     }
 
     const actionMaskAsRead = (chat.unreadCount || chat.hasUnreadMark)
@@ -128,6 +142,7 @@ const useChatContextActions = ({
       actionMarkAsUnread,
       actionPin,
       !isSelf && actionMute,
+      !isSelf && actionOnlyMentions,
       !isSelf && !isServiceNotifications && !isInFolder && actionArchive,
       actionReport,
       actionDelete,
