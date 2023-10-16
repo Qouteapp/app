@@ -91,12 +91,12 @@ const useChatContextActions = ({
     const actionOnlyMentions = isMuted
       ? {
         title: 'Enable only @mentions',
-        icon: 'unmute',
+        icon: 'mention',
         handler: () => updateChatMutedState({ chatId: chat.id, isMuted: false }),
       }
       : {
         title: 'Disable only @mentions',
-        icon: 'mute',
+        icon: 'mention',
         handler: handleMute,
       };
 
