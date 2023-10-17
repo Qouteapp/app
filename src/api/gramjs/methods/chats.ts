@@ -25,6 +25,7 @@ import {
   ARCHIVED_FOLDER_ID,
   DEBUG,
   GENERAL_TOPIC_ID,
+  INBOX_FOLDER_ID,
   MAX_INT_32,
   MEMBERS_LOAD_SLICE,
   SERVICE_NOTIFICATIONS_USER_ID,
@@ -882,6 +883,7 @@ export async function fetchChatFolders() {
   const orderedIds = dialogFilters.map(({ id }) => id);
   if (defaultFolderPosition !== -1) {
     orderedIds.splice(defaultFolderPosition, 0, ALL_FOLDER_ID);
+    orderedIds.splice(defaultFolderPosition, 0, INBOX_FOLDER_ID);
   }
   return {
     byId: buildCollectionByKey(
