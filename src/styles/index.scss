@@ -331,8 +331,8 @@ body:not(.is-ios) {
   --color-background-own-apple: rgb(200, 156, 106);
   --color-background-selected: rgb(44, 44, 44);
   --color-background-own-selected: rgb(171, 107, 112);
-  --color-chat-hover: rgb(44, 44, 44);
-  --color-chat-active: rgb(200, 156, 106);
+  --color-chat-hover: rgba(0, 0, 0, 0.16);
+  --color-chat-active: rgb(200, 156, 106, 0.48);
   --color-chat-active-greyed: rgb(247, 199, 141);
   --color-item-active: rgb(41, 41, 41);
   --color-text: rgb(255, 255, 255);
@@ -351,12 +351,12 @@ body:not(.is-ios) {
   --color-light-shadow: rgb(0, 0, 0, 0.251);
   --color-green: rgb(229, 197, 152);
   --color-text-meta-colored: rgb(223, 187, 146);
-  --color-reply-hover: rgb(39, 39, 39);
-  --color-reply-active: rgb(46, 47, 47);
-  --color-reply-own-hover: rgb(229, 197, 151);
+  --color-reply-hover: rgba(0, 0, 0, 0.16);
+  --color-reply-active: rgba(0, 0, 0, 0.32);
+  --color-reply-own-hover: rgba(0, 0, 0, 0.16);
   --color-reply-own-hover-apple: rgb(229, 197, 151);
   --color-reply-own-active: rgb(246, 197, 160);
-  --color-reply-own-active-apple: rgb(246, 197, 160);
+  --color-reply-own-active-apple: rgba(0, 0, 0, 0.32);
   --color-accent-own: rgb(255, 255, 255);
   --color-message-meta-own: rgb(255, 255, 255, 0.533);
   --color-own-links: rgb(255, 255, 255);
