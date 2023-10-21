@@ -72,9 +72,12 @@
     max-width: 35rem;
     min-width: 17.5rem;
     margin: 2rem auto;
-    background-color: var(--color-background);
-    box-shadow: 0 0.25rem 0.5rem 0.125rem var(--color-default-shadow);
-    border-radius: var(--border-radius-modal);
+    background-color: #1616167f;
+    backdrop-filter: blur(20px) saturate(190%) contrast(70%) brightness(80%);
+    border: 1px solid;
+    border-color: #ffffff1a;
+    box-shadow: 0px 4px 4px 0px var(--color-default-shadow);
+    border-radius: 0.5rem;
     transform: translate3d(0, -1rem, 0);
 
     transition: transform 0.2s ease, opacity 0.2s ease;
@@ -99,7 +102,7 @@
 
   .modal-header,
   %modal-header {
-    padding: 1rem 1rem 0;
+    padding: 1.25rem 1rem 0.5rem 1rem;
     display: flex;
     align-items: center;
     flex-shrink: 0;
@@ -150,7 +153,8 @@
     padding: 1rem;
     overflow-y: auto;
     max-height: 92vh;
-
+    
+    /* stylelint-disable */
     b,
     strong {
       word-break: break-word;
@@ -163,6 +167,7 @@
     unicode-bidi: plaintext;
     text-align: initial;
   }
+  /* stylelint-enable */
 
   .modal-about {
     display: -webkit-box;
@@ -183,9 +188,20 @@
     flex-direction: row-reverse;
     justify-content: flex-start;
     flex-wrap: wrap;
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--color-text);
 
     .confirm-dialog-button + .confirm-dialog-button {
-      margin-right: 1rem;
+      margin-right: 0.625rem;
+    }
+
+    .confirm-dialog-button:first-child {
+      height: 1.75rem;
+      padding: 0rem 0.1875rem 0rem 0.875rem;
+      border-radius: 0.25rem;
+      background: #C36567;
+      box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.25);
     }
   }
 
@@ -201,13 +217,16 @@
 
   .confirm-dialog-button {
     width: auto;
-    height: auto;
     text-align: right;
-    font-weight: 500;
+    height: 1.75rem;
+    padding: 0rem 0.1875rem 0rem 0.875rem;
+    border-radius: 0.25rem;
+    background: #C36567;
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.25);
     white-space: pre-wrap;
   }
 
   .dialog-button-spacer {
-    flex-grow: 1;
+    flex-grow: 0.625rem;
   }
 }

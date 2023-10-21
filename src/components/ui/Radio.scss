@@ -1,5 +1,7 @@
 .Radio {
-  display: block;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   position: relative;
   padding-left: 4.5rem;
   text-align: left;
@@ -23,12 +25,14 @@
   }
 
   > input {
-    position: absolute;
+    order: 2;
+    position: relative;
     z-index: var(--z-below);
     opacity: 0;
   }
 
   .Radio-main {
+    order: 1;
     &::before,
     &::after {
       content: "";
@@ -64,6 +68,10 @@
       word-break: break-word;
       unicode-bidi: plaintext;
       text-align: left;
+      color: var(--color-text);
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.375rem; 
     }
 
     .subLabel {
