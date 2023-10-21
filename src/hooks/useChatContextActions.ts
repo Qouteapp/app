@@ -103,6 +103,19 @@ const useChatContextActions = ({
       ? { title: lang('MarkNotDone'), icon: 'unarchive', handler: () => toggleChatArchived({ id: chat.id }) }
       : { title: lang('MarkDone'), icon: 'archive', handler: () => toggleChatArchived({ id: chat.id }) };
 
+    const handleKeyDown = function (event: KeyboardEvent) {
+      if (event.altKey && event.key === 'E') {
+        // Здесь вызывается ваша функция для архивации/разархивации
+        toggleChatArchived({ id: chat.id });
+      }
+    };
+
+    // Добавление обработчика
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Удаление обработчика
+    document.removeEventListener('keydown', handleKeyDown);
+
     const canReport = handleReport && (isChatChannel(chat) || isChatGroup(chat) || (user && !user.isSelf));
     const actionReport = canReport
       ? { title: lang('ReportPeer.Report'), icon: 'flag', handler: handleReport }
