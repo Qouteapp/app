@@ -9,6 +9,7 @@ import buildClassName from '../../util/buildClassName';
 import { IS_TOUCH_ENV, MouseButton } from '../../util/windowEnvironment';
 import renderText from '../common/helpers/renderText';
 
+import { actionArchive } from '../../hooks/useChatContextActions';
 import useContextMenuHandlers from '../../hooks/useContextMenuHandlers';
 import { useFastClick } from '../../hooks/useFastClick';
 import useFlag from '../../hooks/useFlag';
@@ -181,18 +182,25 @@ const ListItem: FC<OwnProps> = ({
     }
   });
 
-  const handleMouseDown = useLastCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+  // eslint-disable-next-line max-len
+  const handleMouseDown = useLastCallback((e: React.MouseEvent<HTMLElement, MouseEvent> | React.KeyboardEvent<HTMLElement>) => {
+    if (e.altKey && e.type === 'keydown' && (e as React.KeyboardEvent<HTMLElement>).key === 'e') {
+      actionArchive({ id: href });
+    }
     if (inactive || IS_TOUCH_ENV) {
       return;
     }
-    if (contextActions && (e.button === MouseButton.Secondary || !onClick)) {
-      handleBeforeContextMenu(e);
+    if (contextActions
+      && ((e as React.MouseEvent<HTMLElement, MouseEvent>).button === MouseButton.Secondary
+      || !onClick)
+    ) {
+      handleBeforeContextMenu(e as React.MouseEvent<HTMLElement, MouseEvent>);
     }
-    if (e.button === MouseButton.Main) {
+    if ((e as React.MouseEvent<HTMLElement, MouseEvent>).button === MouseButton.Main) {
       if (!onClick) {
-        handleContextMenu(e);
+        handleContextMenu(e as React.MouseEvent<HTMLElement, MouseEvent>);
       } else {
-        handleClick(e);
+        handleClick(e as React.MouseEvent<HTMLElement, MouseEvent>);
       }
     }
   });
