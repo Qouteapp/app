@@ -34,11 +34,10 @@
   border-radius: var(--border-radius-default);
   background-color: transparent;
   background-size: cover;
-  padding: 0.625rem;
+  padding: 0.25rem 0.875rem;
   color: white;
   line-height: 1.2;
   cursor: var(--custom-cursor, pointer);
-  text-transform: uppercase;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
