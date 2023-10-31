@@ -79,7 +79,7 @@ export default function useArchiver() {
   };
 
   useInterval(() => {
-    if (ULU_APP.IS_AUTOARCHIVER_ENABLED) {
+    if (ULU_APP.IS_ARCHIVER_ENABLED) {
       process();
     }
   }, UPDATE_TIME_SEC * 1000);
