@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type {
   ApiChat, ApiGlobalMessageSearchType, ApiMessage, ApiTopic, ApiUser,
 } from '../../../api/types';
@@ -25,6 +26,7 @@ const searchThrottled = throttle((cb) => cb(), 500, false);
 
 addActionHandler('setGlobalSearchQuery', (global, actions, payload): ActionReturnType => {
   const { query, tabId = getCurrentTabId() } = payload!;
+  console.log('Received global search query:', query);
   const { chatId } = selectTabState(global, tabId).globalSearch;
 
   if (query && !chatId) {
@@ -168,6 +170,7 @@ async function searchMessagesGlobal<T extends GlobalState>(
 
   global = getGlobal();
   const currentSearchQuery = selectCurrentGlobalSearchQuery(global, tabId);
+  console.log('Current global search query:', currentSearchQuery);
   if (!result || (query !== '' && query !== currentSearchQuery)) {
     global = updateGlobalSearchFetchingStatus(global, { messages: false }, tabId);
     setGlobal(global);

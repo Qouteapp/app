@@ -20,6 +20,7 @@ import type { ApiUser } from '../../api/types';
 import { getMainUsername, getUserFirstOrLastName } from '../../global/helpers';
 import { selectTabState } from '../../global/selectors';
 import captureKeyboardListeners from '../../util/captureKeyboardListeners';
+import { getCurrentTabId } from '../../util/establishMultitabRole';
 import { throttle } from '../../util/schedulers';
 import renderText from '../common/helpers/renderText';
 
@@ -123,25 +124,34 @@ const CommandMenu: FC<CommandMenuProps> = ({ topUserIds, usersById }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const currentTabId = getCurrentTabId();
 
   const fetchSearchResults = async () => {
     if (searchQuery.length < 4) {
       setSearchResults([]);
+      setLoading(false);
       return;
     }
 
+    console.log('Setting loading to true');
     setLoading(true);
     const { setGlobalSearchQuery } = getActions();
-    await setGlobalSearchQuery({ query: searchQuery });
-
-    const globalState = getGlobal();
-    const { globalSearch } = selectTabState(globalState /* tabId */);
-    const localChatIds = globalSearch?.localResults?.chatIds ?? [];
-    const globalChatIds = globalSearch?.globalResults?.chatIds ?? [];
-
-    setSearchResults([...localChatIds, ...globalChatIds]);
-    setLoading(false);
+    await setGlobalSearchQuery({ query: searchQuery, tabId: currentTabId });
   };
+
+  useEffect(() => {
+    const globalState = getGlobal();
+    const { globalSearch } = selectTabState(globalState, currentTabId);
+
+    if (globalSearch.fetchingStatus && !globalSearch.fetchingStatus.chats && !globalSearch.fetchingStatus.messages) {
+      setLoading(false);
+      const localChatIds = globalSearch.localResults?.chatIds ?? [];
+      const globalChatIds = globalSearch.globalResults?.chatIds ?? [];
+
+      console.log('Updated results:', localChatIds, globalChatIds);
+      setSearchResults([...localChatIds, ...globalChatIds]);
+    }
+  }, []);
 
   useEffect(() => {
     fetchSearchResults();

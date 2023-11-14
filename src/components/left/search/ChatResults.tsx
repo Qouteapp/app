@@ -147,6 +147,8 @@ const ChatResults: FC<OwnProps & StateProps> = ({
       return MEMO_EMPTY_ARRAY;
     }
 
+    // eslint-disable-next-line no-console
+    console.log('Updated foundIds:', globalChatIds);
     return sortChatIds(
       unique([...globalChatIds, ...globalUserIds]),
       chatsById,
@@ -159,6 +161,8 @@ const ChatResults: FC<OwnProps & StateProps> = ({
       return MEMO_EMPTY_ARRAY;
     }
 
+    // eslint-disable-next-line no-console
+    console.log('Updated foundIds:', foundIds);
     return foundIds
       .map((id) => {
         const [chatId, messageId] = id.split('_');
