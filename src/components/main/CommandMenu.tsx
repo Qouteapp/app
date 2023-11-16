@@ -16,6 +16,7 @@ import { getActions, withGlobal } from '../../global';
 
 import type { ApiUser } from '../../api/types';
 
+import { FAQ_URL } from '../../config';
 import { getMainUsername, getUserFullName } from '../../global/helpers';
 import captureKeyboardListeners from '../../util/captureKeyboardListeners';
 import { convertLayout } from '../../util/convertLayout';
@@ -25,6 +26,7 @@ import renderText from '../common/helpers/renderText';
 import useArchiver from '../../hooks/useArchiver';
 import useCommands from '../../hooks/useCommands';
 import { useJune } from '../../hooks/useJune';
+import useLang from '../../hooks/useLang';
 
 import './CommandMenu.scss';
 
@@ -47,7 +49,7 @@ const customFilter = (value: string, search: string) => {
 
 const CommandMenu: FC<CommandMenuProps> = ({ topUserIds, usersById }) => {
   const { track } = useJune();
-  const { showNotification } = getActions();
+  const { showNotification, openChat, openUrl } = getActions();
   const [isOpen, setOpen] = useState(false);
   /* const [isArchiverEnabled, setIsArchiverEnabled] = useState(
     !!JSON.parse(String(localStorage.getItem('ulu_is_autoarchiver_enabled'))),
@@ -63,14 +65,16 @@ const CommandMenu: FC<CommandMenuProps> = ({ topUserIds, usersById }) => {
     topUserIds: string[];
     usersById: Record<string, ApiUser>;
   }
-
+  const lang = useLang();
   const close = useCallback(() => {
     setOpen(false);
     setPages(['home']);
   }, []);
 
   const SuggestedContacts: FC<SuggestedContactsProps> = ({ topUserIds }) => {
-    const { loadTopUsers, openChat, addRecentlyFoundChatId } = getActions();
+    const {
+      loadTopUsers, openChat, addRecentlyFoundChatId,
+    } = getActions();
     const runThrottled = throttle(() => loadTopUsers(), 60000, true);
 
     useEffect(() => {
@@ -173,6 +177,21 @@ const CommandMenu: FC<CommandMenuProps> = ({ topUserIds, usersById }) => {
     close();
   }, [runCommand, close]);
 
+  const handleSupport = useCallback(() => {
+    openChat({ id: `${6091980431}` });
+    close();
+  }, [openChat, close]);
+
+  const handleFAQ = useCallback(() => {
+    openUrl({ url: FAQ_URL });
+    close();
+  }, [openUrl, close]);
+
+  const handleChangelog = useCallback(() => {
+    openChat({ id: `${-1001916758340}` });
+    close();
+  }, [openChat, close]);
+
   const handleSelectNewGroup = useCallback(() => {
     runCommand('NEW_GROUP');
     close();
@@ -234,6 +253,9 @@ const CommandMenu: FC<CommandMenuProps> = ({ topUserIds, usersById }) => {
     handleOpenSavedMessages: () => void;
     handleSelectSettings: () => void;
     handleSelectArchived: () => void;
+    handleSupport: () => void;
+    handleFAQ: () => void;
+    handleChangelog: () => void;
   }
 
   interface CreateNewPageProps {
@@ -263,6 +285,22 @@ const CommandMenu: FC<CommandMenuProps> = ({ topUserIds, usersById }) => {
               {item.label}
             </Command.Item>
           ))}
+        </Command.Group>
+        <Command.Group heading="Help">
+          <Command.Item onSelect={handleFAQ}>
+            <i className="icon icon-help" /><span>Open ulu FAQ</span>
+          </Command.Item>
+          <Command.Item onSelect={handleSupport}>
+            <i className="icon icon-ask-support" /><span>{lang('AskAQuestion')}</span>
+          </Command.Item>
+          <Command.Item onSelect={handleFAQ}>
+            <i className="icon icon-help" /><span>Open ulu FAQ</span>
+          </Command.Item>
+        </Command.Group>
+        <Command.Group heading="What's new">
+          <Command.Item onSelect={handleChangelog}>
+            <i className="icon icon-help" /><span>Help → Changelog</span>
+          </Command.Item>
         </Command.Group>
         <Command.Group heading="Navigation">
           <Command.Item value="$find $search" onSelect={handleSearchFocus}>
@@ -343,6 +381,9 @@ const CommandMenu: FC<CommandMenuProps> = ({ topUserIds, usersById }) => {
             handleSelectSettings={handleSelectSettings}
             handleSelectArchived={handleSelectArchived}
             handleOpenSavedMessages={handleOpenSavedMessages}
+            handleSupport={handleSupport}
+            handleFAQ={handleFAQ}
+            handleChangelog={handleChangelog}
           />
         )}
         {activePage === 'createNew' && (
