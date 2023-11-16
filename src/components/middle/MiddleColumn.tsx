@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable no-null/no-null */
 import React, {
   memo, useEffect, useMemo,
   useState,
@@ -69,6 +71,7 @@ import useForceUpdate from '../../hooks/useForceUpdate';
 import useHistoryBack from '../../hooks/useHistoryBack';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
+import useMultitouchBackSwipe from '../../hooks/useMultitouchBackSwipe';
 import usePrevDuringAnimation from '../../hooks/usePrevDuringAnimation';
 import usePrevious from '../../hooks/usePrevious';
 import { useResize } from '../../hooks/useResize';
@@ -289,6 +292,10 @@ function MiddleColumn({
       })
       : undefined;
   }, [chatId, openChat]);
+
+  useMultitouchBackSwipe(() => {
+    openChat({ id: undefined });
+  });
 
   useSyncEffect(() => {
     setDropAreaState(DropAreaState.None);
