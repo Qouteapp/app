@@ -293,9 +293,6 @@ const CommandMenu: FC<CommandMenuProps> = ({ topUserIds, usersById }) => {
           <Command.Item onSelect={handleSupport}>
             <i className="icon icon-ask-support" /><span>{lang('AskAQuestion')}</span>
           </Command.Item>
-          <Command.Item onSelect={handleFAQ}>
-            <i className="icon icon-help" /><span>Open ulu FAQ</span>
-          </Command.Item>
         </Command.Group>
         <Command.Group heading="What's new">
           <Command.Item onSelect={handleChangelog}>
