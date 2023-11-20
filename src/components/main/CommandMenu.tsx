@@ -29,6 +29,7 @@ import useArchiver from '../../hooks/useArchiver';
 import useCommands from '../../hooks/useCommands';
 import { useJune } from '../../hooks/useJune';
 import useLang from '../../hooks/useLang';
+import { useStorage } from '../../hooks/useStorage';
 
 import AllUsersAndChats from '../common/AllUsersAndChats';
 import FolderPage from '../common/FolderPage';
@@ -171,6 +172,8 @@ const SuggestedContacts: FC<SuggestedContactsProps> = ({
 interface HomePageProps {
   commandArchiveAll: () => void;
   topUserIds?: string[];
+  commandToggleArchiver: () => void;
+  isArchiverEnabled: boolean;
   usersById: Record<string, ApiUser>;
   recentlyFoundChatIds?: string[];
   handleSearchFocus: () => void;
@@ -189,7 +192,6 @@ interface HomePageProps {
   handleSelectNewChannel: () => void;
   handleCreateFolder: () => void;
   handleLockScreenHotkey: () => void;
-  commandToggleArchiver: () => void;
   handleOpenAutomationSettings: () => void;
   handleOpenWorkspaceSettings: () => void;
 }
@@ -201,12 +203,13 @@ interface CreateNewPageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({
-  commandArchiveAll, topUserIds, usersById, recentlyFoundChatIds, close,
+  commandArchiveAll, commandToggleArchiver, isArchiverEnabled,
+  topUserIds, usersById, close,
   handleSearchFocus, handleOpenSavedMessages, handleSelectSettings,
   handleSelectArchived, handleOpenInbox, menuItems, saveAPIKey,
   handleSupport, handleFAQ, handleChangelog, handleSelectNewGroup, handleCreateFolder, handleSelectNewChannel,
-  handleOpenShortcuts, handleLockScreenHotkey, commandToggleArchiver, handleOpenAutomationSettings,
-  handleOpenWorkspaceSettings,
+  handleOpenShortcuts, handleLockScreenHotkey, handleOpenAutomationSettings,
+  handleOpenWorkspaceSettings, recentlyFoundChatIds,
 }) => {
   return (
     <>
@@ -249,7 +252,12 @@ const HomePage: React.FC<HomePageProps> = ({
           <i className="icon icon-archive" /><span>Mark read chats as &quot;Done&quot; (May take ~1-3 min)</span>
         </Command.Item>
         <Command.Item onSelect={commandToggleArchiver}>
-          <i className="icon icon-readchats" /><span>Auto-Done After Reading</span>
+          <i className="icon icon-archive" />
+          <span>
+            {isArchiverEnabled
+              ? 'Disable Auto-Done after reading'
+              : 'Enable Auto-Done after reading'}
+          </span>
         </Command.Item>
         {menuItems.map((item, index) => (
           <Command.Item key={index} onSelect={item.value === 'save_api_key' ? saveAPIKey : undefined}>
@@ -635,6 +643,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
                   handleLockScreenHotkey={handleLockScreenHotkey}
                   commandToggleArchiver={commandToggleArchiver}
                   recentlyFoundChatIds={recentlyFoundChatIds}
+                  isArchiverEnabled={isArchiverEnabled}
                   handleOpenAutomationSettings={handleOpenAutomationSettings}
                   handleOpenWorkspaceSettings={handleOpenWorkspaceSettings}
                 />
