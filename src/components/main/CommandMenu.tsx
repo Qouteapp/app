@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react/jsx-no-bind */
 import React from 'react';
@@ -422,9 +421,11 @@ const CommandMenu: FC<CommandMenuProps> = ({
   }, []);
 
   const openWorkspaceSettings = useCallback((workspaceId?: string) => {
-    console.log('Opening workspace settings for:', workspaceId || 'new workspace');
+    // eslint-disable-next-line no-console
+    console.log('Opening workspace settings for:', workspaceId || '');
     setWorkspaceSettingsOpen(true);
   }, []);
+
   const closeWorkspaceSettings = useCallback(() => {
     setWorkspaceSettingsOpen(false);
   }, []);
@@ -537,7 +538,6 @@ const CommandMenu: FC<CommandMenuProps> = ({
   const { useCommand } = useCommands();
 
   const handleOpenAutomationSettings = () => {
-    console.log('Handle open Automation Settings called');
     close();
     openAutomationSettings();
   };
@@ -545,7 +545,6 @@ const CommandMenu: FC<CommandMenuProps> = ({
   useCommand('OPEN_AUTOMATION_SETTINGS', handleOpenAutomationSettings);
 
   const handleOpenWorkspaceSettings = useCallback((workspaceId?: string) => {
-    console.log('Handle open Workspace Settings called with ID:', workspaceId);
     close();
     if (workspaceId) {
       // Логика для редактирования воркспейса
@@ -556,7 +555,13 @@ const CommandMenu: FC<CommandMenuProps> = ({
     }
   }, [close, openWorkspaceSettings]);
 
-  useCommand('OPEN_WORKSPACE_SETTINGS', handleOpenWorkspaceSettings);
+  const [receivedWorkspaceId, setReceivedWorkspaceId] = useState<string | undefined>();
+
+  useCommand('OPEN_WORKSPACE_SETTINGS', (workspaceId) => {
+    setReceivedWorkspaceId(workspaceId);
+    openWorkspaceSettings(workspaceId);
+  // Откройте WorkspaceSettings здесь или установите состояние, которое приведет к его открытию
+  });
 
   const handleSelectSettings = useCallback(() => {
     runCommand('OPEN_SETTINGS');
@@ -752,6 +757,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
       <WorkspaceSettings
         isOpen={isWorkspaceSettingsOpen}
         onClose={closeWorkspaceSettings}
+        workspaceId={receivedWorkspaceId}
       />
     </div>
 
