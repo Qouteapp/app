@@ -164,7 +164,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   useCommand('OPEN_SEARCH', handleSearchFocus);
   useCommand('LOCK_SCREEN', handleLockScreenHotkey);
 
-  // Cmd+/ to open search
+  /*   // Cmd+/ to open search
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code === 'Slash') {
@@ -182,7 +182,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [hasMenu, onReset]);
+  }, [hasMenu, onReset]); */
 
   const MainButton: FC<{ onTrigger: () => void }> = useMemo(() => {
     return ({ onTrigger }) => (
