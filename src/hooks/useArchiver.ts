@@ -19,6 +19,7 @@ const UPDATE_TIME_SEC = 3;
 const MESSAGE_DISPLAY_TIME_SEC = 60;
 const BATCH_SIZE = 5;
 const SEC_24H = 60 * 60 * 24;
+const DISABLE_AUTOARCHIVER = true;
 
 export default function useArchiver({ isManual }: { isManual: boolean }) {
   const {
@@ -100,9 +101,7 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
     }
     if (isManual) {
       archive();
-    } else if (isAutoArchiverEnabled) {
-      // eslint-disable-next-line no-console
-      console.log('>>> autoarchive');
+    } else if (isAutoArchiverEnabled && !DISABLE_AUTOARCHIVER) {
       autoarchive();
     }
   };
