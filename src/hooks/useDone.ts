@@ -8,8 +8,6 @@ import useArchiver from './useArchiver';
 import { useJune } from './useJune';
 import { useStorage } from './useStorage';
 
-const EVENT_NAME = 'update_chat_done';
-
 const shouldBeDone = (chat: ApiChat) => {
   return chat.isMuted || !(
     chat.hasUnreadMark
@@ -111,8 +109,13 @@ export default function useDone() {
   return { doneChat, isChatDone, doneAllReadChats };
 }
 
+const EVENT_NAME = 'update_chat_done';
+
 export function useDoneUpdates() {
-  const { doneChatIds, setDoneChatIds, isAutoDoneEnabled } = useStorage();
+  const {
+    doneChatIds, setDoneChatIds, isAutoDoneEnabled, isArchiveWhenDoneEnabled,
+  } = useStorage();
+  const { archiveChat } = useArchiver({ isManual: true });
 
   useEffect(() => {
     const listener = (e: any) => {
@@ -122,13 +125,22 @@ export function useDoneUpdates() {
           setDoneChatIds(doneChatIds.filter((chatId: string) => chatId !== chat.id));
         }
         if (isAutoDoneEnabled && !doneChatIds.includes(chat.id) && shouldBeDone(chat)) {
+          // may be rewritten to `doneChat`
           setDoneChatIds([...doneChatIds, chat.id]);
+          if (isArchiveWhenDoneEnabled) {
+            archiveChat({
+              id: chat.id,
+              value: true,
+              isClose: false,
+              isNotification: false,
+            });
+          }
         }
       }
     };
     window.addEventListener(EVENT_NAME, listener);
     return () => window.removeEventListener(EVENT_NAME, listener);
-  }, [doneChatIds, setDoneChatIds, isAutoDoneEnabled]);
+  }, [doneChatIds, setDoneChatIds, isAutoDoneEnabled, archiveChat, isArchiveWhenDoneEnabled]);
 }
 
 export function updateChatDone(chat: ApiChat) {
