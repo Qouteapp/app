@@ -452,7 +452,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
     isArchiveWhenDoneEnabled, setIsArchiveWhenDoneEnabled,
     isFoldersTreeEnabled, setIsFoldersTreeEnabled,
   } = useStorage();
-  const { archiveMessages } = useArchiver({ isManual: true });
+  const { archiveChats } = useArchiver({ isManual: true });
   const { doneAllReadChats } = useDone();
   const [inputValue, setInputValue] = useState('');
   const [menuItems, setMenuItems] = useState<Array<{ label: string; value: string }>>([]);
@@ -699,12 +699,12 @@ const CommandMenu: FC<CommandMenuProps> = ({
 
   const commandArchiveAll = useCallback(() => {
     showNotification({ message: 'All older than 24 hours will be archived!' });
-    archiveMessages();
+    archiveChats();
     close();
     if (track) {
       track('commandArchiveAll');
     }
-  }, [close, archiveMessages, track]);
+  }, [close, archiveChats, track]);
 
   const getFolderName = (id: number | null) => {
     // eslint-disable-next-line no-null/no-null

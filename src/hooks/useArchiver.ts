@@ -81,7 +81,7 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
     }
   };
 
-  const processArchiver = () => {
+  const processArchiver = (doneChatIds?: string[]) => {
     const global = getGlobal();
     const notArchivedChatsIds = global.chats.listIds.active;
     if (!notArchivedChatsIds) {
@@ -91,7 +91,7 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
       const chatsById = global.chats.byId;
       const chat = chatsById[chatId];
       if (chat && chat.id) {
-        if (shouldArchive(chat, global)) {
+        if (shouldArchive(chat, global) && (doneChatIds === undefined || doneChatIds.includes(chat.id))) {
           add(chat.id);
         } else {
           remove(chat.id);
@@ -150,5 +150,5 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
     return false;
   }, [openChat, closeForumPanel, track]);
 
-  return { archiveMessages: processArchiver, archiveChat };
+  return { archiveChats: processArchiver, archiveChat };
 }
