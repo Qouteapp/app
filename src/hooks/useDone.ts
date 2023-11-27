@@ -128,12 +128,14 @@ export function useDoneUpdates() {
           // may be rewritten to `doneChat`
           setDoneChatIds([...doneChatIds, chat.id]);
           if (isArchiveWhenDoneEnabled) {
-            archiveChat({
-              id: chat.id,
-              value: true,
-              isClose: false,
-              isNotification: false,
-            });
+            setTimeout(() => {
+              archiveChat({
+                id: chat.id,
+                value: true,
+                isClose: false,
+                isNotification: false,
+              });
+            }, 200);
           }
         }
       }
