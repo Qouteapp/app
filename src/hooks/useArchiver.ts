@@ -20,6 +20,7 @@ const MESSAGE_DISPLAY_TIME_SEC = 60;
 const BATCH_SIZE = 5;
 const SEC_24H = 60 * 60 * 24;
 const DISABLE_AUTOARCHIVER = true;
+const DISABLE_24H = true;
 
 export default function useArchiver({ isManual }: { isManual: boolean }) {
   const {
@@ -41,7 +42,7 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
       || chat.unreadCount
       || chat.unreadMentionsCount
       || chat.unreadReactionsCount
-      || (isManual && isFreshMessage)
+      || (!DISABLE_24H && isManual && isFreshMessage)
     ));
   };
 
@@ -92,6 +93,11 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
       const chatsById = global.chats.byId;
       const chat = chatsById[chatId];
       if (chat && chat.id) {
+        // eslint-disable-next-line no-console
+        console.log('>>> processArchiver',
+          doneChatIds,
+          shouldArchive(chat, global),
+          (doneChatIds === undefined || doneChatIds.includes(chat.id)));
         if (shouldArchive(chat, global) && (doneChatIds === undefined || doneChatIds.includes(chat.id))) {
           add(chat.id);
         } else {
