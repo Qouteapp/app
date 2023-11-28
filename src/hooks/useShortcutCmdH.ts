@@ -1,17 +1,21 @@
 import { useCallback, useEffect } from '../lib/teact/teact';
+import { getGlobal } from '../global';
 
+import { selectCurrentChat } from '../global/selectors';
 import { IS_MAC_OS } from '../util/windowEnvironment';
 import useSnooze from './useSnooze';
 
-function useShortcutCmdH(currentChatId: string | undefined) {
+function useShortcutCmdH() {
   const { snooze } = useSnooze();
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.shiftKey && e.code === 'KeyH' && currentChatId) {
+    const global = getGlobal();
+    const currentChatId = selectCurrentChat(global)?.id;
+    if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code === 'KeyH' && currentChatId) {
       e.preventDefault();
-      snooze({ chatId: currentChatId }); // Обновленный вызов функции snooze
+      snooze({ chatId: currentChatId });
     }
-  }, [snooze, currentChatId]); // Добавляем currentChatId в зависимости
+  }, [snooze]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);

@@ -64,6 +64,7 @@ import { useJune } from '../../hooks/useJune';
 import useLastCallback from '../../hooks/useLastCallback';
 import usePreventPinchZoomGesture from '../../hooks/usePreventPinchZoomGesture';
 import useShortcutCmdE from '../../hooks/useShortcutCmdE';
+import useShortcutCmdH from '../../hooks/useShortcutCmdH';
 import useShortcutCmdU from '../../hooks/useShortcutCmdU';
 import useShowTransition from '../../hooks/useShowTransition';
 import useSyncEffect from '../../hooks/useSyncEffect';
@@ -349,8 +350,9 @@ const Main: FC<OwnProps & StateProps> = ({
   useArchiver({ isManual: false });
   useDoneUpdates();
 
-  useShortcutCmdU();
   useShortcutCmdE();
+  useShortcutCmdH();
+  useShortcutCmdU();
 
   useEffect(() => {
     if (!IS_ELECTRON) {
