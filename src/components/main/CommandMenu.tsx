@@ -222,7 +222,7 @@ interface HomePageProps {
   handleDoneChat: () => void;
   isChatUnread?: boolean;
   isCurrentChatDone?: boolean;
-  snooze: ({ chatId, threadId }: { chatId: string; threadId?: number }) => void;
+  handleSnooze: () => void;
 }
 
 interface CreateNewPageProps {
@@ -240,7 +240,7 @@ const HomePage: React.FC<HomePageProps> = ({
   handleSupport, handleFAQ, handleChangelog, handleSelectNewGroup, handleCreateFolder, handleSelectNewChannel,
   handleOpenShortcuts, handleLockScreenHotkey, handleOpenAutomationSettings,
   handleOpenWorkspaceSettings, handleSelectWorkspace, savedWorkspaces, currentWorkspace, renderWorkspaceIcon,
-  currentChatId, handleToggleChatUnread, handleDoneChat, isChatUnread, isCurrentChatDone, snooze,
+  currentChatId, handleToggleChatUnread, handleDoneChat, isChatUnread, isCurrentChatDone, handleSnooze,
 }) => {
   const lang = useLang();
   return (
@@ -256,11 +256,7 @@ const HomePage: React.FC<HomePageProps> = ({
                 <span className="kbd">U</span>
               </span>
             </Command.Item>
-            <Command.Item onSelect={() => {
-              snooze({ chatId: currentChatId });
-              close();
-            }}
-            >
+            <Command.Item onSelect={handleSnooze}>
               <i className="icon icon-schedule" />
               <span>Set a reminder for this chat</span>
             </Command.Item>
@@ -778,6 +774,13 @@ const CommandMenu: FC<CommandMenuProps> = ({
     }
   }, [close, archiveMessages, track]);
 
+  const handleSnooze = useCallback(() => {
+    if (currentChatId) {
+      snooze({ chatId: currentChatId });
+      close();
+    }
+  }, [close, snooze, currentChatId]);
+
   const getFolderName = (id: number | null) => {
     // eslint-disable-next-line no-null/no-null
     if (id === null) return 'Unknown Folder';
@@ -921,7 +924,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
                   handleDoneChat={handleDoneChat}
                   isChatUnread={isChatUnread}
                   isCurrentChatDone={isCurrentChatDone}
-                  snooze={snooze}
+                  handleSnooze={handleSnooze}
                 />
                 <AllUsersAndChats
                   close={close}
