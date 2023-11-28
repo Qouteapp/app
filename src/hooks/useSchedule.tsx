@@ -1,8 +1,9 @@
+/* eslint-disable no-console */
 /* eslint-disable react/no-deprecated */
 /* eslint-disable no-null/no-null */
 /* eslint-disable react/jsx-no-bind */
 import { unmountComponentAtNode } from 'react-dom';
-import React, { useState } from '../lib/teact/teact';
+import React, { useEffect, useState } from '../lib/teact/teact';
 
 import { SCHEDULED_WHEN_ONLINE } from '../config';
 import { getServerTimeOffset } from '../util/serverTime';
@@ -44,9 +45,14 @@ const useSchedule = (
   });
 
   const requestCalendar = useLastCallback((whenScheduled: OnScheduledCallback) => {
+    console.log('requestCalendar called. Opening calendar...');
     setMenuOpen(true);
     setOnScheduled(() => whenScheduled);
   });
+
+  useEffect(() => {
+    console.log('useSchedule: isMenuOpen state changed:', isMenuOpen);
+  }, [isMenuOpen]);
 
   const scheduledDefaultDate = openAt ? new Date(openAt * 1000) : new Date();
   scheduledDefaultDate.setSeconds(0);

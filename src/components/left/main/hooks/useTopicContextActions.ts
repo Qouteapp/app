@@ -51,7 +51,7 @@ export default function useTopicContextActions({
       title: lang('NotifyMeHotkey'),
       icon: 'schedule',
       handler: () => {
-        snooze({ chatId, topicId });
+        snooze({ chatId: chat.id, threadId: topicId });
       },
     };
 

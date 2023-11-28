@@ -30,6 +30,7 @@ import useCommands from '../../hooks/useCommands';
 import useDone from '../../hooks/useDone';
 import { useJune } from '../../hooks/useJune';
 import useLang from '../../hooks/useLang';
+import useSnooze from '../../hooks/useSnooze';
 import { useStorage } from '../../hooks/useStorage';
 
 import AllUsersAndChats from '../common/AllUsersAndChats';
@@ -221,6 +222,7 @@ interface HomePageProps {
   handleDoneChat: () => void;
   isChatUnread?: boolean;
   isCurrentChatDone?: boolean;
+  snooze: ({ chatId, threadId }: { chatId: string; threadId?: number }) => void;
 }
 
 interface CreateNewPageProps {
@@ -238,7 +240,7 @@ const HomePage: React.FC<HomePageProps> = ({
   handleSupport, handleFAQ, handleChangelog, handleSelectNewGroup, handleCreateFolder, handleSelectNewChannel,
   handleOpenShortcuts, handleLockScreenHotkey, handleOpenAutomationSettings,
   handleOpenWorkspaceSettings, handleSelectWorkspace, savedWorkspaces, currentWorkspace, renderWorkspaceIcon,
-  currentChatId, handleToggleChatUnread, handleDoneChat, isChatUnread, isCurrentChatDone,
+  currentChatId, handleToggleChatUnread, handleDoneChat, isChatUnread, isCurrentChatDone, snooze,
 }) => {
   const lang = useLang();
   return (
@@ -253,6 +255,14 @@ const HomePage: React.FC<HomePageProps> = ({
                 <span className="kbd">⌘</span>
                 <span className="kbd">U</span>
               </span>
+            </Command.Item>
+            <Command.Item onSelect={() => {
+              snooze({ chatId: currentChatId });
+              close();
+            }}
+            >
+              <i className="icon icon-schedule" />
+              <span>Set a reminder for this chat</span>
             </Command.Item>
             {
               !isCurrentChatDone && (
@@ -492,6 +502,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
   } = useStorage();
   const { archiveMessages } = useArchiver({ isManual: true });
   const { doneAllReadChats, doneChat, isChatDone } = useDone();
+  const { snooze } = useSnooze();
   const [inputValue, setInputValue] = useState('');
   const [menuItems, setMenuItems] = useState<Array<{ label: string; value: string }>>([]);
   const { runCommand } = useCommands();
@@ -910,6 +921,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
                   handleDoneChat={handleDoneChat}
                   isChatUnread={isChatUnread}
                   isCurrentChatDone={isCurrentChatDone}
+                  snooze={snooze}
                 />
                 <AllUsersAndChats
                   close={close}
