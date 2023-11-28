@@ -17,9 +17,7 @@ import { useStorage } from './useStorage';
 const UPDATE_TIME_SEC = 3;
 const MESSAGE_DISPLAY_TIME_SEC = 60;
 const BATCH_SIZE = 5;
-const SEC_24H = 60 * 60 * 24;
 const DISABLE_AUTOARCHIVER = true;
-const DISABLE_24H = true;
 
 export default function useArchiver({ isManual }: { isManual: boolean }) {
   const {
@@ -31,15 +29,12 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
   const chatsToArchive: { [key: string]: Date } = {};
 
   const shouldArchive = (chat: ApiChat) => {
-    const isFreshMessage = chat.lastMessage
-      && (chat.lastMessage.editDate || chat.lastMessage.date || 0) > Math.round(Date.now() / 1000) - SEC_24H;
     return chat && (chat.isMuted || !(
       chat.id === SERVICE_NOTIFICATIONS_USER_ID // impossible to archive
       || chat.hasUnreadMark
       || chat.unreadCount
       || chat.unreadMentionsCount
       || chat.unreadReactionsCount
-      || (!DISABLE_24H && isManual && isFreshMessage)
     ));
   };
 
