@@ -10,6 +10,8 @@ import { getActions, getGlobal } from '../../global';
 
 import captureEscKeyListener from '../../util/captureEscKeyListener';
 
+import { useJune } from '../../hooks/useJune';
+
 // eslint-disable-next-line import/no-named-as-default
 import FolderSelector from './WorkspaceSettingsFoldersList';
 
@@ -34,6 +36,7 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
   const [logoUrl, setLogoUrl] = useState('');
   // eslint-disable-next-line no-null/no-null
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { track } = useJune();
 
   const uploadManager = new UploadManager({
     apiKey: 'public_kW15bndTdL4cidRTCc1sS8rNYQsu',
@@ -112,6 +115,9 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
         localStorage.setItem('currentWorkspace', newWorkspaceData.id); // Устанавливаем новый воркспейс как текущий
         showNotification({ message: 'Workspace created successfully.' }); // Уведомление о создании
         close(); // Закрываем модальное окно
+        if (track) {
+          track('Create new workspace');
+        }
       }
     } catch (error) {
       //
@@ -209,7 +215,7 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
           </div>
         </div>
         <div className="desc">
-          <div>Name your workspace in such a way that it&apos;s easy to remember and understand.</div>
+          <div>Please name your workspace and select a logo. The recommended logo size is 256x256px.</div>
         </div>
         <div className="header">
           <div>Folders</div>

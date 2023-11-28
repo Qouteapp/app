@@ -13,6 +13,7 @@ import { compact } from '../util/iteratees';
 import { IS_ELECTRON, IS_OPEN_IN_NEW_TAB_SUPPORTED } from '../util/windowEnvironment';
 import useArchiver from './useArchiver';
 import useDone from './useDone';
+import { useJune } from './useJune';
 import useLang from './useLang';
 import useSnooze from './useSnooze';
 
@@ -47,6 +48,7 @@ const useChatContextActions = ({
   const { archiveChat } = useArchiver({ isManual: true });
   const { doneChat, isChatDone } = useDone();
   const { snooze } = useSnooze();
+  const { track } = useJune();
 
   return useMemo(() => {
     if (!chat) {
@@ -65,6 +67,9 @@ const useChatContextActions = ({
       icon: 'schedule',
       handler: () => {
         snooze({ chatId: chat.id });
+        if (track) {
+          track('Snooze chat', { source: 'Chat Context Menu' });
+        }
       },
     };
 
@@ -107,10 +112,30 @@ const useChatContextActions = ({
     }
 
     const actionMaskAsRead = (chat.unreadCount || chat.hasUnreadMark)
-      ? { title: lang('MarkAsReadHotkey'), icon: 'readchats', handler: () => toggleChatUnread({ id: chat.id }) }
+      ? {
+        title:
+        lang('MarkAsReadHotkey'),
+        icon: 'readchats',
+        handler: () => {
+          toggleChatUnread({ id: chat.id });
+          if (track) {
+            track('Mark as read', { source: 'Chat Context Menu' });
+          }
+        },
+      }
       : undefined;
+
     const actionMarkAsUnread = !(chat.unreadCount || chat.hasUnreadMark) && !chat.isForum
-      ? { title: lang('MarkAsUnreadHotkey'), icon: 'unread', handler: () => toggleChatUnread({ id: chat.id }) }
+      ? {
+        title: lang('MarkAsUnreadHotkey'),
+        icon: 'unread',
+        handler: () => {
+          toggleChatUnread({ id: chat.id });
+          if (track) {
+            track('Mark as unread', { source: 'Chat Context Menu' });
+          }
+        },
+      }
       : undefined;
 
     const actionDone = isChatDone(chat)
@@ -119,6 +144,9 @@ const useChatContextActions = ({
         icon: 'select',
         handler: () => {
           doneChat({ id: chat.id, value: false });
+          if (track) {
+            track('Mark as not done', { source: 'Chat Context Menu' });
+          }
         },
       }
       : {
@@ -126,6 +154,9 @@ const useChatContextActions = ({
         icon: 'select',
         handler: () => {
           doneChat({ id: chat.id, value: true });
+          if (track) {
+            track('Mark as done', { source: 'Chat Context Menu' });
+          }
         },
       };
 
@@ -170,7 +201,7 @@ const useChatContextActions = ({
     const isInFolder = folderId !== undefined;
 
     return compact([
-      actionNotifyMe,
+      ...([] || [actionNotifyMe]), // todo: undo temphide
       !isSelf && !isServiceNotifications && !isInFolder && actionDone,
       actionMaskAsRead,
       actionMarkAsUnread,
@@ -184,7 +215,7 @@ const useChatContextActions = ({
   }, [
     chat, user, canChangeFolder, lang, handleChatFolderChange, isPinned, isInSearch, isMuted,
     handleDelete, handleMute, handleReport, folderId, isSelf, isServiceNotifications,
-    isChatDone, doneChat, archiveChat, snooze,
+    isChatDone, doneChat, archiveChat, snooze, track,
   ]);
 };
 

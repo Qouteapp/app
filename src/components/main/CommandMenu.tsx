@@ -18,7 +18,7 @@ import { FAQ_URL, SHORTCUTS_URL } from '../../config';
 import {
   getChatTitle, getChatTypeString, getMainUsername, getUserFullName, isDeletedUser,
 } from '../../global/helpers';
-import { selectCurrentChat } from '../../global/selectors';
+import { selectCurrentChat, selectUser } from '../../global/selectors';
 import captureKeyboardListeners from '../../util/captureKeyboardListeners';
 import { convertLayout } from '../../util/convertLayout';
 import { throttle } from '../../util/schedulers';
@@ -52,6 +52,7 @@ export type Workspace = {
 
 interface CommandMenuProps {
   topUserIds?: string[];
+  currentUser: ApiUser | undefined;
   currentChat?: ApiChat;
   currentChatId?: string;
   usersById: Record<string, ApiUser>;
@@ -148,12 +149,15 @@ const SuggestedContacts: FC<SuggestedContactsProps> = ({
 
     return { content, value };
   };
-
+  const { track } = useJune();
   const handleClick = useCallback((id: string) => {
     openChat({ id, shouldReplaceHistory: true });
     setTimeout(() => addRecentlyFoundChatId({ id }), SEARCH_CLOSE_TIMEOUT_MS);
     close();
-  }, [openChat, addRecentlyFoundChatId, close]);
+    if (track) {
+      track('Use suggestions in Сommand Menu', { chatId: id });
+    }
+  }, [close, track]);
 
   return (
     <Command.Group heading="Suggestions">
@@ -221,6 +225,7 @@ interface HomePageProps {
   handleDoneChat: () => void;
   isChatUnread?: boolean;
   isCurrentChatDone?: boolean;
+  showNotification: (params: { message: string }) => void;
 }
 
 interface CreateNewPageProps {
@@ -238,7 +243,7 @@ const HomePage: React.FC<HomePageProps> = ({
   handleSupport, handleFAQ, handleChangelog, handleSelectNewGroup, handleCreateFolder, handleSelectNewChannel,
   handleOpenShortcuts, handleLockScreenHotkey, handleOpenAutomationSettings,
   handleOpenWorkspaceSettings, handleSelectWorkspace, savedWorkspaces, currentWorkspace, renderWorkspaceIcon,
-  currentChatId, handleToggleChatUnread, handleDoneChat, isChatUnread, isCurrentChatDone,
+  currentChatId, handleToggleChatUnread, handleDoneChat, isChatUnread, isCurrentChatDone, showNotification,
 }) => {
   const lang = useLang();
   return (
@@ -313,7 +318,10 @@ const HomePage: React.FC<HomePageProps> = ({
             return (
               <Command.Item
                 key={workspace.id}
-                onSelect={() => handleSelectWorkspace(workspace.id)}
+                onSelect={() => {
+                  handleSelectWorkspace(workspace.id);
+                  showNotification({ message: 'Workspace is changing...' });
+                }}
               >
                 {renderWorkspaceIcon(workspace)}
                 <span>Go to {workspace.name} workspace</span>
@@ -473,6 +481,7 @@ const CreateNewPage: React.FC<CreateNewPageProps> = (
 
 const CommandMenu: FC<CommandMenuProps> = ({
   topUserIds,
+  currentUser,
   currentChat,
   currentChatId,
   usersById,
@@ -480,7 +489,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
   recentlyFoundChatIds,
   folders, handleSelectWorkspace: originalHandleSelectWorkspace, savedWorkspaces, currentWorkspace,
 }) => {
-  const { track } = useJune();
+  const { track, analytics } = useJune();
   const {
     showNotification, openUrl, openChatByUsername, toggleChatUnread,
   } = getActions();
@@ -551,6 +560,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
 
   const handleSelectWorkspace = (workspaceId: string) => {
     originalHandleSelectWorkspace(workspaceId, close); // передаем функцию close
+    if (track) { track('Switch workspace', { source: 'Сommand Menu' }); }
   };
 
   const handleInputChange = (newValue: string) => {
@@ -590,7 +600,10 @@ const CommandMenu: FC<CommandMenuProps> = ({
     localStorage.setItem('openai_api_key', inputValue);
     showNotification({ message: 'The OpenAI API key has been saved.' });
     setOpen(false);
-  }, [inputValue]);
+    if (track) {
+      track('Add openAI key');
+    }
+  }, [inputValue, track]);
 
   const handleSupport = useCallback(() => {
     openChatByUsername({ username: 'ulugmer' });
@@ -709,14 +722,25 @@ const CommandMenu: FC<CommandMenuProps> = ({
     });
     setIsArchiveWhenDoneEnabled(updIsArchiveWhenDoneEnabled);
     close();
-  }, [close, isArchiveWhenDoneEnabled, setIsArchiveWhenDoneEnabled]);
+    if (analytics && currentUser) {
+      analytics.identify(currentUser.id, {
+        autoArchiveWhenDone: updIsArchiveWhenDoneEnabled,
+      });
+    }
+  }, [analytics, close, currentUser, isArchiveWhenDoneEnabled, setIsArchiveWhenDoneEnabled]);
 
   const commandToggleAutoDone = useCallback(() => {
     const updIsAutoDoneEnabled = !isAutoDoneEnabled;
     showNotification({ message: updIsAutoDoneEnabled ? 'Auto-Done enabled!' : 'Auto-Done disabled!' });
     setIsAutoDoneEnabled(updIsAutoDoneEnabled);
+
+    if (analytics && currentUser) {
+      analytics.identify(currentUser.id, {
+        autoDoneAfterRead: updIsAutoDoneEnabled,
+      });
+    }
     close();
-  }, [close, isAutoDoneEnabled, setIsAutoDoneEnabled]);
+  }, [analytics, close, currentUser, isAutoDoneEnabled, setIsAutoDoneEnabled]);
 
   const commandToggleFoldersTree = useCallback(() => {
     const updIsFoldersTreeEnabled = !isFoldersTreeEnabled;
@@ -728,14 +752,17 @@ const CommandMenu: FC<CommandMenuProps> = ({
     setIsFoldersTreeEnabled(updIsFoldersTreeEnabled);
     close();
     window.location.reload();
-  }, [close, isFoldersTreeEnabled, setIsFoldersTreeEnabled]);
+    if (track) {
+      track(updIsFoldersTreeEnabled ? 'Turn on new Folder view' : 'Turn off new Folder view');
+    }
+  }, [close, isFoldersTreeEnabled, setIsFoldersTreeEnabled, track]);
 
   const commandDoneAll = useCallback(() => {
     showNotification({ message: 'All read chats are marked as done!' });
     doneAllReadChats();
     close();
     if (track) {
-      track('commandDoneAll');
+      track('Use "Mark all read chats as done" command');
     }
   }, [close, doneAllReadChats, track]);
 
@@ -746,8 +773,11 @@ const CommandMenu: FC<CommandMenuProps> = ({
       const action = isChatUnread ? 'MarkedAsRead' : 'MarkedAsUnread';
       showNotification({ message: lang(action) });
       close();
+      if (track) {
+        track(isChatUnread ? 'Mark as Read' : 'Mark as Unread', { source: 'Сommand Menu' });
+      }
     }
-  }, [currentChatId, currentChat, toggleChatUnread, close, lang, isChatUnread]);
+  }, [currentChatId, currentChat, isChatUnread, lang, close, track]);
 
   // Функция для отметки чата как выполненного
   const handleDoneChat = useCallback(() => {
@@ -755,15 +785,18 @@ const CommandMenu: FC<CommandMenuProps> = ({
       doneChat({ id: currentChatId });
       showNotification({ message: 'Chat marked as done' });
       close();
+      if (track) {
+        track('Mark as Done', { source: 'Сommand Menu' });
+      }
     }
-  }, [currentChatId, doneChat, close]);
+  }, [currentChatId, doneChat, close, track]);
 
   const commandArchiveAll = useCallback(() => {
     showNotification({ message: 'All older than 24 hours will be archived!' });
     archiveChats();
     close();
     if (track) {
-      track('commandArchiveAll');
+      track('Use "Archive all read chats" command');
     }
   }, [close, archiveChats, track]);
 
@@ -910,6 +943,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
                   handleDoneChat={handleDoneChat}
                   isChatUnread={isChatUnread}
                   isCurrentChatDone={isCurrentChatDone}
+                  showNotification={showNotification}
                 />
                 <AllUsersAndChats
                   close={close}
@@ -969,6 +1003,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
 export default memo(withGlobal(
   (global): CommandMenuProps => {
     const { userIds: topUserIds } = global.topPeers;
+    const currentUser = global.currentUserId ? selectUser(global, global.currentUserId) : undefined;
     const currentChat = selectCurrentChat(global);
     const currentChatId = selectCurrentChat(global)?.id;
     const usersById = global.users.byId;
@@ -1001,6 +1036,7 @@ export default memo(withGlobal(
 
     return {
       topUserIds,
+      currentUser,
       currentChat,
       currentChatId,
       usersById,

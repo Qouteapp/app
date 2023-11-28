@@ -5,7 +5,6 @@ import type { ApiChat } from '../api/types';
 
 import { selectCurrentChat, selectTabState } from '../global/selectors';
 import useArchiver from './useArchiver';
-import { useJune } from './useJune';
 import { useStorage } from './useStorage';
 
 const shouldBeDone = (chat: ApiChat) => {
@@ -22,7 +21,6 @@ export default function useDone() {
   const {
     openChat, closeForumPanel, showNotification,
   } = getActions();
-  const { track } = useJune();
   const { doneChatIds, setDoneChatIds, isArchiveWhenDoneEnabled } = useStorage();
 
   const isChatDone = useCallback((chat: ApiChat) => {
@@ -79,9 +77,8 @@ export default function useDone() {
           }`,
         });
       }
-      track?.(updDone ? 'toggleChatDone' : 'toggleChatUndone');
     }
-  }, [archiveChat, doneChatIds, isArchiveWhenDoneEnabled, setDoneChatIds, track]);
+  }, [archiveChat, doneChatIds, isArchiveWhenDoneEnabled, setDoneChatIds]);
 
   const doneAllReadChats = useCallback(() => {
     const global = getGlobal();
