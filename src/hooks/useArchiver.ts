@@ -7,7 +7,6 @@ import { useCallback } from '../lib/teact/teact';
 import { getActions, getGlobal } from '../global';
 
 import type { ApiChat } from '../api/types';
-import type { GlobalState } from '../global/types';
 
 import { SERVICE_NOTIFICATIONS_USER_ID } from '../config';
 import { selectCurrentChat, selectTabState } from '../global/selectors';
@@ -31,12 +30,10 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
 
   const chatsToArchive: { [key: string]: Date } = {};
 
-  const shouldArchive = (chat: ApiChat, global: GlobalState) => {
-    const pinnedChatIds = global.chats.orderedPinnedIds.active;
-    const isPinnedInAllFolder = Boolean(pinnedChatIds?.includes(chat.id));
+  const shouldArchive = (chat: ApiChat) => {
     const isFreshMessage = chat.lastMessage
       && (chat.lastMessage.editDate || chat.lastMessage.date || 0) > Math.round(Date.now() / 1000) - SEC_24H;
-    return chat && !isPinnedInAllFolder && (chat.isMuted || !(
+    return chat && (chat.isMuted || !(
       chat.id === SERVICE_NOTIFICATIONS_USER_ID // impossible to archive
       || chat.hasUnreadMark
       || chat.unreadCount
@@ -96,9 +93,9 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
         // eslint-disable-next-line no-console
         console.log('>>> processArchiver',
           doneChatIds,
-          shouldArchive(chat, global),
+          shouldArchive(chat),
           (doneChatIds === undefined || doneChatIds.includes(chat.id)));
-        if (shouldArchive(chat, global) && (doneChatIds === undefined || doneChatIds.includes(chat.id))) {
+        if (shouldArchive(chat) && (doneChatIds === undefined || doneChatIds.includes(chat.id))) {
           add(chat.id);
         } else {
           remove(chat.id);
