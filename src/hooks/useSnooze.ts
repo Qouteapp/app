@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import TeactDOM from '../lib/teact/teact-dom';
 import { getActions, getGlobal } from '../global';
 
 import {
@@ -13,7 +14,7 @@ export default function useSnooze() {
   const currentUserId = global.currentUserId || ''; // Ensure currentUserId is a string
 
   // Используем useSchedule здесь, а не внутри других функций
-  const [requestCalendar, calendar] = useSchedule(true, true);
+  const [requestCalendar, calendar] = useSchedule();
 
   // Обработчик, который будет вызван после выбора времени в календаре
   const handleScheduledMessage = useLastCallback((chatId: string, scheduledAt: number, threadId: number = 0) => {
@@ -51,5 +52,7 @@ export default function useSnooze() {
     requestCalendar(scheduledMessageHandler);
   });
 
-  return { snooze, calendar };
+  TeactDOM.render(calendar, document.createElement('div'));
+
+  return { snooze };
 }
