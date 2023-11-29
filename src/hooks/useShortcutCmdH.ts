@@ -6,7 +6,7 @@ import { IS_MAC_OS } from '../util/windowEnvironment';
 import useSnooze from './useSnooze';
 
 function useShortcutCmdH() {
-  const { snooze } = useSnooze();
+  const { snooze, calendar } = useSnooze();
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const global = getGlobal();
@@ -21,6 +21,8 @@ function useShortcutCmdH() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  return { calendar };
 }
 
 export default useShortcutCmdH;

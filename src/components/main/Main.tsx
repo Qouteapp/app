@@ -351,7 +351,7 @@ const Main: FC<OwnProps & StateProps> = ({
   useDoneUpdates();
 
   useShortcutCmdE();
-  useShortcutCmdH();
+  const { calendar } = useShortcutCmdH();
   useShortcutCmdU();
 
   useEffect(() => {
@@ -648,6 +648,7 @@ const Main: FC<OwnProps & StateProps> = ({
       <ReactionPicker isOpen={isReactionPickerOpen} />
       <CommandMenu />
       <UluChatFolders portalRef={chatFoldersPortalRef} />
+      {calendar}
     </div>
   );
 };
