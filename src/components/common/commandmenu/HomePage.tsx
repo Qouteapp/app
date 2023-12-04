@@ -2,8 +2,10 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react/jsx-no-bind */
 import React from 'react';
+import type { User } from '@supabase/supabase-js';
 // eslint-disable-next-line react/no-deprecated
 import { Command } from 'cmdk';
+import { useEffect, useState } from '../../../lib/teact/teact';
 
 import type { ApiUser } from '../../../api/types';
 
@@ -11,6 +13,7 @@ import { IS_APP, IS_ARC_BROWSER } from '../../../util/windowEnvironment';
 
 import useLang from '../../../hooks/useLang';
 
+import { supabase } from '../../../supabase/SupabaseClient';
 import SuggestedContacts from './SuggestedContacts';
 
 import '../../main/CommandMenu.scss';
@@ -77,6 +80,32 @@ const HomePage: React.FC<HomePageProps> = ({
   currentChatId, handleToggleChatUnread, handleDoneChat, isChatUnread, isCurrentChatDone, showNotification,
 }) => {
   const lang = useLang();
+
+  const [user, setUser] = useState<User | undefined>(undefined);
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user);
+    });
+
+    return () => {
+      if (authListener) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, []);
+
+  const handleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        // Замените YOUR_REDIRECT_URI на ваш фактический URI перенаправления
+        redirectTo: 'https://bjyjfetkptfvmohjkkew.supabase.co/auth/v1/callback',
+      },
+    });
+    if (error) console.error('Error during sign in:', error);
+  };
+
   return (
     <>
       {
@@ -270,6 +299,15 @@ const HomePage: React.FC<HomePageProps> = ({
               : 'Enable "Аrchive chats when mark as done"'}
           </span>
         </Command.Item>
+        {!user ? (
+          <Command.Item onSelect={handleSignIn}>
+            <span>Sign in with Google</span>
+          </Command.Item>
+        ) : (
+          <Command.Item onSelect={() => supabase.auth.signOut()}>
+            <span>Sign Out</span>
+          </Command.Item>
+        )}
         {menuItems.map((item, index) => (
           <Command.Item key={index} onSelect={item.value === 'save_api_key' ? saveAPIKey : undefined}>
             {item.label}
