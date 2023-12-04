@@ -135,9 +135,9 @@ const CommanMenuChatSearch: React.FC<{
     // Сортировка оставшихся чатов
     const sortedChatIds = sortChatIds([...chatIds, ...userIds], chatsById);
 
-    if (searchQuery.length < 2) {
+    /* if (searchQuery.length < 2) {
       return [];
-    }
+    } */
 
     // Объединение приоритетных и отсортированных остальных чатов
     return unique([...priorityIds, ...sortedChatIds]);
