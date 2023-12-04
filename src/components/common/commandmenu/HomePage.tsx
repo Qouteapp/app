@@ -7,6 +7,7 @@ import { Command } from 'cmdk';
 import type { ApiUser } from '../../../api/types';
 import type { Workspace } from '../../../types';
 
+import { useFocusMode } from '../../../hooks/useFocusMode';
 import useLang from '../../../hooks/useLang';
 
 import BillingGroup from './HomePage/BillingGroup';
@@ -58,6 +59,17 @@ const HomePage: React.FC<HomePageProps> = ({
   currentChatId, isCurrentChatDone, handleDoneChat, handleToggleChatUnread, isChatUnread,
 }) => {
   const lang = useLang();
+  const { isFocusMode, enableFocusMode, disableFocusMode } = useFocusMode();
+
+  const toggleFocusMode5sec = () => {
+    if (isFocusMode) {
+      disableFocusMode();
+    } else {
+      enableFocusMode(50000); // Вы можете также передать длительность
+    }
+    close();
+    showNotification({ message: 'Focus mode is turned on' });
+  };
 
   return (
     <>
@@ -153,6 +165,12 @@ const HomePage: React.FC<HomePageProps> = ({
             {item.label}
           </Command.Item>
         ))}
+        <Command.Item onSelect={toggleFocusMode5sec}>
+          <i className="icon icon-settings" />
+          <span>
+            {isFocusMode ? 'Disable Focus Mode' : 'Enable Focus Mode'}
+          </span>
+        </Command.Item>
       </Command.Group>
       <BillingGroup close={close} />
     </>

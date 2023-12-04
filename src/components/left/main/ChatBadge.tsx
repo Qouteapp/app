@@ -1,5 +1,6 @@
+/* eslint-disable no-console */
 import type { FC } from '../../../lib/teact/teact';
-import React, { memo, useMemo } from '../../../lib/teact/teact';
+import React, { memo, useEffect, useMemo } from '../../../lib/teact/teact';
 
 import type { ApiChat, ApiTopic } from '../../../api/types';
 import type { Signal } from '../../../util/signals';
@@ -23,11 +24,18 @@ type OwnProps = {
   isMuted?: boolean;
   shouldShowOnlyMostImportant?: boolean;
   forceHidden?: boolean | Signal<boolean>;
+  isFocusMode?: boolean;
 };
 
 const ChatBadge: FC<OwnProps> = ({
-  topic, chat, isPinned, isMuted, shouldShowOnlyMostImportant, wasTopicOpened, forceHidden,
+  topic, chat, isPinned, isMuted, shouldShowOnlyMostImportant, wasTopicOpened, forceHidden, isFocusMode,
 }) => {
+  console.log('Is Focus Mode (Badge):', isFocusMode);
+
+  useEffect(() => {
+    console.log('Updated isFocusMode (Badge):', isFocusMode);
+  }, [isFocusMode]);
+
   const {
     unreadMentionsCount = 0, unreadReactionsCount = 0,
   } = !chat.isForum ? chat : {}; // TODO[forums] Unread mentions and reactions temporarily disabled for forums
@@ -59,7 +67,7 @@ const ChatBadge: FC<OwnProps> = ({
     () => (isSignal(forceHidden) ? forceHidden() : forceHidden),
     [forceHidden],
   );
-  const isShown = !resolvedForceHidden && Boolean(
+  const isShown = !resolvedForceHidden && /* !isFocusMode &&  */Boolean(
     unreadCount || unreadMentionsCount || hasUnreadMark || isPinned || unreadReactionsCount
     || isTopicUnopened,
   );
@@ -123,8 +131,13 @@ const ChatBadge: FC<OwnProps> = ({
     );
   }
 
+  const badgeClassName = buildClassName(
+    'ChatBadge-transition',
+    /* isFocusMode && 'focus-mode', */
+  );
+
   return (
-    <ShowTransition isCustom className="ChatBadge-transition" isOpen={isShown}>
+    <ShowTransition isCustom className={badgeClassName} isOpen={isShown}>
       {renderContent()}
     </ShowTransition>
   );

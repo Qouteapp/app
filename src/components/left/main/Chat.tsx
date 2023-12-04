@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { FC } from '../../../lib/teact/teact';
 import React, { memo, useEffect } from '../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../global';
@@ -50,6 +51,7 @@ import { IS_OPEN_IN_NEW_TAB_SUPPORTED } from '../../../util/windowEnvironment';
 import useAppLayout from '../../../hooks/useAppLayout';
 import useChatContextActions from '../../../hooks/useChatContextActions';
 import useFlag from '../../../hooks/useFlag';
+import { useFocusMode } from '../../../hooks/useFocusMode';
 import { useIsIntersecting } from '../../../hooks/useIntersectionObserver';
 import useLastCallback from '../../../hooks/useLastCallback';
 import useSelectorSignal from '../../../hooks/useSelectorSignal';
@@ -152,6 +154,14 @@ const Chat: FC<OwnProps & StateProps> = ({
   const [shouldRenderReportModal, markRenderReportModal, unmarkRenderReportModal] = useFlag();
 
   const { lastMessage, isForum, isForumAsMessages } = chat || {};
+
+  const { isFocusMode } = useFocusMode();
+
+  console.log('Is Focus Mode (Chat):', isFocusMode);
+
+  useEffect(() => {
+    console.log('Updated isFocusMode (Chat):', isFocusMode);
+  }, [isFocusMode]);
 
   const { renderSubtitle, ref } = useChatListEntry({
     chat,
@@ -283,7 +293,13 @@ const Chat: FC<OwnProps & StateProps> = ({
         />
         <div className="avatar-badge-wrapper">
           <div className={buildClassName('avatar-online', isAvatarOnlineShown && 'avatar-online-shown')} />
-          <ChatBadge chat={chat} isMuted={isMuted} shouldShowOnlyMostImportant forceHidden={getIsForumPanelClosed} />
+          <ChatBadge
+            chat={chat}
+            isFocusMode={isFocusMode}
+            isMuted={isMuted}
+            shouldShowOnlyMostImportant
+            forceHidden={getIsForumPanelClosed}
+          />
         </div>
         {chat.isCallActive && chat.isCallNotEmpty && (
           <ChatCallStatus isMobile={isMobile} isSelected={isSelected} isActive={withInterfaceAnimations} />
