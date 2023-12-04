@@ -154,7 +154,8 @@ const CommanMenuChatSearch: React.FC<{
         {ids.map((id) => {
           const isUser = usersById.hasOwnProperty(id);
           const { content, value } = renderName(id, isUser);
-          if (!content) return undefined;
+          // eslint-disable-next-line no-null/no-null
+          if (!content) return null;
           return (
             <CommandMenuListItem key={id} value={value} onSelect={handeSelect(id)} content={content} />
           );
