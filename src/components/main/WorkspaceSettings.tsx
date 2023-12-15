@@ -178,9 +178,7 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
     if (workspaceId === DEFAULT_WORKSPACE.id) {
       return;
     }
-    const updatedWorkspaces = savedWorkspaces.filter((ws: {
-      id: string;
-    }) => ws.id !== workspaceId);
+    const updatedWorkspaces = savedWorkspaces.filter((ws) => ws.id !== workspaceId);
     setSavedWorkspaces(updatedWorkspaces);
     setCurrentWorkspaceId(DEFAULT_WORKSPACE.id);
     showNotification({ message: 'Workspace deleted successfully.' });

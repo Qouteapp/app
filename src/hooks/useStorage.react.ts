@@ -30,7 +30,7 @@ export function useStorage() {
   const [
     isInitialMarkAsDone,
     setIsInitialMarkAsDone,
-  ] = useLocalStorage<boolean>('was_initial_mark_as_done', false);
+  ] = useLocalStorage<boolean>('ulu_is_initial_mark_as_done', false);
 
   return {
     isAutoDoneEnabled,
@@ -52,51 +52,47 @@ export function useStorage() {
   };
 }
 
-function useLocalStorage<T>(key: string, initValue: T): [value: T, setValue: (val: T) => void] {
+function useLocalStorage<T>(key: string, defaultValue: T): [value: T, setValue: (val: T) => void] {
   const eventName = `update_storage_${key}`;
 
-  const [state, setState] = useState<T>((() => {
+  const getStoredValue: () => (T | undefined) = () => {
     const value = localStorage.getItem(key);
     // eslint-disable-next-line no-null/no-null
     if (value !== null) {
       try {
         const parsedValue = JSON.parse(value);
-        if (typeof parsedValue === typeof initValue) {
-          return parsedValue;
+        if (typeof parsedValue !== typeof defaultValue) {
+          throw new Error();
         }
+        return parsedValue as T;
       } catch { /* */ }
     }
+    return undefined;
+  };
 
-    localStorage.setItem(key, JSON.stringify(initValue));
-    window.dispatchEvent(new Event(eventName));
-    return initValue;
-  })());
-
-  useEffect(() => {
-    if (JSON.stringify(state) !== localStorage.getItem(key)) { // can be optimized
-      localStorage.setItem(key, JSON.stringify(state));
+  const writeValue: (value: T) => void = (value) => {
+    const stringifiedValue = JSON.stringify(value);
+    if (localStorage.getItem(key) !== stringifiedValue) {
+      localStorage.setItem(key, stringifiedValue);
       window.dispatchEvent(new Event(eventName));
     }
-  }, [key, state, eventName]);
+  };
+
+  const reinitValue: () => T = () => {
+    const storedValue = getStoredValue();
+    if (storedValue !== undefined) {
+      return storedValue;
+    } else {
+      writeValue(defaultValue);
+      return defaultValue;
+    }
+  };
+
+  const [state, setState] = useState<T>(reinitValue());
 
   useEffect(() => {
     const listenStorageChange = () => {
-      setState(() => {
-        const value = localStorage.getItem(key);
-        // eslint-disable-next-line no-null/no-null
-        if (value !== null) {
-          try {
-            const parsedValue = JSON.parse(value);
-            if (typeof parsedValue === typeof initValue) {
-              return parsedValue;
-            }
-          } catch { /* */ }
-        }
-
-        localStorage.setItem(key, JSON.stringify(initValue));
-        window.dispatchEvent(new Event(eventName));
-        return initValue;
-      });
+      setState(reinitValue());
     };
     window.addEventListener(eventName, listenStorageChange);
     return () => window.removeEventListener(eventName, listenStorageChange);
@@ -104,10 +100,12 @@ function useLocalStorage<T>(key: string, initValue: T): [value: T, setValue: (va
   }, []);
 
   const setStateFiltered = (value: T) => {
-    const updValue = (value === undefined || typeof value !== typeof initValue)
-      ? initValue
-      : value;
-    setState(updValue);
+    if (value === undefined || typeof value !== typeof defaultValue) {
+      throw new Error(`Unexpected setState for ${key}: ${JSON.stringify(value)}`);
+    }
+
+    setState(value);
+    writeValue(value);
   };
 
   return [state, setStateFiltered];
