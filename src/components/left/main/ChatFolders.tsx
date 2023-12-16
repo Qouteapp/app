@@ -1,8 +1,8 @@
 /* eslint-disable no-null/no-null */
-import type { CSSProperties, RefObject } from 'react';
+import type { RefObject } from 'react';
 import type { FC } from '../../../lib/teact/teact';
 import React, {
-  memo, useCallback, useEffect, useMemo, useRef, useState,
+  memo, useEffect, useMemo, useRef,
 } from '../../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../../global';
 
@@ -71,12 +71,8 @@ type StateProps = {
 
 const SAVED_MESSAGES_HOTKEY = '0';
 const FIRST_FOLDER_INDEX = 0;
-const INVISIBLE_CHAT_TREE_STYLES = 'max-height: 0' as CSSProperties;
-const RECALCULATE_TREE_HEIGHT_INTERVAL_MS = 300;
-const COMMON_PADDING = 16;
 
 const ChatFolders: FC<OwnProps & StateProps> = ({
-  leftMainHeaderRef,
   foldersDispatch,
   onSettingsScreenSelect,
   onLeftColumnContentChange,
@@ -343,47 +339,9 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
 
   const uluSystemFoldersRef = useRef<HTMLDivElement>(null);
 
-  const recalculateFoldersTreeStyles = useCallback(() => {
-    // if no refs are initialized, we hide the tree
-    // because otherwise it would be too tall
-    if (!leftMainHeaderRef.current || !uluSystemFoldersRef.current) {
-      return INVISIBLE_CHAT_TREE_STYLES;
-    }
-
-    let heightSubtractionPx = 0;
-    heightSubtractionPx += leftMainHeaderRef.current.getBoundingClientRect().height;
-    heightSubtractionPx += uluSystemFoldersRef.current.getBoundingClientRect().height;
-    heightSubtractionPx -= 2 * COMMON_PADDING;
-
-    // if for some reason modifier is still 0 or less we also hide the tree
-    // for the same reasons as above
-    if (heightSubtractionPx <= 0) {
-      return INVISIBLE_CHAT_TREE_STYLES;
-    }
-
-    return `max-height: calc(100% - ${heightSubtractionPx}px)`;
-  }, [leftMainHeaderRef]);
-
-  const [chatFoldersTreeStyles, setChatFoldersTreeStyles] = useState(recalculateFoldersTreeStyles());
-  const recalculateHeightIntervalRef = useRef<NodeJS.Timeout | null>();
-
   const { isFoldersTreeEnabled } = useStorage();
 
-  useEffect(() => {
-    recalculateHeightIntervalRef.current = setInterval(() => {
-      const newStyles = recalculateFoldersTreeStyles();
-      setChatFoldersTreeStyles(newStyles);
-    }, RECALCULATE_TREE_HEIGHT_INTERVAL_MS);
-  }, [recalculateFoldersTreeStyles]);
-
-  useEffect(() => {
-    if (chatFoldersTreeStyles !== INVISIBLE_CHAT_TREE_STYLES) {
-      if (typeof recalculateHeightIntervalRef.current === 'number') {
-        clearInterval(recalculateHeightIntervalRef.current);
-      }
-      recalculateHeightIntervalRef.current = null;
-    }
-  }, [chatFoldersTreeStyles]);
+  const chatFoldersTreeStyles = 'max-height: 100%; padding-bottom: 100px';
 
   return (
     <div
