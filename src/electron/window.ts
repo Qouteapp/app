@@ -9,7 +9,7 @@ import { ElectronAction, ElectronEvent } from '../types/electron';
 
 import setupAutoUpdates, { AUTO_UPDATE_SETTING_KEY, getIsAutoUpdateEnabled } from './autoUpdates';
 import { processDeeplink } from './deeplink';
-import { captureLocalStorage, restoreLocalStorage } from './localStorage';
+import { captureLocalStorage, clearLocalStorage, restoreLocalStorage } from './localStorage';
 import tray from './tray';
 import {
   forceQuit, getAppTitle,
@@ -170,7 +170,7 @@ export function createWindow(url?: string) {
   });
 
   if (IS_FIRST_RUN) {
-    ipcMain.emit(ElectronAction.RESTORE_LOCAL_STORAGE);
+    clearLocalStorage();
   }
 
   window.once('ready-to-show', () => {
