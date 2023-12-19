@@ -65,6 +65,8 @@ import useLastCallback from '../../hooks/useLastCallback';
 import usePreventPinchZoomGesture from '../../hooks/usePreventPinchZoomGesture';
 import useShortcutCmdE from '../../hooks/useShortcutCmdE';
 import useShortcutCmdF from '../../hooks/useShortcutCmdF';
+import useShortcutCmdShiftL from '../../hooks/useShortcutCmdShiftL';
+import useShortcutCmdShiftM from '../../hooks/useShortcutCmdShiftM';
 import useShortcutCmdG from '../../hooks/useShortcutCmdG';
 import useShortcutCmdU from '../../hooks/useShortcutCmdU';
 import useShowTransition from '../../hooks/useShowTransition';
@@ -358,6 +360,8 @@ const Main: FC<OwnProps & StateProps> = ({
   useShortcutCmdU();
   useShortcutCmdE();
   useShortcutCmdF();
+  useShortcutCmdShiftL();
+  useShortcutCmdShiftM();
   useShortcutCmdG();
 
   useEffect(() => {
