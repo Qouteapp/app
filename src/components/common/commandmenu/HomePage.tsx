@@ -9,6 +9,7 @@ import type { Workspace } from '../../../types';
 
 import useLang from '../../../hooks/useLang';
 
+import BillingGroup from './HomePage/BillingGroup';
 import CreateNewGroup from './HomePage/CreateNewGroup';
 import HelpGroup from './HomePage/HelpGroup';
 import NavigationGroup from './HomePage/NavigationGroup';
@@ -153,6 +154,7 @@ const HomePage: React.FC<HomePageProps> = ({
           </Command.Item>
         ))}
       </Command.Group>
+      <BillingGroup close={close} />
     </>
   );
 };
