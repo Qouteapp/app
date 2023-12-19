@@ -48,7 +48,11 @@ export function useStorage() {
   const [
     currentWorkspaceId,
     setCurrentWorkspaceId,
-  ] = useLocalStorage<string>({ key: 'current_workspace_id', initValue: DEFAULT_WORKSPACE.id, schema: z.string() });
+  ] = useLocalStorage<string>({
+    key: LOCAL_STORAGE_KEYS.CURRENT_WORKSPACE_ID,
+    initValue: DEFAULT_WORKSPACE.id,
+    schema: z.string(),
+  });
 
   const [
     isInitialMarkAsDone,
