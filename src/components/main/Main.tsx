@@ -282,6 +282,7 @@ const Main: FC<OwnProps & StateProps> = ({
     setIsElectronUpdateAvailable,
     loadPremiumSetStickers,
     loadAuthorizations,
+    loadPeerColors,
   } = getActions();
 
   if (DEBUG && !DEBUG_isLogged) {
@@ -390,6 +391,7 @@ const Main: FC<OwnProps & StateProps> = ({
       updateIsOnline(true);
       loadConfig();
       loadAppConfig();
+      loadPeerColors();
       initMain();
       loadAvailableReactions();
       loadAnimatedEmojis();

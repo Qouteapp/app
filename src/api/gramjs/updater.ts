@@ -522,7 +522,7 @@ export function updater(update: Update) {
       '@type': 'updateMessage',
       chatId: buildApiPeerId(update.channelId, 'channel'),
       id: update.id,
-      message: { views: update.views },
+      message: { viewsCount: update.views },
     });
 
     // Chats
@@ -1130,6 +1130,12 @@ export function updater(update: Update) {
       device: update.device,
       location: update.location,
       isUnconfirmed: update.unconfirmed,
+    });
+  } else if (update instanceof GramJs.UpdateChannelViewForumAsMessages) {
+    onUpdate({
+      '@type': 'updateViewForumAsMessages',
+      chatId: buildApiPeerId(update.channelId, 'channel'),
+      isEnabled: update.enabled ? true : undefined,
     });
   } else if (DEBUG) {
     const params = typeof update === 'object' && 'className' in update ? update.className : update;

@@ -131,6 +131,7 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
     openChatLanguageModal,
     setSettingOption,
     unblockUser,
+    setViewForumAsMessages,
   } = getActions();
   // eslint-disable-next-line no-null/no-null
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -210,6 +211,7 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
 
   const handleAsMessagesClick = useLastCallback(() => {
     openChat({ id: chatId });
+    setViewForumAsMessages({ chatId, isEnabled: true });
   });
 
   function handleRequestCall() {

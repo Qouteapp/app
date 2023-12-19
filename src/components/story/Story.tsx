@@ -15,6 +15,7 @@ import { EDITABLE_STORY_INPUT_CSS_SELECTOR, EDITABLE_STORY_INPUT_ID } from '../.
 import { getSenderTitle, isUserId } from '../../global/helpers';
 import {
   selectChat, selectIsCurrentUserPremium,
+  selectPeer,
   selectPeerStories, selectPeerStory,
   selectTabState, selectUser,
 } from '../../global/selectors';
@@ -24,6 +25,7 @@ import { formatMediaDuration, formatRelativeTime } from '../../util/dateFormat';
 import download from '../../util/download';
 import { getServerTime } from '../../util/serverTime';
 import renderText from '../common/helpers/renderText';
+import { PRIMARY_VIDEO_MIME, SECONDARY_VIDEO_MIME } from './helpers/videoFormats';
 
 import useUnsupportedMedia from '../../hooks/media/useUnsupportedMedia';
 import useAppLayout, { getIsMobile } from '../../hooks/useAppLayout';
@@ -38,11 +40,13 @@ import useLastCallback from '../../hooks/useLastCallback';
 import useLongPress from '../../hooks/useLongPress';
 import useMediaTransition from '../../hooks/useMediaTransition';
 import useShowTransition from '../../hooks/useShowTransition';
+import { useStreaming } from '../../hooks/useStreaming';
 import useStoryPreloader from './hooks/useStoryPreloader';
 import useStoryProps from './hooks/useStoryProps';
 
 import Avatar from '../common/Avatar';
 import Composer from '../common/Composer';
+import Icon from '../common/Icon';
 import Button from '../ui/Button';
 import DropdownMenu from '../ui/DropdownMenu';
 import MenuItem from '../ui/MenuItem';
@@ -74,6 +78,7 @@ interface OwnProps {
 
 interface StateProps {
   peer: ApiPeer;
+  forwardSender?: ApiPeer;
   story?: ApiTypeStory;
   isMuted: boolean;
   orderedIds?: number[];
@@ -89,15 +94,13 @@ interface StateProps {
 const VIDEO_MIN_READY_STATE = 4;
 const SPACEBAR_CODE = 32;
 
-const PRIMARY_VIDEO_MIME = 'video/mp4; codecs=hvc1.1.6.L63.00';
-const SECONDARY_VIDEO_MIME = 'video/mp4; codecs=avc1.64001E';
-
 const STEALTH_MODE_NOTIFICATION_DURATION = 4000;
 
 function Story({
   peerId,
   storyId,
   peer,
+  forwardSender,
   isMuted,
   isArchivedStories,
   isPrivateStories,
@@ -152,6 +155,7 @@ function Story({
   const {
     isDeletedStory,
     hasText,
+    hasForwardInfo,
     thumbnail,
     previewBlobUrl,
     isVideo,
@@ -182,6 +186,10 @@ function Story({
   const areViewsExpired = Boolean(
     isOut && (story!.date + viewersExpirePeriod) < getServerTime(),
   );
+
+  const forwardSenderTitle = forwardSender ? getSenderTitle(lang, forwardSender)
+    : (isLoadedStory && story.forwardInfo?.fromName);
+
   const canCopyLink = Boolean(
     isLoadedStory
     && story.isPublic
@@ -201,6 +209,10 @@ function Story({
     hasFullData && !shouldForcePause && isAppFocused && !isComposerHasFocus && !isCaptionExpanded
     && !isPausedBySpacebar && !isPausedByLongPress,
   );
+
+  const duration = isLoadedStory && story.content.video?.duration
+    ? story.content.video.duration
+    : undefined;
 
   const shouldShowFooter = isLoadedStory && (isOut || isChannel);
 
@@ -226,6 +238,8 @@ function Story({
   } = useShowTransition(hasText && isCaptionExpanded);
 
   const { transitionClassNames: appearanceAnimationClassNames } = useShowTransition(true);
+
+  useStreaming(videoRef, fullMediaData, PRIMARY_VIDEO_MIME);
 
   useStoryPreloader(peerId, storyId);
 
@@ -369,16 +383,14 @@ function Story({
     }
   }, [isComposerHasFocus, isCaptionExpanded, shouldForcePause, isAppFocused, isPausedByLongPress, isPausedBySpacebar]);
 
-  const handleVideoStoryTimeUpdate = useLastCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const video = e.currentTarget;
-    if (video.readyState >= VIDEO_MIN_READY_STATE) {
-      setCurrentTime(video.currentTime);
-    }
-  });
-
   const handleOpenChat = useLastCallback(() => {
     onClose();
     openChat({ id: peerId });
+  });
+
+  const handleForwardPeerClick = useLastCallback(() => {
+    onClose();
+    openChat({ id: forwardSender!.id });
   });
 
   const handleOpenPrevStory = useLastCallback(() => {
@@ -389,6 +401,16 @@ function Story({
   const handleOpenNextStory = useLastCallback(() => {
     setCurrentTime(0);
     openNextStory();
+  });
+
+  const handleVideoStoryTimeUpdate = useLastCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    if (video.readyState >= VIDEO_MIN_READY_STATE) {
+      setCurrentTime(video.currentTime);
+    }
+    if (duration && video.currentTime >= duration) {
+      handleOpenNextStory();
+    }
   });
 
   useEffect(() => {
@@ -508,10 +530,6 @@ function Story({
   }, [isMobile, lang]);
 
   function renderStoriesTabs() {
-    const duration = isLoadedStory && story.content.video?.duration
-      ? story.content.video.duration
-      : undefined;
-
     return (
       <div className={styles.storyIndicators}>
         {(isSingleStory ? [storyId] : orderedIds ?? []).map((id) => (
@@ -591,6 +609,19 @@ function Story({
             {renderText(getSenderTitle(lang, peer) || '')}
           </span>
           <div className={styles.storyMetaRow}>
+            {forwardSenderTitle && (
+              <span
+                className={buildClassName(
+                  styles.storyMeta, styles.forwardHeader, forwardSender && styles.clickable,
+                )}
+                onClick={forwardSender ? handleForwardPeerClick : undefined}
+              >
+                <Icon name="loop" />
+                <span className={styles.forwardHeaderText}>
+                  {renderText(forwardSenderTitle)}
+                </span>
+              </span>
+            )}
             {story && 'date' in story && (
               <span className={styles.storyMeta}>{formatRelativeTime(lang, serverTime, story.date)}</span>
             )}
@@ -711,8 +742,8 @@ function Story({
             onPlaying={markStoryPlaying}
             onPause={unmarkStoryPlaying}
             onWaiting={unmarkStoryPlaying}
+            disableRemotePlayback
             onTimeUpdate={handleVideoStoryTimeUpdate}
-            onEnded={handleOpenNextStory}
           >
             <source src={fullMediaData} type={PRIMARY_VIDEO_MIME} width="720" />
             {altMediaData && <source src={altMediaData} type={SECONDARY_VIDEO_MIME} width="480" />}
@@ -753,7 +784,7 @@ function Story({
         />
       )}
       {hasText && <div className={styles.captionGradient} />}
-      {hasText && (
+      {(hasText || hasForwardInfo) && (
         <StoryCaption
           key={`caption-${storyId}-${peerId}`}
           story={story as ApiStory}
@@ -812,9 +843,12 @@ export default memo(withGlobal<OwnProps>((global, {
     viewModal || forwardedStoryId || tabState.reactionPicker?.storyId || isReportModalOpen || isPrivacyModalOpen
     || isPremiumModalOpen || isDeleteModalOpen || safeLinkModalUrl || isStealthModalOpen || mapModal,
   );
+  const forwardSenderId = story && 'forwardInfo' in story ? story.forwardInfo?.fromPeerId : undefined;
+  const forwardSender = forwardSenderId ? selectPeer(global, forwardSenderId) : undefined;
 
   return {
     peer: (user || chat)!,
+    forwardSender,
     story,
     orderedIds: isArchivedStories ? archiveIds : (isPrivateStories ? pinnedIds : orderedIds),
     isMuted,

@@ -490,16 +490,15 @@ export function getPeerIdDividend(peerId: string) {
 }
 
 export function getPeerColorKey(peer: ApiPeer | undefined) {
-  if (peer?.color) return peer.color;
+  if (peer?.color?.color) return peer.color.color;
 
-  const index = peer ? getPeerIdDividend(peer.id) % 7 : 0;
-  return index;
+  return peer ? getPeerIdDividend(peer.id) % 7 : 0;
 }
 
 export function getPeerColorCount(peer: ApiPeer) {
   const key = getPeerColorKey(peer);
   // eslint-disable-next-line eslint-multitab-tt/no-immediate-global
-  return getGlobal().appConfig?.peerColors?.[key]?.length || 1;
+  return getGlobal().peerColors?.general[key].colors?.length || 1;
 }
 
 export function buildChatTimeSnapshot(chatId: string): ChatTimeSnapshot {
