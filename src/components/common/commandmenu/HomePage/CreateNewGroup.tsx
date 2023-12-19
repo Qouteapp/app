@@ -67,13 +67,26 @@ const CreateNewGroup: FC<CreateNewGroupProps> = ({
     runCommand('OPEN_AUTOMATION_SETTINGS');
   };
 
-  const handleNewMeetLink = () => {
+  const handleNewMeetLink = useCallback(() => {
     close();
     openUrl({
       url: 'https://meet.new',
       shouldSkipModal: true,
     });
-  };
+  }, [close]);
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyM') {
+        handleNewMeetLink();
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener('keydown', listener);
+    return () => document.removeEventListener('keydown', listener);
+  }, [handleNewMeetLink]);
 
   const handleNewLinearTask = useCallback(() => {
     close();
@@ -104,17 +117,6 @@ const CreateNewGroup: FC<CreateNewGroupProps> = ({
       shortcut: IS_ARC_BROWSER ? [cmdKey, 'G'] : [cmdKey, '⇧', 'C'],
     },
     {
-      onSelect: handleNewMeetLink,
-      icon: 'video-outlined',
-      label: 'Create new Google Meet',
-    },
-    {
-      onSelect: handleNewLinearTask,
-      icon: 'linear',
-      label: 'Create new Linear task',
-      shortcut: [cmdKey, '⇧', 'L'],
-    },
-    {
       onSelect: handleSelectNewChannel,
       icon: 'channel',
       label: 'Create new channel',
@@ -133,6 +135,18 @@ const CreateNewGroup: FC<CreateNewGroupProps> = ({
       onSelect: handleOpenAutomationSettings,
       icon: 'bots',
       label: 'Create folder rule',
+    },
+    {
+      onSelect: handleNewMeetLink,
+      icon: 'video-outlined',
+      label: 'Create new Google Meet',
+      shortcut: [cmdKey, '⇧', 'M'],
+    },
+    {
+      onSelect: handleNewLinearTask,
+      icon: 'linear',
+      label: 'Create new Linear task',
+      shortcut: [cmdKey, '⇧', 'L'],
     },
   ];
 
