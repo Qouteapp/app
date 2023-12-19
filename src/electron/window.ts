@@ -169,10 +169,6 @@ export function createWindow(url?: string) {
     }
   });
 
-  if (IS_FIRST_RUN) {
-    ipcMain.emit(ElectronAction.RESTORE_LOCAL_STORAGE);
-  }
-
   window.once('ready-to-show', () => {
     splash.close(); // Закрыть сплеш-скрин
     window.show(); // Показать основное окно
