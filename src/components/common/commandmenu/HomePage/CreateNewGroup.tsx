@@ -39,19 +39,6 @@ const CreateNewGroup: FC<CreateNewGroupProps> = ({
     close();
   }, [runCommand, close]);
 
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.code === 'KeyG') {
-        handleSelectNewGroup();
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-
-    document.addEventListener('keydown', listener);
-    return () => document.removeEventListener('keydown', listener);
-  }, [handleSelectNewGroup]);
-
   const handleCreateFolder = useCallback(() => {
     runCommand('NEW_FOLDER');
     close();
