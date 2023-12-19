@@ -65,6 +65,7 @@ import useLastCallback from '../../hooks/useLastCallback';
 import usePreventPinchZoomGesture from '../../hooks/usePreventPinchZoomGesture';
 import useShortcutCmdE from '../../hooks/useShortcutCmdE';
 import useShortcutCmdF from '../../hooks/useShortcutCmdF';
+import useShortcutCmdG from '../../hooks/useShortcutCmdG';
 import useShortcutCmdU from '../../hooks/useShortcutCmdU';
 import useShowTransition from '../../hooks/useShowTransition';
 import useSyncEffect from '../../hooks/useSyncEffect';
@@ -357,6 +358,7 @@ const Main: FC<OwnProps & StateProps> = ({
   useShortcutCmdU();
   useShortcutCmdE();
   useShortcutCmdF();
+  useShortcutCmdG();
 
   useEffect(() => {
     if (!IS_ELECTRON) {

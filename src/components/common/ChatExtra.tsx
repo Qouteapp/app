@@ -1,3 +1,5 @@
+/* eslint-disable consistent-return */
+/* eslint-disable no-console */
 import type { FC } from '../../lib/teact/teact';
 import React, {
   memo, useEffect, useMemo, useState,
@@ -13,6 +15,7 @@ import { TME_LINK_PREFIX } from '../../config';
 import {
   getChatLink,
   getHasAdminRight,
+  getMainUsername,
   isChatChannel,
   isUserId,
   isUserRightBanned,
@@ -131,30 +134,6 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
     return isTopicInfo ? topicLink! : getChatLink(chat) || chatInviteLink;
   }, [chat, isTopicInfo, topicLink, chatInviteLink]);
 
-  const handleNotificationChange = useLastCallback(() => {
-    setAreNotificationsEnabled((current) => {
-      const newAreNotificationsEnabled = !current;
-
-      runDebounced(() => {
-        if (isTopicInfo) {
-          updateTopicMutedState({
-            chatId: chatId!,
-            topicId: topicId!,
-            isMuted: !newAreNotificationsEnabled,
-          });
-        } else {
-          updateChatMutedState({ chatId: chatId!, isMuted: !newAreNotificationsEnabled });
-        }
-      });
-
-      return newAreNotificationsEnabled;
-    });
-  });
-
-  if (!chat || chat.isRestricted || (isSelf && !forceShowSelf)) {
-    return undefined;
-  }
-
   function copy(text: string, entity: string) {
     copyTextToClipboard(text);
     showNotification({ message: `${entity} was copied` });
@@ -214,6 +193,81 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
         </span>
       </ListItem>
     );
+  }
+
+  const userLink = useMemo(() => {
+    if (user) {
+      const handle = getMainUsername(user); // Теперь user гарантированно не undefined
+      if (handle) {
+        return `${handle}`;
+      }
+    }
+  }, [user]);
+
+  const chatLink = useMemo(() => {
+    if (chat) {
+      return getChatLink(chat); // Теперь chat гарантированно не undefined
+    }
+  }, [chat]);
+
+  const linkToCopy = useMemo(() => {
+    return userLink || (isTopicInfo ? topicLink : chatLink) || chatInviteLink;
+  }, [userLink, isTopicInfo, topicLink, chatLink, chatInviteLink]);
+
+  useEffect(() => {
+    // Функция для копирования текста
+    const copyLink = (text: string | undefined, type: string) => {
+      if (text) {
+        copyTextToClipboard(text);
+        showNotification({ message: `${type} was copied` });
+      }
+    };
+
+    // Обработчик событий клавиатуры
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyC') {
+        let type = 'Link';
+        if (linkToCopy === userLink) {
+          type = 'Username';
+        } else if (linkToCopy === topicLink) {
+          type = 'Topic Link';
+        }
+        copyLink(linkToCopy, type);
+        e.preventDefault();
+      }
+    };
+
+    // Добавление обработчика событий
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Удаление обработчика событий при размонтировании компонента
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [linkToCopy, topicLink, userLink]);
+
+  const handleNotificationChange = useLastCallback(() => {
+    setAreNotificationsEnabled((current) => {
+      const newAreNotificationsEnabled = !current;
+
+      runDebounced(() => {
+        if (isTopicInfo) {
+          updateTopicMutedState({
+            chatId: chatId!,
+            topicId: topicId!,
+            isMuted: !newAreNotificationsEnabled,
+          });
+        } else {
+          updateChatMutedState({ chatId: chatId!, isMuted: !newAreNotificationsEnabled });
+        }
+      });
+
+      return newAreNotificationsEnabled;
+    });
+  });
+
+  if (!chat || chat.isRestricted || (isSelf && !forceShowSelf)) {
+    return undefined;
   }
 
   return (
