@@ -1,6 +1,7 @@
 import type { FC } from '../../lib/teact/teact';
 import React, {
   memo,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -108,6 +109,7 @@ type StateProps = {
   isRepliesChat?: boolean;
   isCreator?: boolean;
   isBot?: boolean;
+  isSynced?: boolean;
   messageIds?: number[];
   messagesById?: Record<number, ApiMessage>;
   firstUnreadId?: number;
@@ -154,6 +156,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
   isChannelChat,
   isGroupChat,
   canPost,
+  isSynced,
   isReady,
   isChatWithSelf,
   isRepliesChat,
@@ -256,10 +259,10 @@ const MessageList: FC<OwnProps & StateProps> = ({
   }, [containerRef]);
 
   useEffect(() => {
-    if (!isCurrentUserPremium && isChannelChat && isReady) {
+    if (!isCurrentUserPremium && isChannelChat && isSynced && isReady) {
       loadSponsoredMessages({ chatId });
     }
-  }, [isCurrentUserPremium, chatId, isReady, isChannelChat]);
+  }, [isCurrentUserPremium, chatId, isSynced, isReady, isChannelChat]);
 
   // Updated only once when messages are loaded (as we want the unread divider to keep its position)
   useSyncEffect(() => {
@@ -351,7 +354,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
     }
     const global = getGlobal();
     const ids = messageIds.filter((id) => selectThreadInfo(global, chatId, id)?.isCommentsInfo
-      || messagesById[id]?.views !== undefined);
+      || messagesById[id]?.viewsCount !== undefined);
 
     if (!ids.length) return;
 
@@ -457,6 +460,55 @@ const MessageList: FC<OwnProps & StateProps> = ({
     [getContainerHeight, rememberScrollPositionRef],
   );
 
+  const lastScrollTimeRef = useRef(0);
+  const isScrollingRef = useRef(false);
+
+  const scrollHalfPage = useCallback((direction: 'up' | 'down', smooth: boolean = true) => {
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const halfHeight = container.clientHeight / 2;
+
+      if (smooth) {
+        container.scrollTo({
+          top: direction === 'up'
+            ? container.scrollTop - halfHeight : container.scrollTop + halfHeight,
+          behavior: 'smooth',
+        });
+      } else {
+        container.scrollTop = direction === 'up' ? container.scrollTop - halfHeight : container.scrollTop + halfHeight;
+      }
+
+      lastScrollTimeRef.current = Date.now();
+      isScrollingRef.current = true;
+    }
+  }, []);
+
+  const keyDownHandler = useCallback((e) => {
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.altKey) {
+      e.preventDefault();
+      const currentTime = Date.now();
+      const smooth = (currentTime - lastScrollTimeRef.current) > 300 && !isScrollingRef.current;
+      scrollHalfPage(e.key === 'ArrowUp' ? 'up' : 'down', smooth);
+    }
+  }, [scrollHalfPage]); // зависимость от scrollHalfPage
+
+  const keyUpHandler = useCallback((e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      isScrollingRef.current = false;
+    }
+  }, []);
+
+  // Добавление и удаление обработчиков событий
+  useEffect(() => {
+    document.addEventListener('keydown', keyDownHandler);
+    document.addEventListener('keyup', keyUpHandler);
+
+    return () => {
+      document.removeEventListener('keydown', keyDownHandler);
+      document.removeEventListener('keyup', keyUpHandler);
+    };
+  }, [keyDownHandler, keyUpHandler]);
+
   // Handles updated message list, takes care of scroll repositioning
   useLayoutEffectWithPrevDeps(([prevMessageIds, prevIsViewportNewest]) => {
     if (process.env.APP_ENV === 'perf') {
@@ -479,6 +531,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
     }
 
     const container = containerRef.current!;
+
     listItemElementsRef.current = Array.from(container.querySelectorAll<HTMLDivElement>('.message-list-item'));
     const lastItemElement = listItemElementsRef.current[listItemElementsRef.current.length - 1];
     const firstUnreadElement = memoFirstUnreadIdRef.current
@@ -741,6 +794,7 @@ export default memo(withGlobal<OwnProps>(
       isChatWithSelf: selectIsChatWithSelf(global, chatId),
       isRepliesChat: isChatWithRepliesBot(chatId),
       isBot: Boolean(chatBot),
+      isSynced: global.isSynced,
       messageIds,
       messagesById,
       firstUnreadId: selectFirstUnreadId(global, chatId, threadId),

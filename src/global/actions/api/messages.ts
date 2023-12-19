@@ -26,13 +26,12 @@ import {
   MAX_MEDIA_FILES_FOR_ALBUM,
   MESSAGE_LIST_SLICE,
   RE_TELEGRAM_LINK,
-  RE_TG_LINK,
-  RE_TME_LINK,
   SERVICE_NOTIFICATIONS_USER_ID,
   SUPPORTED_AUDIO_CONTENT_TYPES,
   SUPPORTED_IMAGE_CONTENT_TYPES,
   SUPPORTED_VIDEO_CONTENT_TYPES,
 } from '../../../config';
+import { isDeepLink } from '../../../util/deepLinkParser';
 import { ensureProtocol } from '../../../util/ensureProtocol';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import {
@@ -185,6 +184,9 @@ addActionHandler('loadViewportMessages', (global, actions, payload): ActionRetur
 
     // Prevent requests with local offsets
     if (isLocalMessageId(offsetId)) return;
+
+    // Prevent unnecessary requests in threads
+    if (offsetId === threadId && direction === LoadMoreDirection.Backwards) return;
 
     const isOutlying = Boolean(listedIds && !listedIds.includes(offsetId));
     const historyIds = (isOutlying
@@ -1460,6 +1462,17 @@ addActionHandler('viewSponsoredMessage', (global, actions, payload): ActionRetur
   void callApi('viewSponsoredMessage', { chat, random: message.randomId });
 });
 
+addActionHandler('clickSponsoredMessage', (global, actions, payload): ActionReturnType => {
+  const { chatId } = payload;
+  const chat = selectChat(global, chatId);
+  const message = selectSponsoredMessage(global, chatId);
+  if (!chat || !message) {
+    return;
+  }
+
+  void callApi('clickSponsoredMessage', { chat, random: message.randomId });
+});
+
 addActionHandler('fetchUnreadMentions', async (global, actions, payload): Promise<void> => {
   const { chatId, offsetId } = payload;
   const chat = selectChat(global, chatId);
@@ -1530,7 +1543,7 @@ addActionHandler('openUrl', (global, actions, payload): ActionReturnType => {
   const urlWithProtocol = ensureProtocol(url)!;
   const isStoriesViewerOpen = Boolean(selectTabState(global, tabId).storyViewer.peerId);
 
-  if (urlWithProtocol.match(RE_TME_LINK) || urlWithProtocol.match(RE_TG_LINK)) {
+  if (isDeepLink(urlWithProtocol)) {
     if (isStoriesViewerOpen) {
       actions.closeStoryViewer({ tabId });
     }
@@ -1765,8 +1778,8 @@ addActionHandler('loadMessageViews', async (global, actions, payload): Promise<v
   global = addChats(global, buildCollectionByKey(result.chats, 'id'));
   result.viewsInfo.forEach((update) => {
     global = updateChatMessage(global, chatId, update.id, {
-      views: update.views,
-      forwards: update.forwards,
+      viewsCount: update.views,
+      forwardsCount: update.forwards,
     });
 
     global = updateThreadInfo(global, chatId, update.id, update.threadInfo);

@@ -32,8 +32,9 @@ const StoryFooter = ({
   const lang = useLang();
 
   const {
-    viewsCount, reactionsCount, isOut, peerId, id: storyId, sentReaction,
+    views, isOut, peerId, id: storyId, sentReaction,
   } = story;
+  const { viewsCount, forwardsCount, reactionsCount } = views || {};
   const isChannel = !isUserId(peerId);
 
   const isSentStoryReactionHeart = sentReaction && 'emoticon' in sentReaction
@@ -50,11 +51,11 @@ const StoryFooter = ({
   const recentViewers = useMemo(() => {
     const { users: { byId: usersById } } = getGlobal();
 
-    const recentViewerIds = story && 'recentViewerIds' in story ? story.recentViewerIds : undefined;
+    const recentViewerIds = views && 'recentViewerIds' in views ? views.recentViewerIds : undefined;
     if (!recentViewerIds) return undefined;
 
     return recentViewerIds.map((id) => usersById[id]).filter(Boolean);
-  }, [story]);
+  }, [views]);
 
   const handleOpenStoryViewModal = useLastCallback(() => {
     openStoryViewModal({ storyId });
@@ -121,37 +122,54 @@ const StoryFooter = ({
           round
           onClick={handleForwardClick}
           ariaLabel={lang('Forward')}
+          className={styles.footerItem}
         >
           <Icon name="forward" />
         </Button>
       )}
       {isChannel && (
-        <div className={styles.channelReaction}>
-          <Button
-            round
-            className={styles.reactionButton}
-            color="translucent"
-            size="smaller"
-            onClick={handleLikeStory}
-            ariaLabel={lang('AccDescrLike')}
-          >
-            {sentReaction && (
-              <ReactionAnimatedEmoji
-                key={'documentId' in sentReaction ? sentReaction.documentId : sentReaction.emoticon}
-                containerId={containerId}
-                reaction={sentReaction}
-                withEffectOnly={isSentStoryReactionHeart}
-              />
-            )}
-            {(!sentReaction || isSentStoryReactionHeart) && (
-              <Icon
-                name={isSentStoryReactionHeart ? 'heart' : 'heart-outline'}
-                className={buildClassName(isSentStoryReactionHeart && styles.reactionHeart)}
-              />
-            )}
-          </Button>
-          {Boolean(reactionsCount) && (<span>{reactionsCount}</span>)}
-        </div>
+        <>
+          {Boolean(forwardsCount) && (
+            <div className={styles.footerItem}>
+              <Button
+                round
+                color="translucent"
+                size="smaller"
+                nonInteractive
+                ariaLabel={lang('PublicShares')}
+              >
+                <Icon name="loop" />
+              </Button>
+              <span>{forwardsCount}</span>
+            </div>
+          )}
+          <div className={styles.footerItem}>
+            <Button
+              round
+              className={styles.reactionButton}
+              color="translucent"
+              size="smaller"
+              onClick={handleLikeStory}
+              ariaLabel={lang('AccDescrLike')}
+            >
+              {sentReaction && (
+                <ReactionAnimatedEmoji
+                  key={'documentId' in sentReaction ? sentReaction.documentId : sentReaction.emoticon}
+                  containerId={containerId}
+                  reaction={sentReaction}
+                  withEffectOnly={isSentStoryReactionHeart}
+                />
+              )}
+              {(!sentReaction || isSentStoryReactionHeart) && (
+                <Icon
+                  name={isSentStoryReactionHeart ? 'heart' : 'heart-outline'}
+                  className={buildClassName(isSentStoryReactionHeart && styles.reactionHeart)}
+                />
+              )}
+            </Button>
+            {Boolean(reactionsCount) && (<span>{reactionsCount}</span>)}
+          </div>
+        </>
       )}
     </div>
   );

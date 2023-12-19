@@ -1,24 +1,30 @@
-import type { FC } from '../../../lib/teact/teact';
 import React, {
-  memo, useEffect, useRef,
-  useState,
+  memo, useEffect, useRef, useState,
 } from '../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../global';
 
-import type { ApiMessagePublicForward, ApiMessageStatistics, StatisticsGraph } from '../../../api/types';
+import type {
+  ApiMessagePublicForward,
+  ApiPostStatistics,
+  StatisticsGraph,
+} from '../../../api/types';
+import { LoadMoreDirection } from '../../../types';
 
+import { STATISTICS_PUBLIC_FORWARDS_LIMIT } from '../../../config';
 import { selectChatFullInfo, selectTabState } from '../../../global/selectors';
 import buildClassName from '../../../util/buildClassName';
 import { callApi } from '../../../api/gramjs';
 
 import useForceUpdate from '../../../hooks/useForceUpdate';
 import useLang from '../../../hooks/useLang';
+import useLastCallback from '../../../hooks/useLastCallback';
 
+import InfiniteScroll from '../../ui/InfiniteScroll';
 import Loading from '../../ui/Loading';
+import StatisticsMessagePublicForward from './StatisticsMessagePublicForward';
 import StatisticsOverview from './StatisticsOverview';
-import StatisticsPublicForward from './StatisticsPublicForward';
 
-import './Statistics.scss';
+import styles from './Statistics.module.scss';
 
 type ILovelyChart = { create: Function };
 let lovelyChartPromise: Promise<ILovelyChart>;
@@ -35,8 +41,9 @@ async function ensureLovelyChart() {
 
 const GRAPH_TITLES = {
   viewsGraph: 'Stats.MessageInteractionsTitle',
+  reactionsGraph: 'ReactionsByEmotionChartTitle',
 };
-const GRAPHS = Object.keys(GRAPH_TITLES) as (keyof ApiMessageStatistics)[];
+const GRAPHS = Object.keys(GRAPH_TITLES) as (keyof ApiPostStatistics)[];
 
 export type OwnProps = {
   chatId: string;
@@ -44,25 +51,25 @@ export type OwnProps = {
 };
 
 export type StateProps = {
-  statistics?: ApiMessageStatistics;
+  statistics?: ApiPostStatistics;
   messageId?: number;
   dcId?: number;
 };
 
-const Statistics: FC<OwnProps & StateProps> = ({
+function Statistics({
   chatId,
   isActive,
   statistics,
   dcId,
   messageId,
-}) => {
+}: OwnProps & StateProps) {
   const lang = useLang();
   // eslint-disable-next-line no-null/no-null
   const containerRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const loadedCharts = useRef<string[]>([]);
 
-  const { loadMessageStatistics, loadStatisticsAsyncGraph } = getActions();
+  const { loadMessageStatistics, loadMessagePublicForwards, loadStatisticsAsyncGraph } = getActions();
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
@@ -144,34 +151,48 @@ const Statistics: FC<OwnProps & StateProps> = ({
     isReady, statistics, lang, chatId, messageId, loadStatisticsAsyncGraph, dcId, forceUpdate,
   ]);
 
+  const handleLoadMore = useLastCallback(({ direction }: { direction: LoadMoreDirection }) => {
+    if (direction === LoadMoreDirection.Backwards && messageId) {
+      loadMessagePublicForwards({ chatId, messageId });
+    }
+  });
+
   if (!isReady || !statistics || !messageId) {
     return <Loading />;
   }
 
   return (
-    <div className={buildClassName('Statistics custom-scroll', isReady && 'ready')}>
+    <div className={buildClassName(styles.root, 'custom-scroll', isReady && styles.ready)}>
       <StatisticsOverview statistics={statistics} type="message" title={lang('StatisticOverview')} />
 
       {!loadedCharts.current.length && <Loading />}
 
       <div ref={containerRef}>
         {GRAPHS.map((graph) => (
-          <div className={buildClassName('Statistics__graph', !loadedCharts.current.includes(graph) && 'hidden')} />
+          <div className={buildClassName(styles.graph, !loadedCharts.current.includes(graph) && styles.hidden)} />
         ))}
       </div>
 
       {Boolean(statistics.publicForwards) && (
-        <div className="Statistics__public-forwards">
-          <h2 className="Statistics__public-forwards-title">{lang('Stats.Message.PublicShares')}</h2>
+        <div className={styles.publicForwards}>
+          <h2 className={styles.publicForwardsTitle}>{lang('Stats.Message.PublicShares')}</h2>
 
-          {statistics.publicForwardsData!.map((item: ApiMessagePublicForward) => (
-            <StatisticsPublicForward data={item} />
-          ))}
+          <InfiniteScroll
+            items={statistics.publicForwardsData}
+            itemSelector=".statistic-public-forward"
+            onLoadMore={handleLoadMore}
+            preloadBackwards={STATISTICS_PUBLIC_FORWARDS_LIMIT}
+            noFastList
+          >
+            {(statistics.publicForwardsData as ApiMessagePublicForward[]).map((item) => (
+              <StatisticsMessagePublicForward key={item.messageId} data={item} />
+            ))}
+          </InfiniteScroll>
         </div>
       )}
     </div>
   );
-};
+}
 
 export default memo(withGlobal<OwnProps>(
   (global, { chatId }): StateProps => {

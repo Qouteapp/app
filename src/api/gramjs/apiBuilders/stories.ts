@@ -4,7 +4,8 @@ import type {
   ApiMediaArea,
   ApiMediaAreaCoordinates,
   ApiStealthMode,
-  ApiStoryView,
+  ApiStoryForwardInfo,
+  ApiStoryView, ApiStoryViews,
   ApiTypeStory,
   MediaContent,
 } from '../../types';
@@ -42,7 +43,7 @@ export function buildApiStory(peerId: string, story: GramJs.TypeStoryItem): ApiT
     edited, pinned, expireDate, id, date, caption,
     entities, media, privacy, views,
     public: isPublic, noforwards, closeFriends, contacts, selectedContacts,
-    mediaAreas, sentReaction, out,
+    mediaAreas, sentReaction, out, fwdFrom,
   } = story;
 
   const content: MediaContent = {
@@ -66,16 +67,24 @@ export function buildApiStory(peerId: string, story: GramJs.TypeStoryItem): ApiT
     ...(selectedContacts && { isForSelectedContacts: true }),
     ...(closeFriends && { isForCloseFriends: true }),
     ...(noforwards && { noForwards: true }),
-    ...(views?.viewsCount && { viewsCount: views.viewsCount }),
-    ...(views?.reactionsCount && { reactionsCount: views.reactionsCount }),
-    ...(views?.reactions && { reactions: views.reactions.map(buildReactionCount) }),
-    ...(views?.recentViewers && {
-      recentViewerIds: views.recentViewers.map((viewerId) => buildApiPeerId(viewerId, 'user')),
-    }),
+    ...(views && { views: buildApiStoryViews(views) }),
     ...(out && { isOut: true }),
     ...(privacy && { visibility: buildPrivacyRules(privacy) }),
     ...(mediaAreas && { mediaAreas: mediaAreas.map(buildApiMediaArea).filter(Boolean) }),
     ...(sentReaction && { sentReaction: buildApiReaction(sentReaction) }),
+    ...(fwdFrom && { forwardInfo: buildApiStoryForwardInfo(fwdFrom) }),
+  };
+}
+
+function buildApiStoryViews(views: GramJs.TypeStoryViews): ApiStoryViews | undefined {
+  return {
+    viewsCount: views.viewsCount,
+    forwardsCount: views.forwardsCount,
+    reactionsCount: views.reactionsCount,
+    ...(views?.reactions && { reactions: views.reactions.map(buildReactionCount).filter(Boolean) }),
+    ...(views?.recentViewers && {
+      recentViewerIds: views.recentViewers.map((viewerId) => buildApiPeerId(viewerId, 'user')),
+    }),
   };
 }
 
@@ -165,4 +174,14 @@ export function buildApiPeerStories(peerStories: GramJs.PeerStories) {
   const peerId = getApiChatIdFromMtpPeer(peerStories.peer);
 
   return buildCollectionByCallback(peerStories.stories, (story) => [story.id, buildApiStory(peerId, story)]);
+}
+
+export function buildApiStoryForwardInfo(forwardHeader: GramJs.TypeStoryFwdHeader): ApiStoryForwardInfo {
+  const { from, fromName, storyId } = forwardHeader;
+
+  return {
+    storyId,
+    fromPeerId: from && getApiChatIdFromMtpPeer(from),
+    fromName,
+  };
 }

@@ -50,6 +50,7 @@ import {
   resolveMessageApiChatId,
   serializeBytes,
 } from '../helpers';
+import { buildApiBotApp } from './bots';
 import { buildApiCallDiscardReason } from './calls';
 import {
   buildApiPhoto,
@@ -78,7 +79,7 @@ export function setMessageBuilderCurrentUserId(_currentUserId: string) {
 export function buildApiSponsoredMessage(mtpMessage: GramJs.SponsoredMessage): ApiSponsoredMessage | undefined {
   const {
     fromId, message, entities, startParam, channelPost, chatInvite, chatInviteHash, randomId, recommended, sponsorInfo,
-    additionalInfo, showPeerPhoto, webpage,
+    additionalInfo, showPeerPhoto, webpage, buttonText, app,
   } = mtpMessage;
   const chatId = fromId ? getApiChatIdFromMtpPeer(fromId) : undefined;
   const chatInviteTitle = chatInvite
@@ -102,6 +103,8 @@ export function buildApiSponsoredMessage(mtpMessage: GramJs.SponsoredMessage): A
     ...(channelPost && { channelPostId: channelPost }),
     ...(sponsorInfo && { sponsorInfo }),
     ...(additionalInfo && { additionalInfo }),
+    ...(buttonText && { buttonText }),
+    ...(app && { botApp: buildApiBotApp(app) }),
   };
 }
 
@@ -201,8 +204,8 @@ export function buildApiMessageWithChatId(
     content,
     date: mtpMessage.date,
     senderId: fromId || (mtpMessage.out && mtpMessage.post && currentUserId) || chatId,
-    views: mtpMessage.views,
-    forwards: mtpMessage.forwards,
+    viewsCount: mtpMessage.views,
+    forwardsCount: mtpMessage.forwards,
     isScheduled,
     isFromScheduled: mtpMessage.fromScheduled,
     isSilent: mtpMessage.silent,
@@ -343,6 +346,7 @@ function buildAction(
   let slug: string | undefined;
   let isGiveaway: boolean | undefined;
   let isUnclaimed: boolean | undefined;
+  let pluralValue: number | undefined;
 
   const targetUserIds = 'users' in action
     ? action.users && action.users.map((id) => buildApiPeerId(id, 'user'))
@@ -542,6 +546,17 @@ function buildAction(
     if (action.boostPeer) {
       targetChatId = getApiChatIdFromMtpPeer(action.boostPeer);
     }
+  } else if (action instanceof GramJs.MessageActionGiveawayResults) {
+    if (!action.winnersCount) {
+      text = 'lng_action_giveaway_results_none';
+    } else if (action.unclaimedCount) {
+      text = 'lng_action_giveaway_results_some';
+    } else {
+      text = 'BoostingGiveawayServiceWinnersSelected';
+      translationValues.push('%amount%');
+      amount = action.winnersCount;
+      pluralValue = action.winnersCount;
+    }
   } else {
     text = 'ChatList.UnsupportedMessage';
   }
@@ -570,6 +585,7 @@ function buildAction(
     topicEmojiIconId,
     isTopicAction,
     isUnclaimed,
+    pluralValue,
   };
 }
 
@@ -886,6 +902,7 @@ function buildReplyInfo(inputInfo: ApiInputReplyInfo, isForum?: boolean): ApiRep
     replyToPeerId: inputInfo.replyToPeerId,
     quoteText: inputInfo.quoteText,
     isForumTopic: isForum && inputInfo.replyToTopId ? true : undefined,
+    ...(Boolean(inputInfo.quoteText) && { isQuote: true }),
   };
 }
 

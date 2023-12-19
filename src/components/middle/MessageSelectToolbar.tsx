@@ -170,6 +170,7 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
         )}
         onClick={onClick}
         title={label}
+        aria-label={label}
       >
         <i className={buildClassName('icon', `icon-${icon}`)} />
         {hotkey && (

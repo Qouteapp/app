@@ -12,13 +12,20 @@ import { processDeeplink } from './deeplink';
 import { captureLocalStorage, restoreLocalStorage } from './localStorage';
 import tray from './tray';
 import {
-  forceQuit, getAppTitle,
-  getCurrentWindow, getLastWindow, hasExtraWindows, IS_FIRST_RUN, IS_MAC_OS,
-  IS_PREVIEW, IS_WINDOWS, reloadWindows, store, TRAFFIC_LIGHT_POSITION, windows,
+  checkIsWebContentsUrlAllowed, forceQuit, getAppTitle, getCurrentWindow, getLastWindow, hasExtraWindows,
+  IS_FIRST_RUN, IS_MAC_OS, IS_PREVIEW, IS_WINDOWS, reloadWindows, store, TRAFFIC_LIGHT_POSITION, windows,
 } from './utils';
 import windowStateKeeper from './windowState';
 
 const ALLOWED_DEVICE_ORIGINS = ['http://localhost:1234', 'file://'];
+
+function updateWindowTransparency(isTransparent: boolean) {
+  const currentWindow = BrowserWindow.getFocusedWindow();
+  if (currentWindow) {
+    // eslint-disable-next-line no-null/no-null
+    currentWindow.setVibrancy(isTransparent ? 'sidebar' : null);
+  }
+}
 
 export function createWindow(url?: string) {
   const windowState = windowStateKeeper({
@@ -52,6 +59,18 @@ export function createWindow(url?: string) {
     height = windowState.height;
   }
 
+  const splash = new BrowserWindow({
+    width,
+    height,
+    x,
+    y,
+    transparent: true,
+    vibrancy: 'sidebar',
+    titleBarStyle: 'hidden',
+  });
+
+  splash.loadFile(path.join(__dirname, 'components', 'splash.html'));
+
   const window = new BrowserWindow({
     show: false,
     x,
@@ -60,10 +79,6 @@ export function createWindow(url?: string) {
     width,
     height,
     title: getAppTitle(),
-    transparent: true,
-    backgroundColor: '#00000000',
-    vibrancy: 'sidebar',
-    visualEffectState: 'followWindow', // ...this is needed to make it work on macOS
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       devTools: process.env.APP_ENV !== 'production',
@@ -71,14 +86,20 @@ export function createWindow(url?: string) {
     ...(IS_MAC_OS && {
       titleBarStyle: 'hidden',
       trafficLightPosition: TRAFFIC_LIGHT_POSITION.standard,
+      transparent: true,
+      vibrancy: 'sidebar',
     }),
   });
 
   windowState.manage(window);
 
-  if (process.platform === 'darwin') {
-    window.setVibrancy('sidebar');
-  }
+  window.on('enter-full-screen', () => {
+    updateWindowTransparency(false); // Сделать фон непрозрачным в полноэкранном режиме
+  });
+
+  window.on('leave-full-screen', () => {
+    updateWindowTransparency(true); // Вернуть прозрачность при выходе из полноэкранного режима
+  });
 
   window.webContents.setWindowOpenHandler((details: HandlerDetails) => {
     shell.openExternal(details.url);
@@ -87,6 +108,12 @@ export function createWindow(url?: string) {
 
   window.webContents.session.setDevicePermissionHandler(({ deviceType, origin }) => {
     return deviceType === 'hid' && ALLOWED_DEVICE_ORIGINS.includes(origin);
+  });
+
+  window.webContents.on('will-navigate', (event, newUrl) => {
+    if (!checkIsWebContentsUrlAllowed(newUrl)) {
+      event.preventDefault();
+    }
   });
 
   window.on('page-title-updated', (event: Event) => {
@@ -145,8 +172,11 @@ export function createWindow(url?: string) {
       await captureLocalStorage();
       reloadWindows();
     }
+  });
 
-    window.show();
+  window.once('ready-to-show', () => {
+    splash.close(); // Закрыть сплеш-скрин
+    window.show(); // Показать основное окно
   });
 
   windows.add(window);
@@ -154,11 +184,10 @@ export function createWindow(url?: string) {
 }
 
 function loadWindowUrl(window: BrowserWindow, url?: string, hash?: string): void {
-  if (url) {
+  if (url && checkIsWebContentsUrlAllowed(url)) {
     window.loadURL(url);
   } else if (!app.isPackaged) {
     window.loadURL(`http://localhost:1234${hash}`);
-    window.webContents.openDevTools();
   } else if (getIsAutoUpdateEnabled()) {
     window.loadURL(`${process.env.BASE_URL}${hash}`);
   } else if (getIsAutoUpdateEnabled() === undefined && IS_FIRST_RUN) {

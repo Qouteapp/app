@@ -22,18 +22,23 @@
 @keyframes gradient-border {
   0% {
     border-image: linear-gradient(to right, var(--color-primary), var(--color-borders)) 1;
+    background-color: var(--color-cmdk);
   }
   25% {
     border-image: linear-gradient(to bottom, var(--color-primary), var(--color-borders)) 1;
+    background-color: var(--color-cmdk);
   }
   50% {
     border-image: linear-gradient(to left, var(--color-primary), var(--color-borders)) 1;
+    background-color: var(--color-cmdk);
   }
   75% {
     border-image: linear-gradient(to top, var(--color-primary), var(--color-borders)) 1;
+    background-color: var(--color-cmdk);
   }
   100% {
     border-image: linear-gradient(to right, var(--color-primary), var(--color-borders)) 1;
+    background-color: var(--color-cmdk);
   }
 }
 
@@ -86,6 +91,8 @@
   display: flex;
   align-items: center;
   position: relative;
+
+  
 
 
   .text-entity-link,

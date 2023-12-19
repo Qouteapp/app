@@ -33,16 +33,17 @@ import type {
   ApiKeyboardButton,
   ApiMessage,
   ApiMessageEntity,
-  ApiMessageStatistics,
   ApiMyBoost,
   ApiNewPoll,
   ApiNotification,
   ApiPaymentCredentials,
   ApiPaymentFormNativeParams,
   ApiPaymentSavedInfo,
+  ApiPeerColors,
   ApiPeerStories,
   ApiPhoneCall,
   ApiPhoto,
+  ApiPostStatistics,
   ApiPremiumPromo,
   ApiReaction,
   ApiReceipt,
@@ -499,8 +500,10 @@ export type TabState = {
 
   statistics: {
     byChatId: Record<string, ApiChannelStatistics | ApiGroupStatistics>;
-    currentMessage?: ApiMessageStatistics;
+    currentMessage?: ApiPostStatistics;
     currentMessageId?: number;
+    currentStory?: ApiPostStatistics;
+    currentStoryId?: number;
   };
 
   newContact?: {
@@ -657,6 +660,7 @@ export type TabState = {
 export type GlobalState = {
   config?: ApiConfig;
   appConfig?: ApiAppConfig;
+  peerColors?: ApiPeerColors;
   hasWebAuthTokenFailed?: boolean;
   hasWebAuthTokenPasswordRequired?: true;
   isCacheApiSupported?: boolean;
@@ -1335,6 +1339,9 @@ export interface ActionPayloads {
   viewSponsoredMessage: {
     chatId: string;
   };
+  clickSponsoredMessage: {
+    chatId: string;
+  };
   loadSendAs: {
     chatId: string;
   };
@@ -1491,6 +1498,9 @@ export interface ActionPayloads {
   toggleMessageStatistics: ({
     messageId?: number;
   } & WithTabId) | undefined;
+  toggleStoryStatistics: ({
+    storyId?: number;
+  } & WithTabId) | undefined;
   loadStatistics: {
     chatId: string;
     isGroup: boolean;
@@ -1498,6 +1508,18 @@ export interface ActionPayloads {
   loadMessageStatistics: {
     chatId: string;
     messageId: number;
+  } & WithTabId;
+  loadMessagePublicForwards: {
+    chatId: string;
+    messageId: number;
+  } & WithTabId;
+  loadStoryStatistics: {
+    chatId: string;
+    storyId: number;
+  } & WithTabId;
+  loadStoryPublicForwards: {
+    chatId: string;
+    storyId: number;
   } & WithTabId;
   loadStatisticsAsyncGraph: {
     chatId: string;
@@ -2694,6 +2716,7 @@ export interface ActionPayloads {
   loadAppConfig: {
     hash: number;
   } | undefined;
+  loadPeerColors: undefined;
   requestNextSettingsScreen: {
     screen?: SettingsScreens;
     foldersAction?: ReducerAction<FoldersActions>;
@@ -2814,6 +2837,10 @@ export interface ActionPayloads {
     topicId: number;
     isMuted?: boolean;
     muteUntil?: number;
+  };
+  setViewForumAsMessages: {
+    chatId: string;
+    isEnabled: boolean;
   };
 
   openCreateTopicPanel: {

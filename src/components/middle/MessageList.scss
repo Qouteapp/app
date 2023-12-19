@@ -3,6 +3,12 @@
   width: 100%;
   margin-bottom: 0.5rem;
 
+  border: 1px solid var(--color-borders-middle);
+  background-color: var(--color-background-secondary);
+  border-radius: var(--border-radius-default);
+  margin-right: 0;
+  margin-left: 0;
+
   overflow-y: scroll;
   overflow-x: hidden;
 
@@ -69,7 +75,7 @@
   }
 
   &.no-composer {
-    margin-bottom: 0;
+    margin-bottom: 1rem;
 
     .last-in-list {
       margin-bottom: 1rem;
@@ -94,6 +100,9 @@
   }
 
   @media (max-width: 600px) {
+    border: none;
+    border-radius: 0;
+
     &.with-bottom-shift {
       margin-bottom: 0;
 
@@ -255,10 +264,6 @@
 
   .action-message-content {
     max-width: 100%;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .ActionMessage.centered-action {
@@ -368,11 +373,6 @@
     margin-bottom: 0.5rem;
   }
 
-  .local-action-message,
-  .ActionMessage.in-one-row {
-    height: 1.5625rem;
-  }
-
   .ActionMessage {
     .action-link {
       cursor: var(--custom-cursor, pointer);
@@ -399,6 +399,7 @@
     width: 100%;
     transform: translate3d(0, 0, 0);
     transition: transform var(--layer-transition);
+    margin-right: 0.5rem;
 
     .messages-container {
       width: 100%;
@@ -413,7 +414,8 @@
     }
 
     #Main.narrow-message-list & {
-      width: calc(100% - var(--right-column-width));
+      width: calc(100% - var(--right-column-width) - 0.5rem);
+      margin-right: 0.5rem !important;
 
       .messages-container {
         width: 100%;
@@ -440,5 +442,13 @@
     &::-webkit-scrollbar-thumb {
       background-color: transparent !important;
     }
+  }
+
+  @media (min-width: 600px) {
+    border: 1px solid var(--color-borders-middle);
+    background-color: var(--color-background-secondary);
+    border-radius: var(--border-radius-default);
+    margin-right: 0 !important;
+    margin-left: 0 !important;
   }
 }

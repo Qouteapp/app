@@ -293,6 +293,7 @@ export interface ApiAction {
   slug?: string;
   isGiveaway?: boolean;
   isUnclaimed?: boolean;
+  pluralValue?: number;
 }
 
 export interface ApiWebPage {
@@ -363,6 +364,12 @@ export interface ApiMessageForwardInfo {
   fromMessageId?: number;
   hiddenUserName?: string;
   postAuthorTitle?: string;
+}
+
+export interface ApiStoryForwardInfo {
+  fromPeerId?: string;
+  fromName?: string;
+  storyId?: number;
 }
 
 export type ApiMessageEntityDefault = {
@@ -465,8 +472,8 @@ export interface ApiMessage {
   forwardInfo?: ApiMessageForwardInfo;
   isDeleting?: boolean;
   previousLocalId?: number;
-  views?: number;
-  forwards?: number;
+  viewsCount?: number;
+  forwardsCount?: number;
   isEdited?: boolean;
   editDate?: number;
   isMentioned?: boolean;
@@ -601,6 +608,8 @@ export type ApiSponsoredMessage = {
   expiresAt: number;
   sponsorInfo?: string;
   additionalInfo?: string;
+  buttonText?: string;
+  botApp?: ApiBotApp;
 };
 
 // KeyboardButtons
@@ -728,6 +737,9 @@ export type ApiBotApp = {
   description: string;
   photo?: ApiPhoto;
   document?: ApiDocument;
+};
+
+export type ApiMessagesBotApp = ApiBotApp & {
   isInactive?: boolean;
   shouldRequestWriteAccess?: boolean;
 };

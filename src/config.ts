@@ -53,7 +53,7 @@ export const CUSTOM_EMOJI_PREVIEW_CACHE_DISABLED = false;
 export const CUSTOM_EMOJI_PREVIEW_CACHE_NAME = 'tt-custom-emoji-preview';
 export const MEDIA_CACHE_MAX_BYTES = 512 * 1024; // 512 KB
 export const CUSTOM_BG_CACHE_NAME = 'tt-custom-bg';
-export const LANG_CACHE_NAME = 'tt-lang-packs-v26';
+export const LANG_CACHE_NAME = 'tt-lang-packs-v27';
 export const ASSET_CACHE_NAME = 'tt-assets';
 export const AUTODOWNLOAD_FILESIZE_MB_LIMITS = [1, 5, 10, 50, 100, 500];
 export const DATA_BROADCAST_CHANNEL_NAME = 'tt-global';
@@ -91,6 +91,7 @@ export const COMMON_CHATS_LIMIT = 100;
 export const GROUP_CALL_PARTICIPANTS_LIMIT = 100;
 export const STORY_LIST_LIMIT = 100;
 export const API_GENERAL_ID_LIMIT = 100;
+export const STATISTICS_PUBLIC_FORWARDS_LIMIT = 50;
 
 export const STORY_VIEWS_MIN_SEARCH = 15;
 export const STORY_MIN_REACTIONS_SORT = 10;
@@ -314,8 +315,8 @@ export const FRESH_AUTH_PERIOD = 86400; // 1 day
 
 export const LIGHT_THEME_BG_COLOR = '#fefffe';
 export const DARK_THEME_BG_COLOR = '#0E0F0F';
-export const DEFAULT_PATTERN_COLOR = '#475aa0';
-export const DARK_THEME_PATTERN_COLOR = '#E9666F';
+export const DEFAULT_PATTERN_COLOR = '#475aa030';
+export const DARK_THEME_PATTERN_COLOR = '#E9666F30';
 export const PEER_COLOR_BG_OPACITY = '1a';
 export const PEER_COLOR_BG_ACTIVE_OPACITY = '2b';
 export const PEER_COLOR_GRADIENT_STEP = 5; // px
@@ -352,9 +353,22 @@ export const ULU_APP = {
 
 export const DEFAULT_WORKSPACE: Workspace = {
   id: 'personal',
-  name: 'Personal Workspace',
+  name: 'Personal',
   logoUrl: undefined,
   folders: [],
+};
+
+export const WORKSPACE_CHAT_TIME_SNAPSHOT_STALE_MINUTES = 30;
+
+export const LOCAL_STORAGE_KEYS = {
+  WORKSPACES: 'workspaces',
+  CURRENT_WORKSPACE_ID: 'current_workspace_id',
+  IS_AUTO_DONE_ENABLED: 'ulu_is_auto_done_enabled',
+  IS_INITIAL_MARK_AS_DONE: 'ulu_is_initial_mark_as_done',
+  IS_AUTO_ARCHIVER_ENABLED: 'ulu_is_autoarchiver_enabled',
+  IS_ARCHIVE_WHEN_DONE_ENABLED: 'ulu_is_archive_when_done_enabled',
+  IS_FOLDERS_TREE_ENABLED: 'ulu_is_folders_tree_enabled',
+  DONE_CHAT_IDS: 'ulu_done_chat_ids',
 };
 
 function determineCmdKey() {

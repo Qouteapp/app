@@ -65,6 +65,9 @@ import useLastCallback from '../../hooks/useLastCallback';
 import usePreventPinchZoomGesture from '../../hooks/usePreventPinchZoomGesture';
 import useShortcutCmdE from '../../hooks/useShortcutCmdE';
 import useShortcutCmdF from '../../hooks/useShortcutCmdF';
+import useShortcutCmdG from '../../hooks/useShortcutCmdG';
+import useShortcutCmdShiftL from '../../hooks/useShortcutCmdShiftL';
+import useShortcutCmdShiftM from '../../hooks/useShortcutCmdShiftM';
 import useShortcutCmdU from '../../hooks/useShortcutCmdU';
 import useShowTransition from '../../hooks/useShowTransition';
 import useSyncEffect from '../../hooks/useSyncEffect';
@@ -81,6 +84,7 @@ import LeftColumn from '../left/LeftColumn';
 import UluChatFolders from '../left/main/UluChatFolders';
 import MediaViewer from '../mediaViewer/MediaViewer.async';
 import AudioPlayer from '../middle/AudioPlayer';
+import Header from '../middle/Header';
 import ReactionPicker from '../middle/message/ReactionPicker.async';
 import MessageListHistoryHandler from '../middle/MessageListHistoryHandler';
 import MiddleColumn from '../middle/MiddleColumn';
@@ -278,6 +282,7 @@ const Main: FC<OwnProps & StateProps> = ({
     setIsElectronUpdateAvailable,
     loadPremiumSetStickers,
     loadAuthorizations,
+    loadPeerColors,
   } = getActions();
 
   if (DEBUG && !DEBUG_isLogged) {
@@ -356,6 +361,9 @@ const Main: FC<OwnProps & StateProps> = ({
   useShortcutCmdU();
   useShortcutCmdE();
   useShortcutCmdF();
+  useShortcutCmdShiftL();
+  useShortcutCmdShiftM();
+  useShortcutCmdG();
 
   useEffect(() => {
     if (!IS_ELECTRON) {
@@ -383,6 +391,7 @@ const Main: FC<OwnProps & StateProps> = ({
       updateIsOnline(true);
       loadConfig();
       loadAppConfig();
+      loadPeerColors();
       initMain();
       loadAvailableReactions();
       loadAnimatedEmojis();
@@ -595,6 +604,7 @@ const Main: FC<OwnProps & StateProps> = ({
 
   return (
     <div ref={containerRef} id="Main" className={className}>
+      <Header />
       <LeftColumn ref={leftColumnRef} chatFoldersPortalRef={chatFoldersPortalRef} />
       <MiddleColumn leftColumnRef={leftColumnRef} isMobile={isMobile} />
       <RightColumn isMobile={isMobile} />

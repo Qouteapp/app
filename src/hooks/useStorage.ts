@@ -1,36 +1,63 @@
-import { useEffect, useState } from '../lib/teact/teact';
+import z from 'zod';
+import { useCallback, useEffect, useState } from '../lib/teact/teact';
 
 import type { Workspace } from '../types';
+import { WorkspaceSchema } from '../types';
 
-import { DEFAULT_WORKSPACE } from '../config';
+import { DEFAULT_WORKSPACE, LOCAL_STORAGE_KEYS } from '../config';
 
 export function useStorage() {
-  const [isAutoDoneEnabled, setIsAutoDoneEnabled] = useLocalStorage<boolean>('ulu_is_autodone_enabled', false);
+  const [isAutoDoneEnabled, setIsAutoDoneEnabled] = useLocalStorage<boolean>({
+    key: LOCAL_STORAGE_KEYS.IS_AUTO_DONE_ENABLED,
+    initValue: false,
+    schema: z.boolean(),
+  });
   const [
     isAutoArchiverEnabled,
     setIsAutoArchiverEnabled,
-  ] = useLocalStorage<boolean>('ulu_is_autoarchiver_enabled', false);
+  ] = useLocalStorage<boolean>({
+    key: LOCAL_STORAGE_KEYS.IS_AUTO_ARCHIVER_ENABLED,
+    initValue: false,
+    schema: z.boolean(),
+  });
   const [
     isArchiveWhenDoneEnabled,
     setIsArchiveWhenDoneEnabled,
-  ] = useLocalStorage<boolean>('ulu_is_archive_when_done_enabled', false);
-  const [isFoldersTreeEnabled, setIsFoldersTreeEnabled] = useLocalStorage<boolean>(
-    'ulu_is_folders_tree_enabled',
-    false,
-  );
+  ] = useLocalStorage<boolean>({
+    key: LOCAL_STORAGE_KEYS.IS_ARCHIVE_WHEN_DONE_ENABLED,
+    initValue: false,
+    schema: z.boolean(),
+  });
+  const [isFoldersTreeEnabled, setIsFoldersTreeEnabled] = useLocalStorage<boolean>({
+    key: LOCAL_STORAGE_KEYS.IS_FOLDERS_TREE_ENABLED,
+    initValue: false,
+    schema: z.boolean(),
+  });
 
-  const [doneChatIds, setDoneChatIds] = useLocalStorage<string[]>('ulu_done_chat_ids', []);
+  const [doneChatIds, setDoneChatIds] = useLocalStorage<string[]>({
+    key: LOCAL_STORAGE_KEYS.DONE_CHAT_IDS,
+    initValue: [],
+    schema: z.array(z.string()),
+  });
 
-  const [savedWorkspaces, setSavedWorkspaces] = useLocalStorage<Workspace[]>('workspaces', []);
+  const [savedWorkspaces, setSavedWorkspaces] = useLocalStorage<Workspace[]>({
+    key: LOCAL_STORAGE_KEYS.WORKSPACES,
+    initValue: [],
+    schema: z.array(WorkspaceSchema),
+  });
   const [
     currentWorkspaceId,
     setCurrentWorkspaceId,
-  ] = useLocalStorage<string>('current_workspace_id', DEFAULT_WORKSPACE.id);
+  ] = useLocalStorage<string>({ key: 'current_workspace_id', initValue: DEFAULT_WORKSPACE.id, schema: z.string() });
 
   const [
     isInitialMarkAsDone,
     setIsInitialMarkAsDone,
-  ] = useLocalStorage<boolean>('ulu_is_initial_mark_as_done', false);
+  ] = useLocalStorage<boolean>({
+    key: LOCAL_STORAGE_KEYS.IS_INITIAL_MARK_AS_DONE,
+    initValue: false,
+    schema: z.boolean(),
+  });
 
   return {
     isAutoDoneEnabled,
@@ -52,61 +79,76 @@ export function useStorage() {
   };
 }
 
-function useLocalStorage<T>(key: string, defaultValue: T): [value: T, setValue: (val: T) => void] {
+type UseLocalStorageProps<T> = {
+  key: string;
+  initValue: T;
+  schema: z.ZodTypeAny;
+};
+
+function useLocalStorage<T>({ key, initValue, schema }: UseLocalStorageProps<T>):
+[value: T, setValue: (val: T) => void] {
   const eventName = `update_storage_${key}`;
 
-  const getStoredValue: () => (T | undefined) = () => {
+  const getStoredValue: () => (T | undefined) = useCallback(() => {
     const value = localStorage.getItem(key);
     // eslint-disable-next-line no-null/no-null
     if (value !== null) {
       try {
         const parsedValue = JSON.parse(value);
-        if (typeof parsedValue !== typeof defaultValue) {
-          throw new Error();
+        const isValid = schema.safeParse(parsedValue).success;
+        if (!isValid) {
+          throw new Error(`(read) Invalid value for key ${key}: ${JSON.stringify(parsedValue)}`);
         }
-        return parsedValue as T;
-      } catch { /* */ }
+        return parsedValue;
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error((e as Error).message);
+      }
     }
     return undefined;
-  };
+  }, [key, schema]);
 
-  const writeValue: (value: T) => void = (value) => {
+  const writeValue: (value: T) => void = useCallback((value) => {
     const stringifiedValue = JSON.stringify(value);
     if (localStorage.getItem(key) !== stringifiedValue) {
       localStorage.setItem(key, stringifiedValue);
       window.dispatchEvent(new Event(eventName));
     }
-  };
+  }, [eventName, key]);
 
-  const reinitValue: () => T = () => {
+  const restoreValue: () => T = useCallback(() => {
     const storedValue = getStoredValue();
     if (storedValue !== undefined) {
       return storedValue;
     } else {
-      writeValue(defaultValue);
-      return defaultValue;
+      writeValue(initValue);
+      return initValue;
     }
-  };
+  }, [getStoredValue, writeValue, initValue]);
 
-  const [state, setState] = useState<T>(reinitValue());
+  const [state, setState] = useState<T>(restoreValue());
 
   useEffect(() => {
     const listenStorageChange = () => {
-      setState(reinitValue());
+      setState(restoreValue());
     };
     window.addEventListener(eventName, listenStorageChange);
     return () => window.removeEventListener(eventName, listenStorageChange);
-  // eslint-disable-next-line react-hooks-static-deps/exhaustive-deps
-  }, []);
+  }, [eventName, restoreValue]);
 
-  const setStateFiltered = (value: T) => {
-    if (value === undefined || typeof value !== typeof defaultValue) {
-      throw new Error(`Unexpected setState for ${key}: ${JSON.stringify(value)}`);
+  const setStateSafe = (value: T) => {
+    try {
+      const isValid = schema.safeParse(value).success;
+      if (value === undefined || !isValid) {
+        throw new Error(`(write) Invalid value for key ${key}: ${JSON.stringify(value)}`);
+      }
+      setState(value);
+      writeValue(value);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error((e as Error).message);
     }
-
-    setState(value);
-    writeValue(value);
   };
 
-  return [state, setStateFiltered];
+  return [state, setStateSafe];
 }

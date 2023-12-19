@@ -9,6 +9,7 @@ import type { Workspace } from '../../../types';
 
 import useLang from '../../../hooks/useLang';
 
+import BillingGroup from './HomePage/BillingGroup';
 import CreateNewGroup from './HomePage/CreateNewGroup';
 import HelpGroup from './HomePage/HelpGroup';
 import NavigationGroup from './HomePage/NavigationGroup';
@@ -122,7 +123,7 @@ const HomePage: React.FC<HomePageProps> = ({
         close={close}
       />
       <Command.Group heading="Settings">
-        <Command.Item onSelect={openChangeThemePage}>
+        <Command.Item onSelect={openChangeThemePage} value="'Change interface theme', 'Dark', 'Light'">
           <i className="icon icon-darkmode" /><span>Change interface theme</span>
         </Command.Item>
         <Command.Item onSelect={commandDoneAll}>
@@ -153,6 +154,7 @@ const HomePage: React.FC<HomePageProps> = ({
           </Command.Item>
         ))}
       </Command.Group>
+      <BillingGroup close={close} />
     </>
   );
 };
