@@ -9,7 +9,6 @@ import { useCallback, useEffect } from '../../../../lib/teact/teact';
 import { getActions } from '../../../../lib/teact/teactn';
 
 import { cmdKey } from '../../../../config';
-import { IS_ARC_BROWSER } from '../../../../util/windowEnvironment';
 
 import useCommands from '../../../../hooks/useCommands';
 
@@ -42,11 +41,7 @@ const CreateNewGroup: FC<CreateNewGroupProps> = ({
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      if (IS_ARC_BROWSER && (e.metaKey || e.ctrlKey) && e.code === 'KeyG') {
-        handleSelectNewGroup();
-        e.preventDefault();
-        e.stopPropagation();
-      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyC') {
+      if ((e.metaKey || e.ctrlKey) && e.code === 'KeyG') {
         handleSelectNewGroup();
         e.preventDefault();
         e.stopPropagation();
@@ -114,7 +109,7 @@ const CreateNewGroup: FC<CreateNewGroupProps> = ({
       onSelect: handleSelectNewGroup,
       icon: 'group',
       label: 'Create new group',
-      shortcut: IS_ARC_BROWSER ? [cmdKey, 'G'] : [cmdKey, '⇧', 'C'],
+      shortcut: [cmdKey, 'G'],
     },
     {
       onSelect: handleSelectNewChannel,
