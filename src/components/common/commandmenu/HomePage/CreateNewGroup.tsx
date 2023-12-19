@@ -9,7 +9,6 @@ import { useCallback } from '../../../../lib/teact/teact';
 import { getActions } from '../../../../lib/teact/teactn';
 
 import { cmdKey } from '../../../../config';
-import { IS_ARC_BROWSER } from '../../../../util/windowEnvironment';
 
 import useCommands from '../../../../hooks/useCommands';
 
@@ -71,18 +70,7 @@ const CreateNewGroup: FC<CreateNewGroupProps> = ({
       onSelect: handleSelectNewGroup,
       icon: 'group',
       label: 'Create new group',
-      shortcut: IS_ARC_BROWSER ? [cmdKey, 'G'] : [cmdKey, '⇧', 'C'],
-    },
-    {
-      onSelect: handleNewMeetLink,
-      icon: 'video-outlined',
-      label: 'Create new Google Meet',
-    },
-    {
-      onSelect: handleNewLinearTask,
-      icon: 'linear',
-      label: 'Create new Linear task',
-      shortcut: [cmdKey, '⇧', 'L'],
+      shortcut: [cmdKey, 'G'],
     },
     {
       onSelect: handleSelectNewChannel,
@@ -103,6 +91,18 @@ const CreateNewGroup: FC<CreateNewGroupProps> = ({
       onSelect: handleOpenAutomationSettings,
       icon: 'bots',
       label: 'Create folder rule',
+    },
+    {
+      onSelect: handleNewMeetLink,
+      icon: 'video-outlined',
+      label: 'Create new Google Meet',
+      shortcut: [cmdKey, '⇧', 'M'],
+    },
+    {
+      onSelect: handleNewLinearTask,
+      icon: 'linear',
+      label: 'Create new Linear task',
+      shortcut: [cmdKey, '⇧', 'L'],
     },
   ];
 

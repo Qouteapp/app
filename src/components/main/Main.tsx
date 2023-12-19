@@ -67,6 +67,7 @@ import useShortcutCmdE from '../../hooks/useShortcutCmdE';
 import useShortcutCmdF from '../../hooks/useShortcutCmdF';
 import useShortcutCmdShiftL from '../../hooks/useShortcutCmdShiftL';
 import useShortcutCmdShiftM from '../../hooks/useShortcutCmdShiftM';
+import useShortcutCmdG from '../../hooks/useShortcutCmdG';
 import useShortcutCmdU from '../../hooks/useShortcutCmdU';
 import useShowTransition from '../../hooks/useShowTransition';
 import useSyncEffect from '../../hooks/useSyncEffect';
@@ -361,6 +362,7 @@ const Main: FC<OwnProps & StateProps> = ({
   useShortcutCmdF();
   useShortcutCmdShiftL();
   useShortcutCmdShiftM();
+  useShortcutCmdG();
 
   useEffect(() => {
     if (!IS_ELECTRON) {
