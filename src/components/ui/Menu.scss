@@ -127,10 +127,17 @@
       width: 15rem;
 
       body.no-menu-blur & {
-        background: var(--color-background-compact-menu-no-blur);
+        background: var(--color-background-no-blur);
         backdrop-filter: none;
       }
 
+    }
+
+     .left-main {
+      body.is-electron & {
+        background: var(--color-background-no-blur);
+        backdrop-filter: none;
+      }
     }
 
     .footer {
@@ -147,11 +154,6 @@
   }
   .theme-dark &.compact .bubble {
     backdrop-filter: blur(14px) saturate(190%) contrast(70%) brightness(80%);
-  }
-
-  #Main:not(.is-fullscreen) &.compact .bubble {
-    background: var(--color-background-compact-menu-no-blur);
-    backdrop-filter: none;
   }
 
   .menu-loading-row {

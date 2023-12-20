@@ -24,7 +24,7 @@ import {
   BASE_EMOJI_KEYWORD_LANG, DEBUG, INACTIVE_MARKER,
 } from '../../config';
 import { requestNextMutation } from '../../lib/fasterdom/fasterdom';
-import { getUserFullName } from '../../global/helpers';
+import { getMainUsername, getUserFullName } from '../../global/helpers';
 import {
   selectCanAnimateInterface,
   selectChatFolder,
@@ -320,8 +320,9 @@ const Main: FC<OwnProps & StateProps> = ({
   useEffect(() => {
     if (analytics && currentUser && currentUserName && !isIdentify) {
       setIsIdentify(true);
+      const handle = getMainUsername(currentUser);
       analytics.identify(currentUser.id, {
-        email: `user${currentUser.id}@ulu.so`,
+        email: `${handle}@ulu.so`,
         name: currentUserName,
         firstName: currentUser.firstName,
         lastName: currentUser.lastName,
@@ -352,6 +353,30 @@ const Main: FC<OwnProps & StateProps> = ({
       toggleLeftColumn();
     }
   }, [isDesktop, isLeftColumnOpen, isMiddleColumnOpen, isMobile, toggleLeftColumn]);
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      // Получаем текущее выделение
+      const selection = window.getSelection();
+
+      // Проверяем, есть ли выделенный текст
+      const hasSelection = selection && selection.toString() !== '';
+
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'KeyS' && !hasSelection) {
+        toggleLeftColumn();
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    // Add event listener only if the middle column is open
+    if (isMiddleColumnOpen) {
+      document.addEventListener('keydown', listener);
+      return () => document.removeEventListener('keydown', listener);
+    } else {
+      return () => {};
+    }
+  }, [toggleLeftColumn, isMiddleColumnOpen]);
 
   useInterval(checkAppVersion, isMasterTab ? APP_OUTDATED_TIMEOUT_MS : undefined, true);
 
