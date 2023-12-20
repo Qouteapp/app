@@ -101,7 +101,6 @@ const CommandMenu: FC<StateProps> = ({
     isAutoDoneEnabled, setIsAutoDoneEnabled,
     isArchiveWhenDoneEnabled, setIsArchiveWhenDoneEnabled,
     isFoldersTreeEnabled, setIsFoldersTreeEnabled,
-    isFocusModeEnabled, /* setIsFocusModeEnabled */
   } = useStorage();
   const { archiveChats } = useArchiver({ isManual: true });
   const { doneAllReadChats } = useDone();
@@ -256,21 +255,24 @@ const CommandMenu: FC<StateProps> = ({
   }, []);
 
   const { disableFocusMode } = useFocusMode();
-  const openFocusModePage = useCallback(() => {
-    if (isFocusModeEnabled) {
-      disableFocusMode();
-      showNotification({ message: 'Focus mode is turned off' });
-      track?.('Disable Focus Mode');
-    } else {
-      // Логика для открытия страницы настройки фокус-режима
-      setIsBouncing(true);
-      setPages((prevPages) => [...prevPages, 'focusMode']);
-      setTimeout(() => {
-        setIsBouncing(false);
-      }, 150);
-      setInputValue('');
+
+  const handleDisableFocusMode = useCallback(() => {
+    disableFocusMode();
+    showNotification({ message: 'Focus mode is turned off' });
+    if (typeof track === 'function') {
+      track('Disable Focus Mode');
     }
-  }, [isFocusModeEnabled, disableFocusMode, track]);
+    close();
+  }, [disableFocusMode, close, track]);
+
+  const openFocusModePage = useCallback(() => {
+    // Если фокус-режим не активен, открываем страницу настроек фокус-режима
+    setIsBouncing(true);
+    setPages((prevPages) => [...prevPages, 'focusMode']);
+    setTimeout(() => setIsBouncing(false), 150);
+    setInputValue('');
+    // Не вызываем close(), чтобы страница осталась открытой
+  }, [setInputValue]);
 
   const getFolderName = (id: number | null) => {
     // eslint-disable-next-line no-null/no-null
@@ -467,6 +469,7 @@ const CommandMenu: FC<StateProps> = ({
                   handleDoneChat={handleDoneChat}
                   handleToggleChatUnread={handleToggleChatUnread}
                   isChatUnread={isChatUnread}
+                  handleDisableFocusMode={handleDisableFocusMode}
                 />
                 <CommanMenuChatSearch
                   close={close}

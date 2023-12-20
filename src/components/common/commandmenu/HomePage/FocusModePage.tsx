@@ -45,22 +45,22 @@ const FocusModePage: FC<FocusModePageProps> = ({
   const menuItems = [
     {
       onSelect: () => toggleFocusMode(600000), // 10 minutes
-      icon: 'favorite',
+      icon: 'timer',
       label: '10 minutes',
     },
     {
       onSelect: () => toggleFocusMode(3600000), // 1 hour
-      icon: 'settings',
+      icon: 'timer',
       label: '1 hour',
     },
     {
       onSelect: () => toggleFocusMode(calculateDurationUntilTomorrowMorning()),
-      icon: 'settings',
+      icon: 'timer',
       label: 'Until tomorrow',
     },
     {
       onSelect: () => toggleFocusMode(calculateDurationUntilNextMonday()),
-      icon: 'settings',
+      icon: 'timer',
       label: 'Until next Monday',
     },
   ];
