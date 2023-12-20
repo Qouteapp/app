@@ -34,7 +34,7 @@ type StateProps = {
 } & Pick<ISettings, 'language'>;
 
 const UluSystemFolders: FC<OwnProps & StateProps> = ({
-  userId, language, content, isSavedMessages, onLeftColumnContentChange, isInbox, ref,
+  userId, language, isSavedMessages, onLeftColumnContentChange, ref,
   chatsById,
 }) => {
   const titleInbox = uluGetTranslatedString('Sidebar.SystemFolders.Inbox', language);
@@ -79,7 +79,6 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
   return (
     <UluChatFoldersWrapper ref={ref}>
       <UluChatFolder
-        active={isInbox}
         shouldStressUnreadMessages={false}
         type="inbox"
         title={titleInbox}
@@ -95,7 +94,6 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
         onClick={handleOpenSavedMessages}
       />
       <UluChatFolder
-        active={content === LeftColumnContent.Archived}
         shouldStressUnreadMessages={false}
         type="archived-chats"
         title={titleArchivedChats}

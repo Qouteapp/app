@@ -142,6 +142,7 @@ const useChatContextActions = ({
       !isSelf && actionMute,
       actionPin,
       actionAddToFolder,
+      actionOpenInNewTab,
       actionReport,
       actionDelete,
     ]) as MenuItemContextAction[];
