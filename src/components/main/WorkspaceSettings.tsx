@@ -8,7 +8,7 @@ import {
 } from '../../lib/teact/teact';
 import { getActions, getGlobal } from '../../global';
 
-import { DEFAULT_WORKSPACE } from '../../config';
+import { DEFAULT_WORKSPACE, ULU_APP } from '../../config';
 import captureEscKeyListener from '../../util/captureEscKeyListener';
 
 import { useJune } from '../../hooks/useJune';
@@ -42,7 +42,7 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
   const { track } = useJune();
 
   const uploadManager = new UploadManager({
-    apiKey: 'public_kW15bndTdL4cidRTCc1sS8rNYQsu',
+    apiKey: ULU_APP.UPLOAD_MANAGER_BYTESCALE_API_KEY!,
   });
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [selectedFolderIds, setSelectedFolderIds] = useState<number[]>([]);
