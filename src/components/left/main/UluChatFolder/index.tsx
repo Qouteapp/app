@@ -13,7 +13,7 @@ type OwnProps = {
   type: 'inbox' | 'saved-messages' | 'archived-chats';
   title: string;
   messagesUnreadCount?: number;
-  active: boolean;
+  active?: boolean;
   shouldStressUnreadMessages: boolean;
   onClick: NoneToVoidFunction;
 };
