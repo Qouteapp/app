@@ -83,6 +83,10 @@ export function createWindow(url?: string) {
       preload: path.join(__dirname, 'preload.js'),
       devTools: process.env.APP_ENV !== 'production',
     },
+    ...(IS_WINDOWS && {
+      material: 'acrylic',
+      transparent: true,
+    }),
     ...(IS_MAC_OS && {
       titleBarStyle: 'hidden',
       trafficLightPosition: TRAFFIC_LIGHT_POSITION.standard,
