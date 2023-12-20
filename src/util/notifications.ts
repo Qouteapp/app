@@ -107,7 +107,15 @@ const soundPlayedIds = new Set<string>();
 const notificationSound = new Audio('./notification.mp3');
 notificationSound.setAttribute('mozaudiochannel', 'notification');
 
+function isFocusModeEnabled() {
+  const focusModeValue = localStorage.getItem('ulu_is_focus_mode_enabled');
+  return focusModeValue ? JSON.parse(focusModeValue) : false;
+}
+
 export async function playNotifySound(id?: string, volume?: number) {
+  if (isFocusModeEnabled()) {
+    return; // Не проигрываем звук, если включен фокус-режим
+  }
   if (id !== undefined && soundPlayedIds.has(id)) return;
   const { notificationSoundVolume } = selectNotifySettings(getGlobal());
   const currentVolume = volume ? volume / 10 : notificationSoundVolume / 10;
@@ -295,6 +303,9 @@ export async function subscribe() {
 }
 
 function checkIfShouldNotify(chat: ApiChat, message: Partial<ApiMessage>) {
+  if (isFocusModeEnabled()) {
+    return false; // Не показываем уведомления в фокус-режиме
+  }
   if (!areSettingsLoaded) return false;
   const global = getGlobal();
   const isMuted = selectIsChatMuted(chat, selectNotifySettings(global), selectNotifyExceptions(global));
@@ -449,6 +460,9 @@ export async function notifyAboutMessage({
   message,
   isReaction = false,
 }: { chat: ApiChat; message: Partial<ApiMessage>; isReaction?: boolean }) {
+  if (isFocusModeEnabled()) {
+    return; // Не отправляем уведомление о сообщении, если включен фокус-режим
+  }
   const { hasWebNotifications } = await loadNotificationSettings();
   if (!checkIfShouldNotify(chat, message)) return;
   const areNotificationsSupported = checkIfNotificationsSupported();

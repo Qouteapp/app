@@ -28,13 +28,15 @@ import { transliterate } from '../../util/transliterate';
 import useArchiver from '../../hooks/useArchiver';
 import useCommands from '../../hooks/useCommands';
 import useDone from '../../hooks/useDone';
+import { useFocusMode } from '../../hooks/useFocusMode';
 import { useJune } from '../../hooks/useJune';
 import useLang from '../../hooks/useLang';
 import { useStorage } from '../../hooks/useStorage';
 import { useWorkspaces } from '../../hooks/useWorkspaces';
 
-import ChangeThemePage from '../common/ChangeThemePage';
 import HomePage from '../common/commandmenu/HomePage';
+import ChangeThemePage from '../common/commandmenu/HomePage/ChangeThemePage';
+import FocusModePage from '../common/commandmenu/HomePage/FocusModePage';
 import FolderPage from '../common/FolderPage';
 import CommanMenuChatSearch from '../left/search/CommanMenuChatSearch';
 import AutomationSettings from './AutomationSettings';
@@ -99,6 +101,7 @@ const CommandMenu: FC<StateProps> = ({
     isAutoDoneEnabled, setIsAutoDoneEnabled,
     isArchiveWhenDoneEnabled, setIsArchiveWhenDoneEnabled,
     isFoldersTreeEnabled, setIsFoldersTreeEnabled,
+    isFocusModeEnabled, /* setIsFocusModeEnabled */
   } = useStorage();
   const { archiveChats } = useArchiver({ isManual: true });
   const { doneAllReadChats } = useDone();
@@ -251,6 +254,23 @@ const CommandMenu: FC<StateProps> = ({
       setIsBouncing(false);
     }, 150);
   }, []);
+
+  const { disableFocusMode } = useFocusMode();
+  const openFocusModePage = useCallback(() => {
+    if (isFocusModeEnabled) {
+      disableFocusMode();
+      showNotification({ message: 'Focus mode is turned off' });
+      track?.('Disable Focus Mode');
+    } else {
+      // Логика для открытия страницы настройки фокус-режима
+      setIsBouncing(true);
+      setPages((prevPages) => [...prevPages, 'focusMode']);
+      setTimeout(() => {
+        setIsBouncing(false);
+      }, 150);
+      setInputValue('');
+    }
+  }, [isFocusModeEnabled, disableFocusMode, track]);
 
   const getFolderName = (id: number | null) => {
     // eslint-disable-next-line no-null/no-null
@@ -441,6 +461,7 @@ const CommandMenu: FC<StateProps> = ({
                   currentChatId={currentChatId}
                   allWorkspaces={allWorkspaces}
                   openChangeThemePage={openChangeThemePage}
+                  openFocusModePage={openFocusModePage}
                   inputValue={inputValue}
                   isCurrentChatDone={isCurrentChatDone}
                   handleDoneChat={handleDoneChat}
@@ -467,6 +488,12 @@ const CommandMenu: FC<StateProps> = ({
             )}
             {activePage === 'changeTheme' && (
               <ChangeThemePage
+                close={close}
+                setInputValue={setInputValue}
+              />
+            )}
+            {activePage === 'focusMode' && (
+              <FocusModePage
                 close={close}
                 setInputValue={setInputValue}
               />

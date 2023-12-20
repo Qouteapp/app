@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import type { FC } from '../../../lib/teact/teact';
-import React, { memo, useEffect, useMemo } from '../../../lib/teact/teact';
+import React, { memo, useMemo } from '../../../lib/teact/teact';
 
 import type { ApiChat, ApiTopic } from '../../../api/types';
 import type { Signal } from '../../../util/signals';
@@ -28,14 +28,8 @@ type OwnProps = {
 };
 
 const ChatBadge: FC<OwnProps> = ({
-  topic, chat, isPinned, isMuted, shouldShowOnlyMostImportant, wasTopicOpened, forceHidden, isFocusMode,
+  topic, chat, isPinned, isMuted, shouldShowOnlyMostImportant, wasTopicOpened, forceHidden,
 }) => {
-  console.log('Is Focus Mode (Badge):', isFocusMode);
-
-  useEffect(() => {
-    console.log('Updated isFocusMode (Badge):', isFocusMode);
-  }, [isFocusMode]);
-
   const {
     unreadMentionsCount = 0, unreadReactionsCount = 0,
   } = !chat.isForum ? chat : {}; // TODO[forums] Unread mentions and reactions temporarily disabled for forums

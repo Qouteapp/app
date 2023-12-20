@@ -7,7 +7,6 @@ import { Command } from 'cmdk';
 import type { ApiUser } from '../../../api/types';
 import type { Workspace } from '../../../types';
 
-import { useFocusMode } from '../../../hooks/useFocusMode';
 import useLang from '../../../hooks/useLang';
 
 import BillingGroup from './HomePage/BillingGroup';
@@ -44,6 +43,7 @@ interface HomePageProps {
   handleOpenWorkspaceSettings: () => void;
   handleSelectWorkspace: (workspaceId: string) => void;
   openChangeThemePage: () => void;
+  openFocusModePage: () => void;
   handleChangelog: () => void;
   close: () => void;
 }
@@ -53,23 +53,13 @@ const HomePage: React.FC<HomePageProps> = ({
   commandArchiveAll, commandToggleArchiveWhenDone, isArchiveWhenDoneEnabled,
   topUserIds, usersById, recentlyFoundChatIds, close, isFoldersTreeEnabled, openChangeThemePage,
   menuItems, inputValue, saveAPIKey,
-  handleChangelog,
+  handleChangelog, openFocusModePage,
   handleOpenAutomationSettings, allWorkspaces,
   handleOpenWorkspaceSettings, handleSelectWorkspace, currentWorkspace,
   currentChatId, isCurrentChatDone, handleDoneChat, handleToggleChatUnread, isChatUnread,
 }) => {
   const lang = useLang();
-  const { isFocusMode, enableFocusMode, disableFocusMode } = useFocusMode();
-
-  const toggleFocusMode5sec = () => {
-    if (isFocusMode) {
-      disableFocusMode();
-    } else {
-      enableFocusMode(50000); // Вы можете также передать длительность
-    }
-    close();
-    showNotification({ message: 'Focus mode is turned on' });
-  };
+  const isFocusModeEnabled = localStorage.getItem('ulu_is_focus_mode_enabled') === 'true';
 
   return (
     <>
@@ -165,10 +155,10 @@ const HomePage: React.FC<HomePageProps> = ({
             {item.label}
           </Command.Item>
         ))}
-        <Command.Item onSelect={toggleFocusMode5sec}>
+        <Command.Item onSelect={openFocusModePage}>
           <i className="icon icon-settings" />
           <span>
-            {isFocusMode ? 'Disable Focus Mode' : 'Enable Focus Mode'}
+            {isFocusModeEnabled ? 'Disable Focus Mode' : 'Enable Focus Mode'}
           </span>
         </Command.Item>
       </Command.Group>

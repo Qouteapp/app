@@ -21,7 +21,7 @@ import renderText from '../../common/helpers/renderText';
 import { useJune } from '../../../hooks/useJune';
 import useLang from '../../../hooks/useLang';
 
-import CommandMenuListItem from '../../common/commandmenu/CommanMenuListItem';
+import CommandMenuListItem from '../../common/commandmenu/CommandMenuListItem';
 
 import '../../main/CommandMenu.scss';
 

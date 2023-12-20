@@ -7,7 +7,7 @@ import { Command } from 'cmdk';
 import type { FC } from '../../../../lib/teact/teact';
 import { getActions } from '../../../../lib/teact/teactn';
 
-import CommandMenuListItem from '../CommanMenuListItem';
+import CommandMenuListItem from '../CommandMenuListItem';
 
 import '../../../main/CommandMenu.scss';
 

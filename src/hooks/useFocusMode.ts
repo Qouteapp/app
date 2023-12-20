@@ -1,46 +1,45 @@
 /* eslint-disable no-console */
-import {
-  useCallback, useEffect, useRef, useState,
-} from '../lib/teact/teact';
+import { useCallback, useEffect } from '../lib/teact/teact';
 
-type UseFocusModeReturn = {
-  isFocusMode: boolean;
-  enableFocusMode: (duration?: number) => void;
-  disableFocusMode: () => void;
-};
+import { useStorage } from './useStorage';
 
-export const useFocusMode = (): UseFocusModeReturn => {
-  const [isFocusMode, setFocusMode] = useState<boolean>(false);
-  const focusModeTimeout = useRef<NodeJS.Timeout>();
+export const useFocusMode = () => {
+  const {
+    isFocusModeEnabled, setIsFocusModeEnabled, focusModeEndTime, setFocusModeEndTime,
+  } = useStorage();
 
-  const enableFocusMode = useCallback((duration: number = 6): void => {
-    setFocusMode(true);
-    console.log('Focus mode set to true');
-    focusModeTimeout.current = setTimeout(() => {
-      console.log('Disabling focus mode');
-      setFocusMode(false);
-    }, duration);
-  }, []);
-
-  useEffect(() => {
-    console.log('Updated isFocusMode (hook):', isFocusMode);
-  }, [isFocusMode]);
-
-  const disableFocusMode = useCallback((): void => {
-    setFocusMode(false);
-    if (focusModeTimeout.current) {
-      clearTimeout(focusModeTimeout.current);
+  const checkFocusModeStatus = useCallback(() => {
+    const now = Date.now();
+    if (focusModeEndTime > 0 && focusModeEndTime <= now) {
+      setIsFocusModeEnabled(false);
+      setFocusModeEndTime(0);
     }
-  }, []);
+  }, [focusModeEndTime, setIsFocusModeEnabled, setFocusModeEndTime]);
 
+  // Проверяем и обновляем статус фокус-режима каждую секунду
   useEffect(() => {
-    // Очищаем таймер при размонтировании компонента
-    return () => {
-      if (focusModeTimeout.current) {
-        clearTimeout(focusModeTimeout.current);
-      }
-    };
-  }, []);
+    const interval = setInterval(checkFocusModeStatus, 1000);
+    return () => clearInterval(interval);
+  }, [checkFocusModeStatus]);
 
-  return { isFocusMode, enableFocusMode, disableFocusMode };
+  const enableFocusMode = useCallback((duration: number) => {
+    const endTime = Date.now() + duration;
+    setIsFocusModeEnabled(true);
+    setFocusModeEndTime(endTime);
+    localStorage.setItem('ulu_is_focus_mode_enabled', JSON.stringify(true));
+    localStorage.setItem('ulu_focus_mode_end_time', JSON.stringify(endTime));
+  }, [setIsFocusModeEnabled, setFocusModeEndTime]);
+
+  const disableFocusMode = useCallback(() => {
+    setIsFocusModeEnabled(false);
+    setFocusModeEndTime(0);
+    localStorage.setItem('ulu_is_focus_mode_enabled', JSON.stringify(false));
+    localStorage.setItem('ulu_focus_mode_end_time', JSON.stringify(0));
+  }, [setIsFocusModeEnabled, setFocusModeEndTime]);
+
+  return {
+    isFocusMode: isFocusModeEnabled,
+    enableFocusMode,
+    disableFocusMode,
+  };
 };
