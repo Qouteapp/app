@@ -8,14 +8,14 @@ import {
 } from '../../lib/teact/teact';
 import { getActions, getGlobal } from '../../global';
 
-import { DEFAULT_WORKSPACE, ULU_APP } from '../../config';
+import { DEFAULT_WORKSPACE } from '../../config';
 import captureEscKeyListener from '../../util/captureEscKeyListener';
 
 import { useJune } from '../../hooks/useJune';
 import { useWorkspaces } from '../../hooks/useWorkspaces.react';
 
 // eslint-disable-next-line import/no-named-as-default
-import FolderSelector from './WorkspaceSettingsFoldersList';
+import FolderSelector from './WorkspaceSettingsFoldersList.react';
 
 import './WorkspaceSettings.scss';
 
@@ -42,7 +42,7 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
   const { track } = useJune();
 
   const uploadManager = new UploadManager({
-    apiKey: ULU_APP.UPLOAD_MANAGER_BYTESCALE_API_KEY!,
+    apiKey: 'public_kW15bndTdL4cidRTCc1sS8rNYQsu',
   });
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [selectedFolderIds, setSelectedFolderIds] = useState<number[]>([]);
