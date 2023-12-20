@@ -58,7 +58,7 @@
   transition: transform 100ms ease;
 
   @media (max-width: 1200px){
-    background: var(--color-cmdk-non-transparent);
+    background: var(--color-background-no-blur);
   }
 }
 
