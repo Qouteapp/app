@@ -150,9 +150,12 @@ const CommandMenu: FC<CommandMenuProps> = ({
     ...(currentWorkspace.id !== DEFAULT_WORKSPACE.id ? [DEFAULT_WORKSPACE] : []),
   ];
 
+  const [receivedWorkspaceId, setReceivedWorkspaceId] = useState<string | undefined>();
+
   const openWorkspaceSettings = useCallback((workspaceId?: string) => {
     // eslint-disable-next-line no-console
     console.log(workspaceId || '');
+    setReceivedWorkspaceId(workspaceId);
     setWorkspaceSettingsOpen(true);
   }, []);
 
@@ -168,19 +171,10 @@ const CommandMenu: FC<CommandMenuProps> = ({
 
   const handleOpenWorkspaceSettings = useCallback((workspaceId?: string) => {
     close();
-    if (workspaceId) {
-      // Логика для редактирования воркспейса
-      openWorkspaceSettings(workspaceId);
-    } else {
-      // Логика для открытия создания нового воркспейса
-      openWorkspaceSettings();
-    }
+    openWorkspaceSettings(workspaceId);
   }, [close, openWorkspaceSettings]);
 
-  const [receivedWorkspaceId, setReceivedWorkspaceId] = useState<string | undefined>();
-
   useCommand('OPEN_WORKSPACE_SETTINGS', (workspaceId) => {
-    setReceivedWorkspaceId(workspaceId);
     openWorkspaceSettings(workspaceId);
   });
 

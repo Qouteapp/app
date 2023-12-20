@@ -44,7 +44,6 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
   const uploadManager = new UploadManager({
     apiKey: 'public_kW15bndTdL4cidRTCc1sS8rNYQsu',
   });
-  const [mode, setMode] = useState<'create' | 'edit'>('create'); // Новая переменная состояния для режима
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [selectedFolderIds, setSelectedFolderIds] = useState<number[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -60,24 +59,20 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
     setWorkspaceName('');
     setLogoUrl('');
     setSelectedFolderIds([]);
-    setIsCreating(false);
     setSelectedFile(undefined);
+    setIsCreating(false);
+    setHasChanges(false);
   }, []);
 
   useEffect(() => {
-    if (workspaceId) {
-      if (!isInitialized) {
-        const currentWorkspace = getWorkspaceById(workspaceId);
-        if (currentWorkspace) {
-          setWorkspaceName(currentWorkspace.name);
-          setLogoUrl(currentWorkspace.logoUrl);
-          setSelectedFolderIds(currentWorkspace.folders?.map(Number) || []);
-        }
-        setIsInitialized(true);
+    if (workspaceId && !isInitialized) {
+      const currentWorkspace = getWorkspaceById(workspaceId);
+      if (currentWorkspace) {
+        setWorkspaceName(currentWorkspace.name);
+        setLogoUrl(currentWorkspace.logoUrl);
+        setSelectedFolderIds(currentWorkspace.folders?.map(Number) || []);
       }
-    } else if (isInitialized) {
-      resetState();
-      setIsInitialized(false);
+      setIsInitialized(true);
     }
   }, [workspaceId, isInitialized, resetState, getWorkspaceById]);
 
@@ -124,15 +119,12 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
 
       if (workspaceId) {
         // Обновляем существующий воркспейс
-        setMode('edit');
         const updatedWorkspaces = savedWorkspaces.map((ws) => (ws.id === workspaceId ? newWorkspaceData : ws));
         setSavedWorkspaces(updatedWorkspaces);
         close();
         showNotification({ message: 'Workspace updated successfully.' });
       } else {
         // Создаем новый воркспейс
-        setMode('create');
-        resetState();
         setSavedWorkspaces([...savedWorkspaces, newWorkspaceData]);
         setCurrentWorkspaceId(newWorkspaceData.id);
         close();
@@ -162,12 +154,12 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
 
   useEffect(() => {
     return () => {
-      if (!isOpen && mode === 'create') {
+      if (!isOpen) {
         resetState();
         setIsInitialized(false);
       }
     };
-  }, [isOpen, mode, resetState]);
+  }, [isOpen, resetState]);
 
   useEffect(() => {
     // Если окно видимо, подписываемся на событие нажатия клавиши Esc
@@ -178,9 +170,7 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
     if (workspaceId === DEFAULT_WORKSPACE.id) {
       return;
     }
-    const updatedWorkspaces = savedWorkspaces.filter((ws: {
-      id: string;
-    }) => ws.id !== workspaceId);
+    const updatedWorkspaces = savedWorkspaces.filter((ws) => ws.id !== workspaceId);
     setSavedWorkspaces(updatedWorkspaces);
     setCurrentWorkspaceId(DEFAULT_WORKSPACE.id);
     showNotification({ message: 'Workspace deleted successfully.' });

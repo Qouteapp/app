@@ -1,5 +1,5 @@
 import z from 'zod';
-import { useEffect, useState } from '../lib/teact/teact';
+import { useCallback, useEffect, useState } from '../lib/teact/teact';
 
 import type { Workspace } from '../types';
 import { WorkspaceSchema } from '../types';
@@ -48,7 +48,11 @@ export function useStorage() {
   const [
     currentWorkspaceId,
     setCurrentWorkspaceId,
-  ] = useLocalStorage<string>({ key: 'current_workspace_id', initValue: DEFAULT_WORKSPACE.id, schema: z.string() });
+  ] = useLocalStorage<string>({
+    key: LOCAL_STORAGE_KEYS.CURRENT_WORKSPACE_ID,
+    initValue: DEFAULT_WORKSPACE.id,
+    schema: z.string(),
+  });
 
   const [
     isInitialMarkAsDone,
@@ -89,7 +93,7 @@ function useLocalStorage<T>({ key, initValue, schema }: UseLocalStorageProps<T>)
 [value: T, setValue: (val: T) => void] {
   const eventName = `update_storage_${key}`;
 
-  const [state, setState] = useState<T>((() => {
+  const getStoredValue: () => (T | undefined) = useCallback(() => {
     const value = localStorage.getItem(key);
     // eslint-disable-next-line no-null/no-null
     if (value !== null) {
@@ -97,58 +101,57 @@ function useLocalStorage<T>({ key, initValue, schema }: UseLocalStorageProps<T>)
         const parsedValue = JSON.parse(value);
         const isValid = schema.safeParse(parsedValue).success;
         if (!isValid) {
-          throw new Error('Invalid value');
+          throw new Error(`(read) Invalid value for key ${key}: ${JSON.stringify(parsedValue)}`);
         }
-
         return parsedValue;
-      } catch { /* */ }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error((e as Error).message);
+      }
     }
+    return undefined;
+  }, [key, schema]);
 
-    localStorage.setItem(key, JSON.stringify(initValue));
-    window.dispatchEvent(new Event(eventName));
-    return initValue;
-  })());
-
-  useEffect(() => {
-    if (JSON.stringify(state) !== localStorage.getItem(key)) { // can be optimized
-      localStorage.setItem(key, JSON.stringify(state));
+  const writeValue: (value: T) => void = useCallback((value) => {
+    const stringifiedValue = JSON.stringify(value);
+    if (localStorage.getItem(key) !== stringifiedValue) {
+      localStorage.setItem(key, stringifiedValue);
       window.dispatchEvent(new Event(eventName));
     }
-  }, [key, state, eventName]);
+  }, [eventName, key]);
+
+  const restoreValue: () => T = useCallback(() => {
+    const storedValue = getStoredValue();
+    if (storedValue !== undefined) {
+      return storedValue;
+    } else {
+      writeValue(initValue);
+      return initValue;
+    }
+  }, [getStoredValue, writeValue, initValue]);
+
+  const [state, setState] = useState<T>(restoreValue());
 
   useEffect(() => {
     const listenStorageChange = () => {
-      setState(() => {
-        const value = localStorage.getItem(key);
-        // eslint-disable-next-line no-null/no-null
-        if (value !== null) {
-          try {
-            const parsedValue = JSON.parse(value);
-            const isValid = schema.safeParse(parsedValue).success;
-            if (!isValid) {
-              throw new Error('Invalid value');
-            }
-
-            return parsedValue;
-          } catch { /* */ }
-        }
-
-        localStorage.setItem(key, JSON.stringify(initValue));
-        window.dispatchEvent(new Event(eventName));
-        return initValue;
-      });
+      setState(restoreValue());
     };
     window.addEventListener(eventName, listenStorageChange);
     return () => window.removeEventListener(eventName, listenStorageChange);
-  // eslint-disable-next-line react-hooks-static-deps/exhaustive-deps
-  }, []);
+  }, [eventName, restoreValue]);
 
-  const setStateFiltered = (value: T) => {
-    const updValue = (value === undefined || typeof value !== typeof initValue)
-      ? initValue
-      : value;
-    setState(updValue);
+  const setStateSafe = (value: T) => {
+    try {
+      const isValid = schema.safeParse(value).success;
+      if (value === undefined || !isValid) {
+        throw new Error(`(write) Invalid value for key ${key}: ${JSON.stringify(value)}`);
+      }
+      writeValue(value); // triggers setState
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error((e as Error).message);
+    }
   };
 
-  return [state, setStateFiltered];
+  return [state, setStateSafe];
 }

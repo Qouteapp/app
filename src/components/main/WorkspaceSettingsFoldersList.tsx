@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useEffect } from '../../lib/teact/teact';
+import React from 'react';
 
 import './FolderSelector.scss';
 
@@ -15,24 +14,16 @@ interface FolderSelectorProps {
 }
 
 const FolderSelector: React.FC<FolderSelectorProps> = ({ folders, onSelectedFoldersChange, selectedFolderIds }) => {
-  const [selectedFolders, setSelectedFolders] = useState<Set<number>>(new Set(selectedFolderIds));
-
-  useEffect(() => {
-    setSelectedFolders(new Set(selectedFolderIds));
-  }, [selectedFolderIds]);
-
   const toggleFolder = (id: number) => {
-    setSelectedFolders((prevSelected) => {
-      const newSelected = new Set(prevSelected);
-      if (newSelected.has(id)) {
-        newSelected.delete(id);
-      } else {
-        newSelected.add(id);
-      }
+    const newSelected = new Set(selectedFolderIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
 
-      onSelectedFoldersChange(Array.from(newSelected));
-      return newSelected;
-    });
+    onSelectedFoldersChange(Array.from(newSelected));
+    return newSelected;
   };
 
   return (
@@ -43,7 +34,7 @@ const FolderSelector: React.FC<FolderSelectorProps> = ({ folders, onSelectedFold
             <i className="icon icon-folder folderIcon" />
           </div>
           <span className="folderTitle">{folder.title}</span>
-          <div className={selectedFolders.has(folder.id) ? 'selectedCheckmark' : 'unselectedCheckmark'}>
+          <div className={selectedFolderIds.includes(folder.id) ? 'selectedCheckmark' : 'unselectedCheckmark'}>
             <i className="icon icon-check" />
           </div>
         </div>
