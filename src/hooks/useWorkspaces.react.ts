@@ -6,7 +6,9 @@ export function useWorkspaces() {
     currentWorkspaceId, setCurrentWorkspaceId, savedWorkspaces, setSavedWorkspaces,
   } = useStorage();
 
-  const allWorkspaces = [DEFAULT_WORKSPACE, ...savedWorkspaces];
+  const savedWorkspacesFiltered = savedWorkspaces.filter((ws) => ws.id !== DEFAULT_WORKSPACE.id);
+
+  const allWorkspaces = [DEFAULT_WORKSPACE, ...savedWorkspacesFiltered];
 
   const getWorkspaceById = (wsId: string) => allWorkspaces.find((ws) => ws.id === wsId) || DEFAULT_WORKSPACE; // todo;
 
@@ -16,7 +18,7 @@ export function useWorkspaces() {
     currentWorkspaceId,
     setCurrentWorkspaceId,
     currentWorkspace,
-    savedWorkspaces,
+    savedWorkspaces: savedWorkspacesFiltered,
     setSavedWorkspaces,
     allWorkspaces,
     getWorkspaceById,
