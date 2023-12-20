@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { useCallback, useEffect } from '../lib/teact/teact';
 
 import { useStorage } from './useStorage';

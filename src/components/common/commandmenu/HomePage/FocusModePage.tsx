@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import { Command } from 'cmdk';
@@ -35,7 +34,6 @@ const FocusModePage: FC<FocusModePageProps> = ({
   };
 
   const toggleFocusMode = (duration: number) => {
-    console.log('Toggling focus mode with duration:', duration);
     enableFocusMode(duration);
     showNotification({ message: 'Focus mode is turned on' });
     if (typeof track === 'function') {
