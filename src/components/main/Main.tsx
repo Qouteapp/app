@@ -354,6 +354,25 @@ const Main: FC<OwnProps & StateProps> = ({
     }
   }, [isDesktop, isLeftColumnOpen, isMiddleColumnOpen, isMobile, toggleLeftColumn]);
 
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      // Получаем текущее выделение
+      const selection = window.getSelection();
+
+      // Проверяем, есть ли выделенный текст
+      const hasSelection = selection && selection.toString() !== '';
+
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'BracketLeft' && !hasSelection) {
+        toggleLeftColumn();
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    document.addEventListener('keydown', listener);
+    return () => document.removeEventListener('keydown', listener);
+  }, [toggleLeftColumn]);
+
   useInterval(checkAppVersion, isMasterTab ? APP_OUTDATED_TIMEOUT_MS : undefined, true);
 
   useArchiver({ isManual: false });
