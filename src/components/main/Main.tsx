@@ -24,7 +24,7 @@ import {
   BASE_EMOJI_KEYWORD_LANG, DEBUG, INACTIVE_MARKER,
 } from '../../config';
 import { requestNextMutation } from '../../lib/fasterdom/fasterdom';
-import { getUserFullName } from '../../global/helpers';
+import { getMainUsername, getUserFullName } from '../../global/helpers';
 import {
   selectCanAnimateInterface,
   selectChatFolder,
@@ -320,8 +320,9 @@ const Main: FC<OwnProps & StateProps> = ({
   useEffect(() => {
     if (analytics && currentUser && currentUserName && !isIdentify) {
       setIsIdentify(true);
+      const handle = getMainUsername(currentUser);
       analytics.identify(currentUser.id, {
-        email: `user${currentUser.id}@ulu.so`,
+        email: `${handle}@ulu.so`,
         name: currentUserName,
         firstName: currentUser.firstName,
         lastName: currentUser.lastName,
