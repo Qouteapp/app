@@ -42,7 +42,7 @@ const BillingGroup: FC<BillingGroupProps> = ({
     {
       onSelect: handleSubscribePremuim,
       icon: 'favorite',
-      label: 'Subscribe to "ulu premium" for $4,99',
+      label: 'Upgrade to `ulu` Premium for $4.99',
     },
     {
       onSelect: handleManageBilling,
