@@ -146,8 +146,7 @@ function useLocalStorage<T>({ key, initValue, schema }: UseLocalStorageProps<T>)
       if (value === undefined || !isValid) {
         throw new Error(`(write) Invalid value for key ${key}: ${JSON.stringify(value)}`);
       }
-      setState(value);
-      writeValue(value);
+      writeValue(value); // triggers setState
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error((e as Error).message);
