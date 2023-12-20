@@ -362,16 +362,21 @@ const Main: FC<OwnProps & StateProps> = ({
       // Проверяем, есть ли выделенный текст
       const hasSelection = selection && selection.toString() !== '';
 
-      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'BracketLeft' && !hasSelection) {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'KeyS' && !hasSelection) {
         toggleLeftColumn();
         e.preventDefault();
         e.stopPropagation();
       }
     };
 
-    document.addEventListener('keydown', listener);
-    return () => document.removeEventListener('keydown', listener);
-  }, [toggleLeftColumn]);
+    // Add event listener only if the middle column is open
+    if (isMiddleColumnOpen) {
+      document.addEventListener('keydown', listener);
+      return () => document.removeEventListener('keydown', listener);
+    } else {
+      return () => {};
+    }
+  }, [toggleLeftColumn, isMiddleColumnOpen]);
 
   useInterval(checkAppVersion, isMasterTab ? APP_OUTDATED_TIMEOUT_MS : undefined, true);
 
