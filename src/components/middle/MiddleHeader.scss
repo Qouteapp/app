@@ -395,7 +395,7 @@
     -webkit-app-region: drag;
   }
 
-  body.is-electron.is-macos #Main:not(.left-column-open) & {
+  body.is-electron.is-macos #Main:not(.left-column-open):not(.is-fullscreen) & {
     @media (max-width: 925px) {
       padding-left: 5rem;
 
