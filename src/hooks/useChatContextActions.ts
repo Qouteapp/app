@@ -200,6 +200,7 @@ const useChatContextActions = ({
       !isInbox && !isSelf && !isServiceNotifications && !isInFolder && actionArchive,
       !isSelf && actionMute,
       !isInbox && actionPin,
+      actionOpenInNewTab,
       actionAddToFolder,
       actionReport,
       !isInbox && actionDelete,
