@@ -20,6 +20,7 @@ import {
   getChatTitle, getUserFullName,
 } from '../../global/helpers';
 import { selectCurrentChat, selectTabState, selectUser } from '../../global/selectors';
+import { selectIsWorkspaceSettingsOpen } from '../../global/selectors/ulu/workspaces';
 import captureKeyboardListeners from '../../util/captureKeyboardListeners';
 import { convertLayout } from '../../util/convertLayout';
 import { transliterate } from '../../util/transliterate';
@@ -37,14 +38,13 @@ import HomePage from '../common/commandmenu/HomePage';
 import FolderPage from '../common/FolderPage';
 import CommanMenuChatSearch from '../left/search/CommanMenuChatSearch';
 import AutomationSettings from './AutomationSettings';
-import WorkspaceSettings from './WorkspaceSettings';
 
 import './CommandMenu.scss';
 
 const cmdkElement = document.getElementById('cmdk-root');
 const cmdkRoot = createRoot(cmdkElement!);
 
-interface CommandMenuProps {
+type StateProps = {
   topUserIds?: string[];
   currentUser: ApiUser | undefined;
   currentChat?: ApiChat;
@@ -63,7 +63,8 @@ interface CommandMenuProps {
   chatsById?: Record<string, ApiChat>;
   recentlyFoundChatIds?: string[];
   fetchingStatus?: { chats?: boolean; messages?: boolean };
-}
+  isWorkspaceSettingsOpen: boolean;
+};
 
 const customFilter = (value: string, search: string) => {
   const convertedSearch = convertLayout(search);
@@ -76,7 +77,7 @@ const customFilter = (value: string, search: string) => {
   return 0; // нет соответствия
 };
 
-const CommandMenu: FC<CommandMenuProps> = ({
+const CommandMenu: FC<StateProps> = ({
   topUserIds,
   currentUser,
   currentChat,
@@ -89,7 +90,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
 }) => {
   const { track, analytics } = useJune();
   const {
-    showNotification, openChatByUsername, toggleChatUnread,
+    showNotification, openChatByUsername, toggleChatUnread, openWorkspaceSettings,
   } = getActions();
   const { useCommand } = useCommands();
   const lang = useLang();
@@ -143,25 +144,11 @@ const CommandMenu: FC<CommandMenuProps> = ({
   useCommand('OPEN_AUTOMATION_SETTINGS', handleOpenAutomationSettings);
 
   // Настройки воркспейсов
-  const [isWorkspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(false);
   const { savedWorkspaces, currentWorkspace, setCurrentWorkspaceId } = useWorkspaces();
   const allWorkspaces = [
     ...savedWorkspaces,
     ...(currentWorkspace.id !== DEFAULT_WORKSPACE.id ? [DEFAULT_WORKSPACE] : []),
   ];
-
-  const [receivedWorkspaceId, setReceivedWorkspaceId] = useState<string | undefined>();
-
-  const openWorkspaceSettings = useCallback((workspaceId?: string) => {
-    // eslint-disable-next-line no-console
-    console.log(workspaceId || '');
-    setReceivedWorkspaceId(workspaceId);
-    setWorkspaceSettingsOpen(true);
-  }, []);
-
-  const closeWorkspaceSettings = useCallback(() => {
-    setWorkspaceSettingsOpen(false);
-  }, []);
 
   const handleSelectWorkspace = (workspaceId: string) => {
     setCurrentWorkspaceId(workspaceId);
@@ -171,11 +158,11 @@ const CommandMenu: FC<CommandMenuProps> = ({
 
   const handleOpenWorkspaceSettings = useCallback((workspaceId?: string) => {
     close();
-    openWorkspaceSettings(workspaceId);
+    openWorkspaceSettings({ workspaceId });
   }, [close, openWorkspaceSettings]);
 
   useCommand('OPEN_WORKSPACE_SETTINGS', (workspaceId) => {
-    openWorkspaceSettings(workspaceId);
+    openWorkspaceSettings({ workspaceId });
   });
 
   // Toggle the menu when ⌘K is pressed
@@ -503,11 +490,6 @@ const CommandMenu: FC<CommandMenuProps> = ({
         isOpen={isAutomationSettingsOpen}
         onClose={closeAutomationSettings}
       />
-      <WorkspaceSettings
-        isOpen={isWorkspaceSettingsOpen}
-        onClose={closeWorkspaceSettings}
-        workspaceId={receivedWorkspaceId}
-      />
     </div>
 
   );
@@ -517,7 +499,7 @@ const CommandMenu: FC<CommandMenuProps> = ({
 };
 
 export default memo(withGlobal(
-  (global): CommandMenuProps => {
+  (global): StateProps => {
     const { userIds: topUserIds } = global.topPeers;
     const currentUser = global.currentUserId ? selectUser(global, global.currentUserId) : undefined;
     const { userIds: localContactIds } = global.contactList || {};
@@ -554,6 +536,7 @@ export default memo(withGlobal(
       usersById,
       folders,
       recentlyFoundChatIds,
+      isWorkspaceSettingsOpen: selectIsWorkspaceSettingsOpen(global),
     };
   },
 )(CommandMenu));

@@ -1,34 +1,29 @@
 /* eslint-disable react/jsx-no-bind */
 import type { ChangeEvent } from 'react';
-import React, { useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import React, {
+  useCallback, useEffect, useRef, useState,
+} from 'react';
 import { UploadManager } from '@bytescale/sdk';
-import {
-  useCallback, useEffect,
-} from '../../lib/teact/teact';
 import { getActions, getGlobal } from '../../global';
 
 import { DEFAULT_WORKSPACE } from '../../config';
 import captureEscKeyListener from '../../util/captureEscKeyListener';
 
-import { useJune } from '../../hooks/useJune';
+import { useJune } from '../../hooks/useJune.react';
 import { useWorkspaces } from '../../hooks/useWorkspaces.react';
 
 // eslint-disable-next-line import/no-named-as-default
 import FolderSelector from './WorkspaceSettingsFoldersList.react';
 
-import './WorkspaceSettings.scss';
+import './UluWorkspaceSettingsModalContent.scss';
 
-interface WorkspaceSettingsProps {
+export type OwnProps = {
   isOpen: boolean;
-  onClose: () => void; // тип для функции, которая ничего не возвращает
+  onClose: () => void;
   workspaceId?: string;
-}
+};
 
-const cmdkElement = document.getElementById('workspace-settings-root');
-const cmdkRoot = createRoot(cmdkElement!);
-
-const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, workspaceId }) => {
+const UluWorkspaceSettingsModalContent: React.FC<OwnProps> = ({ isOpen, onClose, workspaceId }) => {
   const global = getGlobal();
   const chatFoldersById = global.chatFolders.byId;
   const orderedFolderIds = global.chatFolders.orderedIds;
@@ -174,11 +169,11 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
     setSavedWorkspaces(updatedWorkspaces);
     setCurrentWorkspaceId(DEFAULT_WORKSPACE.id);
     showNotification({ message: 'Workspace deleted successfully.' });
-    close(); // Закрываем модальное окно
+    close();
   };
 
   const isSaveButtonActive = workspaceName && selectedFolderIds.length > 0 && hasChanges;
-  const WorkspaceSettingsInner = (
+  return (
     <div
       className="background"
     >
@@ -254,9 +249,6 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ isOpen, onClose, 
       </div>
     </div>
   );
-
-  cmdkRoot.render(isOpen ? WorkspaceSettingsInner : <div />);
-  return <div />;
 };
 
-export default WorkspaceSettings;
+export default UluWorkspaceSettingsModalContent;

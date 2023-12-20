@@ -41,6 +41,7 @@ import {
   selectTabState,
   selectUser,
 } from '../../global/selectors';
+import { selectIsWorkspaceSettingsOpen, selectWorkspaceSettingsId } from '../../global/selectors/ulu/workspaces';
 import buildClassName from '../../util/buildClassName';
 import { waitForTransitionEnd } from '../../util/cssAnimationEndListeners';
 import { processDeepLink } from '../../util/deeplink';
@@ -116,6 +117,7 @@ import Notifications from './Notifications.async';
 import PremiumLimitReachedModal from './premium/common/PremiumLimitReachedModal.async';
 import PremiumMainModal from './premium/PremiumMainModal.async';
 import SafeLinkModal from './SafeLinkModal.async';
+import UluWorkspaceSettingsModal from './UluWorkspaceSettingsModal.react';
 
 import './Main.scss';
 
@@ -178,6 +180,8 @@ type StateProps = {
   withInterfaceAnimations?: boolean;
   isSynced?: boolean;
   inviteViaLinkModal?: TabState['inviteViaLinkModal'];
+  isWorkspaceSettingsOpen: boolean;
+  workspaceSettingsId: string | undefined;
 };
 
 const APP_OUTDATED_TIMEOUT_MS = 5 * 60 * 1000; // 5 min
@@ -241,6 +245,8 @@ const Main: FC<OwnProps & StateProps> = ({
   noRightColumnAnimation,
   isSynced,
   inviteViaLinkModal,
+  isWorkspaceSettingsOpen,
+  workspaceSettingsId,
 }) => {
   const {
     initMain,
@@ -283,6 +289,7 @@ const Main: FC<OwnProps & StateProps> = ({
     loadPremiumSetStickers,
     loadAuthorizations,
     loadPeerColors,
+    closeWorkspaceSettings,
   } = getActions();
 
   if (DEBUG && !DEBUG_isLogged) {
@@ -687,6 +694,11 @@ const Main: FC<OwnProps & StateProps> = ({
       <InviteViaLinkModal userIds={inviteViaLinkModal?.restrictedUserIds} chatId={inviteViaLinkModal?.chatId} />
       <CommandMenu />
       <UluChatFolders portalRef={chatFoldersPortalRef} />
+      <UluWorkspaceSettingsModal
+        workspaceId={workspaceSettingsId}
+        isOpen={isWorkspaceSettingsOpen}
+        onClose={closeWorkspaceSettings}
+      />
     </div>
   );
 };
@@ -800,6 +812,8 @@ export default memo(withGlobal<OwnProps>(
       noRightColumnAnimation,
       isSynced: global.isSynced,
       inviteViaLinkModal,
+      isWorkspaceSettingsOpen: selectIsWorkspaceSettingsOpen(global),
+      workspaceSettingsId: selectWorkspaceSettingsId(global),
     };
   },
 )(Main));

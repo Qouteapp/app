@@ -8,7 +8,7 @@ import { actualizeChatTimeSnapshot, buildChatTimeSnapshot } from '../helpers';
 const lsWorkspaces = new LocalStorage<Workspace[]>();
 const lsCurrentWorkspaceId = new LocalStorage<string>();
 
-function getWorkspaces() {
+export function getWorkspaces() {
   const savedWorkspaces = lsWorkspaces.getOrFallback(LOCAL_STORAGE_KEYS.WORKSPACES, [])!;
   const currentWorkspaceId = lsCurrentWorkspaceId.getOrFallback(
     LOCAL_STORAGE_KEYS.CURRENT_WORKSPACE_ID,
