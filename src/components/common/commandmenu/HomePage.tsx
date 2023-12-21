@@ -157,7 +157,7 @@ const HomePage: React.FC<OwnProps> = ({
           </Command.Item>
         ))}
         <Command.Item onSelect={isFocusModeEnabled ? handleDisableFocusMode : openFocusModePage}>
-          <i className="icon icon-settings" />
+          {isFocusModeEnabled ? <i className="icon icon-unmute" /> : <i className="icon icon-mute" />}
           <span>
             {isFocusModeEnabled ? 'Disable Focus Mode' : 'Enable Focus Mode'}
           </span>
