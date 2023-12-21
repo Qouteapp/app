@@ -152,7 +152,7 @@ const SettingsGeneral: FC<OwnProps & StateProps> = ({
           {lang('ChatBackground')}
         </ListItem> */}
 
-        {IS_ELECTRON && IS_WINDOWS && (
+        {IS_ELECTRON && (IS_WINDOWS || IS_MAC_OS) && (
           <Checkbox
             label={lang('GeneralSettings.StatusBarItem')}
             checked={Boolean(isTrayIconEnabled)}

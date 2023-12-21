@@ -19,6 +19,7 @@ interface TrayHelper {
   enable: () => void;
   disable: () => void;
   isEnabled: boolean;
+  updateTrayTitle: (unreadCount: number) => void;
 }
 
 const tray: TrayHelper = {
@@ -41,12 +42,30 @@ const tray: TrayHelper = {
     });
   },
 
+  updateTrayTitle(unreadCount: number) {
+    if (!this.instance) {
+      return;
+    }
+
+    const title = unreadCount > 0 ? ` ${unreadCount}` : '';
+    this.instance.setTitle(title);
+  },
+
   create() {
     if (this.instance) {
       return;
     }
 
-    const icon = nativeImage.createFromPath(path.resolve(__dirname, '../public/icon-electron-windows.ico'));
+    let iconPath;
+    if (process.platform === 'darwin') {
+    // Путь к иконке для MacOS
+      iconPath = path.resolve(__dirname, '../public/icon-electron-macos-tray.png');
+    } else {
+    // Путь к иконке для Windows
+      iconPath = path.resolve(__dirname, '../public/icon-electron-windows.ico');
+    }
+
+    const icon = nativeImage.createFromPath(iconPath);
     const title = getAppTitle();
 
     this.instance = new Tray(icon);
@@ -77,7 +96,9 @@ const tray: TrayHelper = {
     this.instance.on('click', handleTrayClick);
     this.instance.setContextMenu(contextMenu);
     this.instance.setToolTip(title);
-    this.instance.setTitle(title);
+    if (process.platform !== 'darwin') {
+      this.instance.setTitle(title);
+    }
   },
 
   enable() {

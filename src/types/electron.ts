@@ -15,6 +15,7 @@ export enum ElectronAction {
   SET_TRAFFIC_LIGHT_POSITION = 'set-traffic-light-position',
   SET_IS_AUTO_UPDATE_ENABLED = 'set-is-auto-update-enabled',
   GET_IS_AUTO_UPDATE_ENABLED = 'get-is-auto-update-enabled',
+  UPDATE_TRAY_TITLE = 'update-tray-title',
   SET_IS_TRAY_ICON_ENABLED = 'set-is-tray-icon-enabled',
   GET_IS_TRAY_ICON_ENABLED = 'get-is-tray-icon-enabled',
   RESTORE_LOCAL_STORAGE = 'restore-local-storage',
@@ -33,6 +34,7 @@ export interface ElectronApi {
   getIsAutoUpdateEnabled: () => Promise<boolean>;
   setIsTrayIconEnabled: (value: boolean) => Promise<void>;
   getIsTrayIconEnabled: () => Promise<boolean>;
+  updateTrayTitle: (unreadCount: number) => Promise<void>;
   restoreLocalStorage: () => Promise<void>;
 
   on: (eventName: ElectronEvent, callback: any) => VoidFunction;

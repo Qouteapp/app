@@ -76,6 +76,8 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
       : acc;
   }, 0);
 
+  window.electron?.updateTrayTitle(inboxUnreadCount);
+
   return (
     <UluChatFoldersWrapper ref={ref}>
       <UluChatFolder
