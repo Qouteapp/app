@@ -19,6 +19,7 @@ import useChatContextActions from '../../../../../../../hooks/useChatContextActi
 import useContextMenuHandlers from '../../../../../../../hooks/useContextMenuHandlers.react';
 import { useFastClick } from '../../../../../../../hooks/useFastClick.react';
 import useFlag from '../../../../../../../hooks/useFlag.react';
+import { useFocusMode } from '../../../../../../../hooks/useFocusMode';
 import useLastCallback from '../../../../../../../hooks/useLastCallback.react';
 import useMenuPosition from '../../../../../../../hooks/useMenuPosition.react';
 
@@ -198,6 +199,7 @@ const Chat: FC<{
   const shouldRenderUnreadCounter = !!messagesUnreadCount;
   const shouldRenderRightItems = shouldRenderUnreadCounter;
   const classNameRight = buildClassName(styles['mini-items'], styles.right);
+  const { isFocusModeEnabled } = useFocusMode();
 
   // TODO use <ListItem/> with <Ripple/>
   return (
@@ -232,7 +234,12 @@ const Chat: FC<{
         </div>
         { shouldRenderRightItems && (
           <div className={classNameRight}>
-            { shouldRenderUnreadCounter && (<div className={stylesUluChatFolder.unread}>{ messagesUnreadCount }</div>) }
+            { shouldRenderUnreadCounter && (
+              <div className={isFocusModeEnabled
+                ? stylesUluChatFolder.focus : stylesUluChatFolder.unread}
+              >{ messagesUnreadCount }
+              </div>
+            ) }
             {/* { shouldRenderCross && <Cross className={styles.cross} /> } */}
           </div>
         ) }

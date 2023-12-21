@@ -3,6 +3,8 @@ import React, { memo } from '../../../../lib/teact/teact';
 
 import buildClassName from '../../../../util/buildClassName';
 
+import { useFocusMode } from '../../../../hooks/useFocusMode';
+
 import SvgArchivedChats from './SvgArchivedChats';
 import SvgInbox from './SvgInbox';
 import SvgSavedMessages from './SvgSavedMessages';
@@ -28,11 +30,15 @@ const UluChatFolder: FC<OwnProps> = ({
   active, type, title, messagesUnreadCount, onClick, shouldStressUnreadMessages,
 }) => {
   const IconComponent = componentByType[type];
+  const { isFocusModeEnabled } = useFocusMode();
+  // eslint-disable-next-line no-console
+  console.log('Focus Mode Enabled:', isFocusModeEnabled);
 
   const classNameWrapper = buildClassName(
     styles.wrapper,
     active && styles.active,
     !!messagesUnreadCount && shouldStressUnreadMessages && styles['has-unread-messages'],
+    isFocusModeEnabled && styles['focus-mode'],
   );
   const svgFill = active ? 'var(--color-text)' : 'var(--color-text-secondary)';
 
@@ -54,7 +60,11 @@ const UluChatFolder: FC<OwnProps> = ({
           {title}
         </div>
       </div>
-      { !!messagesUnreadCount && (<div className={styles.unread}>{ messagesUnreadCount }</div>) }
+      { !!messagesUnreadCount && (
+        <div className={isFocusModeEnabled ? styles.focus : styles.unread}>
+          { messagesUnreadCount }
+        </div>
+      ) }
     </div>
   );
 };

@@ -13,6 +13,7 @@ import { MouseButton } from '../../../../../../util/windowEnvironment';
 
 import useContextMenuHandlers from '../../../../../../hooks/useContextMenuHandlers.react';
 import { useFastClick } from '../../../../../../hooks/useFastClick.react';
+import { useFocusMode } from '../../../../../../hooks/useFocusMode';
 import useLastCallback from '../../../../../../hooks/useLastCallback.react';
 import useMenuPosition from '../../../../../../hooks/useMenuPosition.react';
 
@@ -85,7 +86,7 @@ const ChatFolder: FC<{
     () => document.querySelector('#chat-folders-tree-context-menu-root')!.querySelector('.Tab-context-menu .bubble'),
   );
   const getLayout = useLastCallback(() => ({ withPortal: true }));
-
+  const { isFocusModeEnabled } = useFocusMode();
   const {
     positionX, positionY, transformOriginX, transformOriginY, style: menuStyle,
   } = useMenuPosition(
@@ -121,7 +122,12 @@ const ChatFolder: FC<{
             {title}
           </div>
         </div>
-        { !!messagesUnreadCount && (<div className={stylesUluChatFolder.unread}>{ messagesUnreadCount }</div>) }
+        { !!messagesUnreadCount && (
+          <div className={isFocusModeEnabled
+            ? stylesUluChatFolder.focus : stylesUluChatFolder.unread}
+          >{ messagesUnreadCount }
+          </div>
+        ) }
         {contextActions && contextMenuPosition !== undefined && (
           <Menu
             isOpen={isContextMenuOpen}
