@@ -67,6 +67,7 @@ import usePreventPinchZoomGesture from '../../hooks/usePreventPinchZoomGesture';
 import useShortcutCmdE from '../../hooks/useShortcutCmdE';
 import useShortcutCmdF from '../../hooks/useShortcutCmdF';
 import useShortcutCmdG from '../../hooks/useShortcutCmdG';
+import useShortcutCmdI from '../../hooks/useShortcutCmdI';
 import useShortcutCmdShiftL from '../../hooks/useShortcutCmdShiftL';
 import useShortcutCmdShiftM from '../../hooks/useShortcutCmdShiftM';
 import useShortcutCmdU from '../../hooks/useShortcutCmdU';
@@ -392,6 +393,7 @@ const Main: FC<OwnProps & StateProps> = ({
 
   useShortcutCmdU();
   useShortcutCmdE();
+  useShortcutCmdI();
   useShortcutCmdF();
   useShortcutCmdShiftL();
   useShortcutCmdShiftM();
