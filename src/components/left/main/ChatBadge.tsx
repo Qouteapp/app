@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { FC } from '../../../lib/teact/teact';
 import React, { memo, useMemo } from '../../../lib/teact/teact';
 
@@ -23,6 +24,7 @@ type OwnProps = {
   isMuted?: boolean;
   shouldShowOnlyMostImportant?: boolean;
   forceHidden?: boolean | Signal<boolean>;
+  isFocusMode?: boolean;
 };
 
 const ChatBadge: FC<OwnProps> = ({
@@ -59,7 +61,7 @@ const ChatBadge: FC<OwnProps> = ({
     () => (isSignal(forceHidden) ? forceHidden() : forceHidden),
     [forceHidden],
   );
-  const isShown = !resolvedForceHidden && Boolean(
+  const isShown = !resolvedForceHidden && /* !isFocusMode &&  */Boolean(
     unreadCount || unreadMentionsCount || hasUnreadMark || isPinned || unreadReactionsCount
     || isTopicUnopened,
   );
@@ -123,8 +125,13 @@ const ChatBadge: FC<OwnProps> = ({
     );
   }
 
+  const badgeClassName = buildClassName(
+    'ChatBadge-transition',
+    /* isFocusMode && 'focus-mode', */
+  );
+
   return (
-    <ShowTransition isCustom className="ChatBadge-transition" isOpen={isShown}>
+    <ShowTransition isCustom className={badgeClassName} isOpen={isShown}>
       {renderContent()}
     </ShowTransition>
   );

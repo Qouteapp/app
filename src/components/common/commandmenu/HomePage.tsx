@@ -17,10 +17,11 @@ import SuggestedContacts from './HomePage/SuggestedContactsGroup';
 
 import '../../main/CommandMenu.scss';
 
-interface HomePageProps {
+type OwnProps = {
   isArchiveWhenDoneEnabled: boolean;
   isAutoDoneEnabled: boolean;
   isFoldersTreeEnabled: boolean;
+  isFocusModeEnabled: boolean;
   topUserIds?: string[];
   usersById: Record<string, ApiUser>;
   recentlyFoundChatIds?: string[];
@@ -41,18 +42,20 @@ interface HomePageProps {
   handleToggleChatUnread: () => void;
   handleOpenAutomationSettings: () => void;
   handleOpenWorkspaceSettings: () => void;
+  handleDisableFocusMode: () => void;
   handleSelectWorkspace: (workspaceId: string) => void;
   openChangeThemePage: () => void;
+  openFocusModePage: () => void;
   handleChangelog: () => void;
   close: () => void;
-}
+};
 
-const HomePage: React.FC<HomePageProps> = ({
+const HomePage: React.FC<OwnProps> = ({
   commandDoneAll, commandToggleAutoDone, isAutoDoneEnabled, commandToggleFoldersTree,
   commandArchiveAll, commandToggleArchiveWhenDone, isArchiveWhenDoneEnabled,
   topUserIds, usersById, recentlyFoundChatIds, close, isFoldersTreeEnabled, openChangeThemePage,
-  menuItems, inputValue, saveAPIKey,
-  handleChangelog,
+  menuItems, inputValue, saveAPIKey, isFocusModeEnabled,
+  handleChangelog, openFocusModePage, handleDisableFocusMode,
   handleOpenAutomationSettings, allWorkspaces,
   handleOpenWorkspaceSettings, handleSelectWorkspace, currentWorkspace,
   currentChatId, isCurrentChatDone, handleDoneChat, handleToggleChatUnread, isChatUnread,
@@ -153,6 +156,12 @@ const HomePage: React.FC<HomePageProps> = ({
             {item.label}
           </Command.Item>
         ))}
+        <Command.Item onSelect={isFocusModeEnabled ? handleDisableFocusMode : openFocusModePage}>
+          <i className="icon icon-settings" />
+          <span>
+            {isFocusModeEnabled ? 'Disable Focus Mode' : 'Enable Focus Mode'}
+          </span>
+        </Command.Item>
       </Command.Group>
       <BillingGroup close={close} />
     </>

@@ -28,13 +28,15 @@ import { transliterate } from '../../util/transliterate';
 import useArchiver from '../../hooks/useArchiver';
 import useCommands from '../../hooks/useCommands';
 import useDone from '../../hooks/useDone';
+import { useFocusMode } from '../../hooks/useFocusMode';
 import { useJune } from '../../hooks/useJune';
 import useLang from '../../hooks/useLang';
 import { useStorage } from '../../hooks/useStorage';
 import { useWorkspaces } from '../../hooks/useWorkspaces';
 
-import ChangeThemePage from '../common/ChangeThemePage';
 import HomePage from '../common/commandmenu/HomePage';
+import ChangeThemePage from '../common/commandmenu/HomePage/ChangeThemePage';
+import FocusModePage from '../common/commandmenu/HomePage/FocusModePage';
 import FolderPage from '../common/FolderPage';
 import CommanMenuChatSearch from '../left/search/CommanMenuChatSearch';
 import AutomationSettings from './AutomationSettings';
@@ -252,6 +254,26 @@ const CommandMenu: FC<StateProps> = ({
     }, 150);
   }, []);
 
+  const { isFocusModeEnabled, disableFocusMode } = useFocusMode();
+
+  const handleDisableFocusMode = useCallback(() => {
+    disableFocusMode();
+    showNotification({ message: 'Focus mode is turned off' });
+    if (typeof track === 'function') {
+      track('Disable Focus Mode');
+    }
+    close();
+  }, [disableFocusMode, close, track]);
+
+  const openFocusModePage = useCallback(() => {
+    // Если фокус-режим не активен, открываем страницу настроек фокус-режима
+    setIsBouncing(true);
+    setPages((prevPages) => [...prevPages, 'focusMode']);
+    setTimeout(() => setIsBouncing(false), 150);
+    setInputValue('');
+    // Не вызываем close(), чтобы страница осталась открытой
+  }, [setInputValue]);
+
   const getFolderName = (id: number | null) => {
     // eslint-disable-next-line no-null/no-null
     if (id === null) return 'Unknown Folder';
@@ -427,6 +449,7 @@ const CommandMenu: FC<StateProps> = ({
                   isAutoDoneEnabled={isAutoDoneEnabled}
                   isArchiveWhenDoneEnabled={isArchiveWhenDoneEnabled}
                   isFoldersTreeEnabled={isFoldersTreeEnabled}
+                  isFocusModeEnabled={isFocusModeEnabled}
                   topUserIds={topUserIds}
                   usersById={usersById}
                   saveAPIKey={saveAPIKey}
@@ -441,11 +464,13 @@ const CommandMenu: FC<StateProps> = ({
                   currentChatId={currentChatId}
                   allWorkspaces={allWorkspaces}
                   openChangeThemePage={openChangeThemePage}
+                  openFocusModePage={openFocusModePage}
                   inputValue={inputValue}
                   isCurrentChatDone={isCurrentChatDone}
                   handleDoneChat={handleDoneChat}
                   handleToggleChatUnread={handleToggleChatUnread}
                   isChatUnread={isChatUnread}
+                  handleDisableFocusMode={handleDisableFocusMode}
                 />
                 <CommanMenuChatSearch
                   close={close}
@@ -467,6 +492,12 @@ const CommandMenu: FC<StateProps> = ({
             )}
             {activePage === 'changeTheme' && (
               <ChangeThemePage
+                close={close}
+                setInputValue={setInputValue}
+              />
+            )}
+            {activePage === 'focusMode' && (
+              <FocusModePage
                 close={close}
                 setInputValue={setInputValue}
               />

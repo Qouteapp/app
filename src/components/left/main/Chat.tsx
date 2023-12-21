@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { FC } from '../../../lib/teact/teact';
 import React, { memo, useEffect } from '../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../global';
@@ -283,7 +284,12 @@ const Chat: FC<OwnProps & StateProps> = ({
         />
         <div className="avatar-badge-wrapper">
           <div className={buildClassName('avatar-online', isAvatarOnlineShown && 'avatar-online-shown')} />
-          <ChatBadge chat={chat} isMuted={isMuted} shouldShowOnlyMostImportant forceHidden={getIsForumPanelClosed} />
+          <ChatBadge
+            chat={chat}
+            isMuted={isMuted}
+            shouldShowOnlyMostImportant
+            forceHidden={getIsForumPanelClosed}
+          />
         </div>
         {chat.isCallActive && chat.isCallNotEmpty && (
           <ChatCallStatus isMobile={isMobile} isSelected={isSelected} isActive={withInterfaceAnimations} />

@@ -368,6 +368,8 @@ export const LOCAL_STORAGE_KEYS = {
   IS_AUTO_ARCHIVER_ENABLED: 'ulu_is_autoarchiver_enabled',
   IS_ARCHIVE_WHEN_DONE_ENABLED: 'ulu_is_archive_when_done_enabled',
   IS_FOLDERS_TREE_ENABLED: 'ulu_is_folders_tree_enabled',
+  IS_FOCUS_MODE_ENABLED: 'ulu_is_focus_mode_enabled',
+  FOCUS_MODE_END_TIME: 'ulu_focus_mode_end_time',
   DONE_CHAT_IDS: 'ulu_done_chat_ids',
 };
 

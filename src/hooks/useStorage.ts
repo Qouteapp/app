@@ -63,6 +63,18 @@ export function useStorage() {
     schema: z.boolean(),
   });
 
+  const [isFocusModeEnabled, setIsFocusModeEnabled] = useLocalStorage<boolean>({
+    key: LOCAL_STORAGE_KEYS.IS_FOCUS_MODE_ENABLED,
+    initValue: false,
+    schema: z.boolean(),
+  });
+
+  const [focusModeEndTime, setFocusModeEndTime] = useLocalStorage<number>({
+    key: LOCAL_STORAGE_KEYS.FOCUS_MODE_END_TIME,
+    initValue: 0, // 0 означает, что фокус-режим не активен
+    schema: z.number(),
+  });
+
   return {
     isAutoDoneEnabled,
     setIsAutoDoneEnabled,
@@ -80,6 +92,10 @@ export function useStorage() {
     setCurrentWorkspaceId,
     isInitialMarkAsDone,
     setIsInitialMarkAsDone,
+    isFocusModeEnabled,
+    setIsFocusModeEnabled,
+    focusModeEndTime,
+    setFocusModeEndTime,
   };
 }
 

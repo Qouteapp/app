@@ -12,7 +12,7 @@ import { cmdKey } from '../../../../config';
 
 import useCommands from '../../../../hooks/useCommands';
 
-import CommandMenuListItem from '../CommanMenuListItem';
+import CommandMenuListItem from '../CommandMenuListItem';
 
 import '../../../main/CommandMenu.scss';
 
