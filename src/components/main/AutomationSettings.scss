@@ -57,7 +57,8 @@ body.is-macos.is-electron .back-button-settins {
   display: flex;
   flex-direction: column;
   position: absolute;
-  width: 30rem;
+  max-width: 30rem;
+  width: 90%;
   top: 4.25rem;
   max-height: 85vh;
   overflow-y: auto; 
