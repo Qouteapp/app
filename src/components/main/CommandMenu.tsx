@@ -254,7 +254,7 @@ const CommandMenu: FC<StateProps> = ({
     }, 150);
   }, []);
 
-  const { disableFocusMode } = useFocusMode();
+  const { isFocusModeEnabled, disableFocusMode } = useFocusMode();
 
   const handleDisableFocusMode = useCallback(() => {
     disableFocusMode();
@@ -449,6 +449,7 @@ const CommandMenu: FC<StateProps> = ({
                   isAutoDoneEnabled={isAutoDoneEnabled}
                   isArchiveWhenDoneEnabled={isArchiveWhenDoneEnabled}
                   isFoldersTreeEnabled={isFoldersTreeEnabled}
+                  isFocusModeEnabled={isFocusModeEnabled}
                   topUserIds={topUserIds}
                   usersById={usersById}
                   saveAPIKey={saveAPIKey}

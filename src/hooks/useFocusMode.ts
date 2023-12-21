@@ -25,19 +25,16 @@ export const useFocusMode = () => {
     const endTime = Date.now() + duration;
     setIsFocusModeEnabled(true);
     setFocusModeEndTime(endTime);
-    localStorage.setItem('ulu_is_focus_mode_enabled', JSON.stringify(true));
-    localStorage.setItem('ulu_focus_mode_end_time', JSON.stringify(endTime));
   }, [setIsFocusModeEnabled, setFocusModeEndTime]);
 
   const disableFocusMode = useCallback(() => {
     setIsFocusModeEnabled(false);
     setFocusModeEndTime(0);
-    localStorage.setItem('ulu_is_focus_mode_enabled', JSON.stringify(false));
-    localStorage.setItem('ulu_focus_mode_end_time', JSON.stringify(0));
   }, [setIsFocusModeEnabled, setFocusModeEndTime]);
 
   return {
-    isFocusMode: isFocusModeEnabled,
+    isFocusModeEnabled,
+    focusModeEndTime,
     enableFocusMode,
     disableFocusMode,
   };

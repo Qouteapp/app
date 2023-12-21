@@ -6,7 +6,9 @@ import type {
 } from '../api/types';
 import { ApiMediaFormat } from '../api/types';
 
-import { APP_NAME, DEBUG, IS_TEST } from '../config';
+import {
+  APP_NAME, DEBUG, IS_TEST, LOCAL_STORAGE_KEYS,
+} from '../config';
 import {
   getChatAvatarHash,
   getChatTitle,
@@ -108,7 +110,7 @@ const notificationSound = new Audio('./notification.mp3');
 notificationSound.setAttribute('mozaudiochannel', 'notification');
 
 function isFocusModeEnabled() {
-  const focusModeValue = localStorage.getItem('ulu_is_focus_mode_enabled');
+  const focusModeValue = localStorage.getItem(LOCAL_STORAGE_KEYS.IS_FOCUS_MODE_ENABLED);
   return focusModeValue ? JSON.parse(focusModeValue) : false;
 }
 

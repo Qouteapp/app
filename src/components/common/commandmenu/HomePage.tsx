@@ -21,6 +21,7 @@ type OwnProps = {
   isArchiveWhenDoneEnabled: boolean;
   isAutoDoneEnabled: boolean;
   isFoldersTreeEnabled: boolean;
+  isFocusModeEnabled: boolean;
   topUserIds?: string[];
   usersById: Record<string, ApiUser>;
   recentlyFoundChatIds?: string[];
@@ -53,14 +54,13 @@ const HomePage: React.FC<OwnProps> = ({
   commandDoneAll, commandToggleAutoDone, isAutoDoneEnabled, commandToggleFoldersTree,
   commandArchiveAll, commandToggleArchiveWhenDone, isArchiveWhenDoneEnabled,
   topUserIds, usersById, recentlyFoundChatIds, close, isFoldersTreeEnabled, openChangeThemePage,
-  menuItems, inputValue, saveAPIKey,
+  menuItems, inputValue, saveAPIKey, isFocusModeEnabled,
   handleChangelog, openFocusModePage, handleDisableFocusMode,
   handleOpenAutomationSettings, allWorkspaces,
   handleOpenWorkspaceSettings, handleSelectWorkspace, currentWorkspace,
   currentChatId, isCurrentChatDone, handleDoneChat, handleToggleChatUnread, isChatUnread,
 }) => {
   const lang = useLang();
-  const isFocusModeEnabled = localStorage.getItem('ulu_is_focus_mode_enabled') === 'true';
 
   return (
     <>
