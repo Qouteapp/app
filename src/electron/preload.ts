@@ -14,6 +14,7 @@ const electronApi: ElectronApi = {
     (position: TrafficLightPosition) => ipcRenderer.invoke(ElectronAction.SET_TRAFFIC_LIGHT_POSITION, position),
   setIsAutoUpdateEnabled: (value: boolean) => ipcRenderer.invoke(ElectronAction.SET_IS_AUTO_UPDATE_ENABLED, value),
   getIsAutoUpdateEnabled: () => ipcRenderer.invoke(ElectronAction.GET_IS_AUTO_UPDATE_ENABLED),
+  updateTrayTitle: (unreadCount: number) => ipcRenderer.invoke(ElectronAction.UPDATE_TRAY_TITLE, unreadCount),
   setIsTrayIconEnabled: (value: boolean) => ipcRenderer.invoke(ElectronAction.SET_IS_TRAY_ICON_ENABLED, value),
   getIsTrayIconEnabled: () => ipcRenderer.invoke(ElectronAction.GET_IS_TRAY_ICON_ENABLED),
   restoreLocalStorage: () => ipcRenderer.invoke(ElectronAction.RESTORE_LOCAL_STORAGE),

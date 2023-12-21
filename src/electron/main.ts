@@ -16,8 +16,8 @@ contextMenu({
   showLearnSpelling: false,
   showLookUpSelection: false,
   showSearchWithGoogle: false,
-  showCopyImage: false,
-  showSelectAll: true,
+  showCopyImage: true,
+  showSelectAll: false,
 });
 
 app.on('ready', () => {

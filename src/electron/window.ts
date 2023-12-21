@@ -169,7 +169,7 @@ export function createWindow(url?: string) {
     window.removeMenu();
   }
 
-  if (IS_WINDOWS && tray.isEnabled) {
+  if ((IS_MAC_OS || IS_WINDOWS) && tray.isEnabled) {
     tray.setupListeners(window);
     tray.create();
   }
@@ -260,6 +260,10 @@ export function setupElectronActionHandlers() {
 
   ipcMain.handle(ElectronAction.GET_IS_AUTO_UPDATE_ENABLED, () => {
     return getIsAutoUpdateEnabled();
+  });
+
+  ipcMain.handle(ElectronAction.UPDATE_TRAY_TITLE, (_, unreadCount: number) => {
+    tray.updateTrayTitle(unreadCount);
   });
 
   ipcMain.handle(ElectronAction.SET_IS_TRAY_ICON_ENABLED, (_, isTrayIconEnabled: boolean) => {
