@@ -948,6 +948,13 @@ export type GlobalState = {
   translations: {
     byChatId: Record<string, ChatTranslatedMessages>;
   };
+
+  ulu: {
+    workspaceSettings: {
+      isOpen: boolean;
+      workspaceId: string | undefined;
+    };
+  };
 };
 
 export type CallSound = (
@@ -2859,6 +2866,11 @@ export interface ActionPayloads {
     file?: File;
     isSuggest?: boolean;
   } & WithTabId;
+
+  /* ULU */
+  // workspaceSettings
+  openWorkspaceSettings: { workspaceId: string | undefined };
+  closeWorkspaceSettings: undefined;
 }
 
 export type RequiredGlobalState = GlobalState & { _: never };
