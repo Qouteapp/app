@@ -148,6 +148,15 @@
     }
   }
 
+  &.ListItem-context-menu{
+    .bubble {
+      body.is-electron & {
+        background: var(--color-background-no-blur);
+        backdrop-filter: none;
+      }
+    }
+  }
+
   &.left-main {
     .bubble {
       body.is-electron & {
