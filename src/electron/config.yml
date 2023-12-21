@@ -8,6 +8,8 @@ files:
   - "dist"
   - "package.json"
   - "public/icon-electron-windows.ico"
+  - "public/icon-electron-macos-tray.png"
+  - "public/icon-electron-macos-tray@2x.png"
   - "!dist/**/build-stats.json"
   - "!dist/**/statoscope-report.html"
   - "!dist/**/reference.json"
