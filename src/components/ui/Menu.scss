@@ -38,7 +38,6 @@
     font-size: 9px;
   }
 
-
   .backdrop {
     position: fixed;
     left: -100vw;
@@ -64,7 +63,8 @@
     color: var(--color-text);
 
     transform: scale(0.85);
-    transition: opacity 150ms cubic-bezier(0.2, 0, 0.2, 1), transform 150ms cubic-bezier(0.2, 0, 0.2, 1) !important;
+    transition: opacity 150ms cubic-bezier(0.2, 0, 0.2, 1),
+      transform 150ms cubic-bezier(0.2, 0, 0.2, 1) !important;
 
     &.open {
       transform: scale(1);
@@ -130,10 +130,9 @@
         background: var(--color-background-no-blur);
         backdrop-filter: none;
       }
-
     }
 
-     .left-main {
+    .left-main {
       body.is-electron & {
         background: var(--color-background-no-blur);
         backdrop-filter: none;
@@ -146,6 +145,15 @@
 
     &.no-blur .bubble {
       background: var(--color-background);
+    }
+  }
+
+  &.left-main {
+    .bubble {
+      body.is-electron & {
+        background: var(--color-background-no-blur);
+        backdrop-filter: none;
+      }
     }
   }
 
