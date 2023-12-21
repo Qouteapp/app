@@ -248,7 +248,7 @@ const CommandMenu: FC<StateProps> = ({
 
   const openChangeThemePage = useCallback(() => {
     setIsBouncing(true);
-    setPages((prevPages) => [...prevPages, 'changeTheme']);
+    setPages((prevPages) => [...prevPages, 'Change Theme']);
     setTimeout(() => {
       setIsBouncing(false);
     }, 150);
@@ -268,7 +268,7 @@ const CommandMenu: FC<StateProps> = ({
   const openFocusModePage = useCallback(() => {
     // Если фокус-режим не активен, открываем страницу настроек фокус-режима
     setIsBouncing(true);
-    setPages((prevPages) => [...prevPages, 'focusMode']);
+    setPages((prevPages) => [...prevPages, 'Focus Mode']);
     setTimeout(() => setIsBouncing(false), 150);
     setInputValue('');
     // Не вызываем close(), чтобы страница осталась открытой
@@ -411,7 +411,7 @@ const CommandMenu: FC<StateProps> = ({
         className={`command-menu-container ${isBouncing ? 'bounce-animation' : ''}`}
       >
         {pages.map((page) => {
-          if (page !== 'home' && page !== 'changeTheme') {
+          if (page !== 'home' && page !== 'Change Theme') {
             return (
               <div key={page} cmdk-vercel-badge="">
                 {page.startsWith('folderPage') ? `Folder: ${getFolderName(Number(folderId))}` : page}
@@ -490,13 +490,13 @@ const CommandMenu: FC<StateProps> = ({
                 close={close}
               />
             )}
-            {activePage === 'changeTheme' && (
+            {activePage === 'Change Theme' && (
               <ChangeThemePage
                 close={close}
                 setInputValue={setInputValue}
               />
             )}
-            {activePage === 'focusMode' && (
+            {activePage === 'Focus Mode' && (
               <FocusModePage
                 close={close}
                 setInputValue={setInputValue}
