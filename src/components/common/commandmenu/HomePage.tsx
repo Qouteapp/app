@@ -17,7 +17,7 @@ import SuggestedContacts from './HomePage/SuggestedContactsGroup';
 
 import '../../main/CommandMenu.scss';
 
-interface HomePageProps {
+type OwnProps = {
   isArchiveWhenDoneEnabled: boolean;
   isAutoDoneEnabled: boolean;
   isFoldersTreeEnabled: boolean;
@@ -47,9 +47,9 @@ interface HomePageProps {
   openFocusModePage: () => void;
   handleChangelog: () => void;
   close: () => void;
-}
+};
 
-const HomePage: React.FC<HomePageProps> = ({
+const HomePage: React.FC<OwnProps> = ({
   commandDoneAll, commandToggleAutoDone, isAutoDoneEnabled, commandToggleFoldersTree,
   commandArchiveAll, commandToggleArchiveWhenDone, isArchiveWhenDoneEnabled,
   topUserIds, usersById, recentlyFoundChatIds, close, isFoldersTreeEnabled, openChangeThemePage,

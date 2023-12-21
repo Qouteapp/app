@@ -64,13 +64,13 @@ export function useStorage() {
   });
 
   const [isFocusModeEnabled, setIsFocusModeEnabled] = useLocalStorage<boolean>({
-    key: 'ulu_is_focus_mode_enabled',
+    key: LOCAL_STORAGE_KEYS.IS_FOCUS_MODE_ENABLED,
     initValue: false,
     schema: z.boolean(),
   });
 
   const [focusModeEndTime, setFocusModeEndTime] = useLocalStorage<number>({
-    key: 'ulu_focus_mode_end_time',
+    key: LOCAL_STORAGE_KEYS.FOCUS_MODE_END_TIME,
     initValue: 0, // 0 означает, что фокус-режим не активен
     schema: z.number(),
   });
