@@ -19,7 +19,7 @@ import useChatContextActions from '../../../../../../../hooks/useChatContextActi
 import useContextMenuHandlers from '../../../../../../../hooks/useContextMenuHandlers.react';
 import { useFastClick } from '../../../../../../../hooks/useFastClick.react';
 import useFlag from '../../../../../../../hooks/useFlag.react';
-import { useFocusMode } from '../../../../../../../hooks/useFocusMode';
+import { useFocusMode } from '../../../../../../../hooks/useFocusMode.react';
 import useLastCallback from '../../../../../../../hooks/useLastCallback.react';
 import useMenuPosition from '../../../../../../../hooks/useMenuPosition.react';
 
