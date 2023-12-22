@@ -31,14 +31,11 @@ const UluChatFolder: FC<OwnProps> = ({
 }) => {
   const IconComponent = componentByType[type];
   const { isFocusModeEnabled } = useFocusMode();
-  // eslint-disable-next-line no-console
-  console.log('Focus Mode Enabled:', isFocusModeEnabled);
 
   const classNameWrapper = buildClassName(
     styles.wrapper,
     active && styles.active,
     !!messagesUnreadCount && shouldStressUnreadMessages && styles['has-unread-messages'],
-    isFocusModeEnabled && styles['focus-mode'],
   );
   const svgFill = active ? 'var(--color-text)' : 'var(--color-text-secondary)';
 
@@ -60,8 +57,8 @@ const UluChatFolder: FC<OwnProps> = ({
           {title}
         </div>
       </div>
-      { !!messagesUnreadCount && (
-        <div className={isFocusModeEnabled ? styles.focus : styles.unread}>
+      { !!messagesUnreadCount && !isFocusModeEnabled && (
+        <div className={styles.unread}>
           { messagesUnreadCount }
         </div>
       ) }

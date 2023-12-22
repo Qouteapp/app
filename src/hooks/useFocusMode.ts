@@ -21,19 +21,6 @@ export const useFocusMode = () => {
     return () => clearInterval(interval);
   }, [checkFocusModeStatus]);
 
-  useEffect(() => {
-    const htmlElement = document.documentElement;
-
-    if (isFocusModeEnabled) {
-      htmlElement.classList.add('is-focus-mode');
-    } else {
-      htmlElement.classList.remove('is-focus-mode');
-    }
-    return () => {
-      htmlElement.classList.remove('is-focus-mode');
-    };
-  }, [isFocusModeEnabled]);
-
   const enableFocusMode = useCallback((duration: number) => {
     const endTime = Date.now() + duration;
     setIsFocusModeEnabled(true);

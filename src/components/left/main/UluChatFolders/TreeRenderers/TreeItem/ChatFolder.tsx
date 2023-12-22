@@ -122,10 +122,9 @@ const ChatFolder: FC<{
             {title}
           </div>
         </div>
-        { !!messagesUnreadCount && (
-          <div className={isFocusModeEnabled
-            ? stylesUluChatFolder.focus : stylesUluChatFolder.unread}
-          >{ messagesUnreadCount }
+        { !!messagesUnreadCount && !isFocusModeEnabled && (
+          <div className={stylesUluChatFolder.unread}>
+            { messagesUnreadCount }
           </div>
         ) }
         {contextActions && contextMenuPosition !== undefined && (

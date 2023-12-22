@@ -234,10 +234,9 @@ const Chat: FC<{
         </div>
         { shouldRenderRightItems && (
           <div className={classNameRight}>
-            { shouldRenderUnreadCounter && (
-              <div className={isFocusModeEnabled
-                ? stylesUluChatFolder.focus : stylesUluChatFolder.unread}
-              >{ messagesUnreadCount }
+            { shouldRenderUnreadCounter && !isFocusModeEnabled && (
+              <div className={stylesUluChatFolder.unread}>
+                { messagesUnreadCount }
               </div>
             ) }
             {/* { shouldRenderCross && <Cross className={styles.cross} /> } */}

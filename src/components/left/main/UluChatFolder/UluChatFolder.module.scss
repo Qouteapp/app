@@ -43,22 +43,6 @@
 	background-color: var(--color-forum-hover-unread-topic-hover);
 	border-radius: 0.25rem;
 	padding: 0 0.1875rem;
-
-	.UluChatFolder-module__focus-mode & {
-		display: none;
-	}
-}
-
-.focus {
-	display: none;
-}
-
-.UluChatFolder-module__unread.UluChatFolder-module__focus-mode {
-    display: none;
-}
-
-html.is-focus-mode .UluChatFolder-module__unread {
-    display: none;
 }
 
 .info {
