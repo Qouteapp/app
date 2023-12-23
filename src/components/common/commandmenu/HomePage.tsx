@@ -9,6 +9,7 @@ import type { Workspace } from '../../../types';
 
 import useLang from '../../../hooks/useLang';
 
+import AIGroup from './HomePage/AIGroup';
 import BillingGroup from './HomePage/BillingGroup';
 import CreateNewGroup from './HomePage/CreateNewGroup';
 import HelpGroup from './HomePage/HelpGroup';
@@ -32,6 +33,8 @@ type OwnProps = {
   inputValue: string;
   isCurrentChatDone?: boolean;
   isChatUnread?: boolean;
+  selectedRange?: Range | null;
+  resetSelectedRange: () => void;
   saveAPIKey: () => void;
   commandDoneAll: () => void;
   handleDoneChat: () => void;
@@ -51,45 +54,74 @@ type OwnProps = {
 };
 
 const HomePage: React.FC<OwnProps> = ({
-  commandDoneAll, commandToggleAutoDone, isAutoDoneEnabled, commandToggleFoldersTree,
-  commandArchiveAll, commandToggleArchiveWhenDone, isArchiveWhenDoneEnabled,
-  topUserIds, usersById, recentlyFoundChatIds, close, isFoldersTreeEnabled, openChangeThemePage,
-  menuItems, inputValue, saveAPIKey, isFocusModeEnabled,
-  handleChangelog, openFocusModePage, handleDisableFocusMode,
-  handleOpenAutomationSettings, allWorkspaces,
-  handleOpenWorkspaceSettings, handleSelectWorkspace, currentWorkspace,
-  currentChatId, isCurrentChatDone, handleDoneChat, handleToggleChatUnread, isChatUnread,
+  commandDoneAll,
+  commandToggleAutoDone,
+  isAutoDoneEnabled,
+  commandToggleFoldersTree,
+  commandArchiveAll,
+  commandToggleArchiveWhenDone,
+  isArchiveWhenDoneEnabled,
+  topUserIds,
+  usersById,
+  recentlyFoundChatIds,
+  close,
+  isFoldersTreeEnabled,
+  openChangeThemePage,
+  menuItems,
+  inputValue,
+  saveAPIKey,
+  isFocusModeEnabled,
+  selectedRange,
+  handleChangelog,
+  openFocusModePage,
+  handleDisableFocusMode,
+  handleOpenAutomationSettings,
+  allWorkspaces,
+  handleOpenWorkspaceSettings,
+  handleSelectWorkspace,
+  currentWorkspace,
+  currentChatId,
+  isCurrentChatDone,
+  handleDoneChat,
+  handleToggleChatUnread,
+  resetSelectedRange,
+  isChatUnread,
 }) => {
   const lang = useLang();
 
   return (
     <>
-      {
-        currentChatId && (
-          <Command.Group>
-            {
-              !isCurrentChatDone && (
-                <Command.Item onSelect={handleDoneChat}>
-                  <i className="icon icon-select" /><span>Mark as Done</span>
-                  <span className="shortcuts">
-                    <span className="kbd">⌘</span>
-                    <span className="kbd">E</span>
-                  </span>
-                </Command.Item>
-              )
-            }
-            <Command.Item onSelect={handleToggleChatUnread}>
-              <i className={`icon ${isChatUnread ? 'icon-unread' : 'icon-readchats'}`} />
-              <span>{lang(isChatUnread ? 'MarkAsRead' : 'MarkAsUnread')}</span>
+      <AIGroup
+        close={close}
+        selectedRange={selectedRange}
+        resetSelectedRange={resetSelectedRange}
+      />
+      {currentChatId && (
+        <Command.Group>
+          {!isCurrentChatDone && (
+            <Command.Item onSelect={handleDoneChat}>
+              <i className="icon icon-select" />
+              <span>Mark as Done</span>
               <span className="shortcuts">
                 <span className="kbd">⌘</span>
-                <span className="kbd">U</span>
+                <span className="kbd">E</span>
               </span>
             </Command.Item>
-          </Command.Group>
-
-        )
-      }
+          )}
+          <Command.Item onSelect={handleToggleChatUnread}>
+            <i
+              className={`icon ${
+                isChatUnread ? 'icon-unread' : 'icon-readchats'
+              }`}
+            />
+            <span>{lang(isChatUnread ? 'MarkAsRead' : 'MarkAsUnread')}</span>
+            <span className="shortcuts">
+              <span className="kbd">⌘</span>
+              <span className="kbd">U</span>
+            </span>
+          </Command.Item>
+        </Command.Group>
+      )}
       {inputValue === '' && topUserIds && usersById && (
         <SuggestedContacts
           topUserIds={topUserIds}
@@ -111,7 +143,8 @@ const HomePage: React.FC<OwnProps> = ({
       />
       <Command.Group heading="What's new">
         <Command.Item onSelect={handleChangelog}>
-          <i className="icon icon-calendar" /><span>Changelog</span>
+          <i className="icon icon-calendar" />
+          <span>Changelog</span>
         </Command.Item>
         <Command.Item onSelect={commandToggleFoldersTree}>
           <i className="icon icon-folder" />
@@ -122,18 +155,22 @@ const HomePage: React.FC<OwnProps> = ({
           </span>
         </Command.Item>
       </Command.Group>
-      <HelpGroup
-        close={close}
-      />
+      <HelpGroup close={close} />
       <Command.Group heading="Settings">
-        <Command.Item onSelect={openChangeThemePage} value="'Change interface theme', 'Dark', 'Light'">
-          <i className="icon icon-darkmode" /><span>Change interface theme</span>
+        <Command.Item
+          onSelect={openChangeThemePage}
+          value="'Change interface theme', 'Dark', 'Light'"
+        >
+          <i className="icon icon-darkmode" />
+          <span>Change interface theme</span>
         </Command.Item>
         <Command.Item onSelect={commandDoneAll}>
-          <i className="icon icon-readchats" /><span>Mark All Read Chats as Done</span>
+          <i className="icon icon-readchats" />
+          <span>Mark All Read Chats as Done</span>
         </Command.Item>
         <Command.Item onSelect={commandArchiveAll}>
-          <i className="icon icon-archive-from-main" /><span>Archive All Read Chats (May take ~1-3 min)</span>
+          <i className="icon icon-archive-from-main" />
+          <span>Archive All Read Chats (May take ~1-3 min)</span>
         </Command.Item>
         <Command.Item onSelect={commandToggleAutoDone}>
           <i className="icon icon-select" />
@@ -152,12 +189,23 @@ const HomePage: React.FC<OwnProps> = ({
           </span>
         </Command.Item>
         {menuItems.map((item, index) => (
-          <Command.Item key={index} onSelect={item.value === 'save_api_key' ? saveAPIKey : undefined}>
+          <Command.Item
+            key={index}
+            onSelect={item.value === 'save_api_key' ? saveAPIKey : undefined}
+          >
             {item.label}
           </Command.Item>
         ))}
-        <Command.Item onSelect={isFocusModeEnabled ? handleDisableFocusMode : openFocusModePage}>
-          {isFocusModeEnabled ? <i className="icon icon-unmute" /> : <i className="icon icon-mute" />}
+        <Command.Item
+          onSelect={
+            isFocusModeEnabled ? handleDisableFocusMode : openFocusModePage
+          }
+        >
+          {isFocusModeEnabled ? (
+            <i className="icon icon-unmute" />
+          ) : (
+            <i className="icon icon-mute" />
+          )}
           <span>
             {isFocusModeEnabled ? 'Disable Focus Mode' : 'Enable Focus Mode'}
           </span>

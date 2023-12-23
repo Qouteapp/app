@@ -1,3 +1,4 @@
+/* eslint-disable no-null/no-null */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react/jsx-no-bind */
 import React from 'react';
@@ -167,16 +168,28 @@ const CommandMenu: FC<StateProps> = ({
     openWorkspaceSettings({ workspaceId });
   });
 
+  const [selectedRange, setSelectedRange] = useState<Range | null>(null);
+
+  const saveSelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      setSelectedRange(selection.getRangeAt(0));
+    }
+  };
+
+  const restoreSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (selectedRange && selection) {
+      selection.removeAllRanges();
+      selection.addRange(selectedRange);
+    }
+  }, [selectedRange]);
+
   // Toggle the menu when ⌘K is pressed
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      // Получаем текущее выделение
-      const selection = window.getSelection();
-
-      // Проверяем, есть ли выделенный текст
-      const hasSelection = selection && selection.toString() !== '';
-
-      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'KeyK' && !hasSelection) {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'KeyK') {
+        saveSelection();
         setOpen(!isOpen);
         e.preventDefault();
         e.stopPropagation();
@@ -190,6 +203,17 @@ const CommandMenu: FC<StateProps> = ({
   const handleInputChange = (newValue: string) => {
     setPrevInputValue(inputValue);
     setInputValue(newValue);
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      restoreSelection();
+    }
+  }, [isOpen, restoreSelection]);
+
+  const resetSelectedRange = () => {
+    // Установите selectedRange в null или в начальное состояние
+    setSelectedRange(null);
   };
 
   useEffect(() => {
@@ -471,6 +495,8 @@ const CommandMenu: FC<StateProps> = ({
                   handleToggleChatUnread={handleToggleChatUnread}
                   isChatUnread={isChatUnread}
                   handleDisableFocusMode={handleDisableFocusMode}
+                  selectedRange={selectedRange}
+                  resetSelectedRange={resetSelectedRange}
                 />
                 <CommanMenuChatSearch
                   close={close}
