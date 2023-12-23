@@ -1,10 +1,6 @@
 /* eslint-disable no-async-without-await/no-async-without-await */
-/* eslint-disable no-alert */
-/* eslint-disable no-console */
 /* eslint-disable react/no-array-index-key */
-/* eslint-disable react/jsx-no-bind */
 import React, { useMemo } from 'react';
-// eslint-disable-next-line react/no-deprecated
 import { Command } from 'cmdk';
 import type { FC } from '../../../../lib/teact/teact';
 
@@ -25,12 +21,14 @@ const AIGroup: FC<AIGroupProps> = ({
   close,
   selectedRange,
 }) => {
+  const apiKey = localStorage.getItem('openai_api_key');
   const isTextSelected = useMemo(() => {
     const selection = window.getSelection();
     return selection && !selection.isCollapsed;
   }, []);
   const handleAICommand = async (commandType: keyof typeof aiPrompts) => {
     if (!selectedRange) {
+      // eslint-disable-next-line no-alert
       alert('Текст не выбран');
       return;
     }
@@ -40,6 +38,7 @@ const AIGroup: FC<AIGroupProps> = ({
       // Используем EventBus для вызова handleSelectAICommand
       EventBus.emit('setAICommandHandler', selectedRange.toString(), prompt);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Ошибка обработки текста:', error);
     }
     close();
@@ -74,19 +73,19 @@ const AIGroup: FC<AIGroupProps> = ({
     },
     {
       onSelect: () => handleAICommand('changeToneToFormal'),
-      icon: 'admin', // Иконка для формального тон
+      icon: 'admin',
       label: 'Change Tone to Formal',
     },
     {
       onSelect: () => handleAICommand('changeToneToFriendly'),
-      icon: 'smile', // Иконка для дружелюбного тон
+      icon: 'smile',
       label: 'Change Tone to Friendly',
     },
   ];
 
   return (
     <Command.Group>
-      {isTextSelected
+      {isTextSelected && apiKey
         && menuItems.map((item, index) => (
           <CommandMenuListItem
             key={index}

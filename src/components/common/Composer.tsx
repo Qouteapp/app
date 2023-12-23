@@ -85,6 +85,7 @@ import {
   selectUserFullInfo,
 } from '../../global/selectors';
 import { selectCurrentLimit } from '../../global/selectors/limits';
+import AIService from '../../util/AIService';
 import buildClassName from '../../util/buildClassName';
 import { processMessageInputForCustomEmoji } from '../../util/customEmojiManager';
 import { formatMediaDuration, formatVoiceRecordDuration } from '../../util/dateFormat';
@@ -97,7 +98,6 @@ import { insertHtmlInSelection } from '../../util/selection';
 import { getServerTime } from '../../util/serverTime';
 import { IS_IOS, IS_VOICE_RECORDING_SUPPORTED } from '../../util/windowEnvironment';
 import windowSize from '../../util/windowSize';
-import AIService from '../../services/AIService';
 import applyIosAutoCapitalizationFix from '../middle/composer/helpers/applyIosAutoCapitalizationFix';
 import buildAttachment, { prepareAttachmentsToSend } from '../middle/composer/helpers/buildAttachment';
 import { escapeHtml } from '../middle/composer/helpers/cleanHtml';

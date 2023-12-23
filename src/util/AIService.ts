@@ -7,7 +7,7 @@ export default class AIService {
 
   public async processText(text: string, prompt: string): Promise<void> {
     if (!this.apiKey) {
-      throw new Error('API ключ не найден');
+      return;
     }
     const requestOptions = {
       method: 'POST',
@@ -41,7 +41,7 @@ export default class AIService {
         const fullText = data.choices[0].message.content;
         this.typeTextByParts(fullText);
       } else {
-        throw new Error('Ответ от OpenAI не содержит данных');
+        //
       }
     } catch (error) {
       // eslint-disable-next-line no-console
