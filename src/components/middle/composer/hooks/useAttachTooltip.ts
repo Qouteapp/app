@@ -126,7 +126,7 @@ const useAttachTooltip = (
     if (canAttachMedia) {
       if (canSendPhotos || canSendVideos) {
         newOptions.push({
-          title: 'Photo', icon: 'photo', shortcut: '⌘ ⇧ U', callback: handleQuickSelect,
+          title: 'Photo', icon: 'photo', callback: handleQuickSelect,
         });
       }
       if (canSendDocuments) {

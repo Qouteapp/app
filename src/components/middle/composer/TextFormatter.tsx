@@ -348,7 +348,7 @@ const TextFormatter: FC<OwnProps> = ({
 
   const handleKeyDown = useLastCallback((e: KeyboardEvent) => {
     const HANDLERS_BY_KEY: Record<string, AnyToVoidFunction> = {
-      u: openLinkControl,
+      // k: openLinkControl,
       b: handleBoldText,
       // u: handleUnderlineText,
       i: handleItalicText,
@@ -357,10 +357,17 @@ const TextFormatter: FC<OwnProps> = ({
       p: handleSpoilerText,
     };
 
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'U') {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyU') {
       e.preventDefault();
       e.stopPropagation();
       handleUnderlineText();
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.code === 'KeyU') {
+      e.preventDefault();
+      e.stopPropagation();
+      openLinkControl();
       return;
     }
 

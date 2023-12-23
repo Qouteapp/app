@@ -136,22 +136,6 @@ const AttachMenu: FC<OwnProps> = ({
     };
   }
 
-  const debouncedHandleQuickSelect = debounce(handleQuickSelect, 300);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.shiftKey && e.code === 'KeyU') {
-        e.preventDefault();
-        debouncedHandleQuickSelect();
-      }
-    };
-
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [debouncedHandleQuickSelect]); // добавлены зависимости для useEffect
-
   const handleDocumentSelect = useLastCallback(() => {
     openSystemFilesDialog(!canSendDocuments && canSendAudios
       ? Array.from(SUPPORTED_AUDIO_CONTENT_TYPES).join(',') : (
