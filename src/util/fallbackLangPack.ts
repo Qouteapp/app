@@ -107,7 +107,7 @@ export default {
     otherValue: 'last seen %@ minutes ago',
   },
   'AttachmentMenu.PhotoOrVideo': 'Photo or Video',
-  'AttachmentMenu.PhotoOrVideoHotkey': `Photo or Video ${IS_MAC_OS ? '[⌘+⇧+U]' : '[Ctrl+Shift+U]'}`,
+  'AttachmentMenu.PhotoOrVideoHotkey': 'Photo or Video',
   AttachDocument: 'File',
   SendWithoutSound: 'Send without sound',
   ScheduleMessage: 'Schedule message',

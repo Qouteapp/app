@@ -85,10 +85,12 @@ import {
   selectUserFullInfo,
 } from '../../global/selectors';
 import { selectCurrentLimit } from '../../global/selectors/limits';
+import AIService from '../../util/AIService';
 import buildClassName from '../../util/buildClassName';
 import { processMessageInputForCustomEmoji } from '../../util/customEmojiManager';
 import { formatMediaDuration, formatVoiceRecordDuration } from '../../util/dateFormat';
 import deleteLastCharacterOutsideSelection from '../../util/deleteLastCharacterOutsideSelection';
+import EventBus from '../../util/EventBus';
 import focusEditableElement from '../../util/focusEditableElement';
 import { MEMO_EMPTY_ARRAY } from '../../util/memo';
 import parseHtmlAsFormattedText from '../../util/parseHtmlAsFormattedText';
@@ -1279,6 +1281,44 @@ const Composer: FC<OwnProps & StateProps> = ({
       }
     }
   });
+
+  const deleteSelectedTextAndInsertNew = useLastCallback((newText) => {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+
+    // Удаление выделенного текста
+    selection.deleteFromDocument();
+
+    // Вставка нового текста
+    const newHtml = renderText(newText, ['escape_html', 'emoji_html', 'br_html'])
+      .join('')
+      .replace(/\u200b+/g, '\u200b');
+    insertHtmlAndUpdateCursor(newHtml);
+  });
+
+  const handleSelectAICommand = useLastCallback((text, prompt) => {
+    const aiService = new AIService((updatedText) => {
+      deleteSelectedTextAndInsertNew(updatedText);
+    });
+
+    aiService.processText(text, prompt);
+  });
+
+  useEffect(() => {
+    // Подписываемся на событие EventBus
+    const handler = (text: string, prompt: string) => {
+      handleSelectAICommand(text, prompt);
+    };
+
+    EventBus.on('setAICommandHandler', handler);
+
+    // Отписка от события при размонтировании компонента
+    return () => {
+      EventBus.off('setAICommandHandler', handler);
+    };
+  }, [handleSelectAICommand]);
+
+  EventBus.emit('setAICommandHandler', handleSelectAICommand);
 
   const removeSlashSymbolAttachmentModal = useLastCallback(() => {
     removeSlashSymbol(EDITABLE_INPUT_MODAL_ID);
