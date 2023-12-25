@@ -64,6 +64,7 @@ import {
 import calculateMiddleFooterTransforms from './helpers/calculateMiddleFooterTransforms';
 
 import useAppLayout from '../../hooks/useAppLayout';
+import useCommands from '../../hooks/useCommands';
 import useCustomBackground from '../../hooks/useCustomBackground';
 import useForceUpdate from '../../hooks/useForceUpdate';
 import useHistoryBack from '../../hooks/useHistoryBack';
@@ -415,6 +416,23 @@ function MiddleColumn({
   const handleTabletFocus = useLastCallback(() => {
     openChat({ id: chatId });
   });
+
+  const { runCommand } = useCommands();
+  const handleSwitchToPreviousWorkspace = useLastCallback(() => {
+    runCommand('SELECT_LAST_WORKSPACE');
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && (IS_ELECTRON ? (e.code === 'Tab' || e.keyCode === 9) : e.code === 'Backquote')) {
+        e.preventDefault();
+        handleSwitchToPreviousWorkspace();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSwitchToPreviousWorkspace]);
 
   const handleSubscribeClick = useLastCallback(() => {
     joinChannel({ chatId: chatId! });

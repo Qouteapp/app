@@ -138,7 +138,9 @@ const ChatList: FC<OwnProps> = ({
     }
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code.startsWith('Digit')) {
+      const selection = window.getSelection();
+      const hasSelection = selection && selection.toString() !== '';
+      if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code.startsWith('Digit') && !hasSelection) {
         const [, digit] = e.code.match(/Digit(\d)/) || [];
         if (!digit || RESERVED_HOTKEYS.has(digit)) return;
 
