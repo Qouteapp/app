@@ -16,6 +16,7 @@ type TCommand = (
   | 'OPEN_WORKSPACE_SETTINGS'
   | 'OPEN_AUTOMATION_SETTINGS'
   | 'OPEN_NOTIFICATION_SETTINGS'
+  | 'SELECT_LAST_WORKSPACE'
 );
 
 export default function useCommands() {

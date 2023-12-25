@@ -113,7 +113,7 @@ const LeftSideMenuItems = ({
   } = useWorkspaces();
   const [workspaceHistory, setWorkspaceHistory] = useState<string[]>([currentWorkspaceId]);
 
-  const { runCommand } = useCommands();
+  const { runCommand, useCommand } = useCommands();
 
   const handleOpenWorkspaceSettings = (workspaceId?: string) => {
     runCommand('OPEN_WORKSPACE_SETTINGS', workspaceId);
@@ -142,23 +142,29 @@ const LeftSideMenuItems = ({
 
   const prevWorkspaceShortcut = IS_ELECTRON ? 'Ctrl + Tab' : 'Ctrl + `';
 
+  const handleSwitchToPreviousWorkspace = useLastCallback(() => {
+    const lastWorkspaceId = workspaceHistory[workspaceHistory.length - 2];
+    if (lastWorkspaceId) {
+      handleSelectWorkspace(lastWorkspaceId);
+      showNotification({ message: 'Workspace is changing...' });
+    } else {
+      // Логика для ситуации, когда нет предыдущего воркспейса
+    }
+  });
+
+  useCommand('SELECT_LAST_WORKSPACE', handleSwitchToPreviousWorkspace);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && (IS_ELECTRON ? (e.code === 'Tab' || e.keyCode === 9) : e.code === 'Backquote')) {
         e.preventDefault();
-        const lastWorkspaceId = workspaceHistory[workspaceHistory.length - 2];
-        if (lastWorkspaceId) {
-          handleSelectWorkspace(lastWorkspaceId);
-          showNotification({ message: 'Workspace is changing...' });
-        } else {
-          //
-        }
+        handleSwitchToPreviousWorkspace();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [workspaceHistory, handleSelectWorkspace]);
+  }, [handleSwitchToPreviousWorkspace]);
 
   /*
   const handleDarkModeToggle = useLastCallback((e: React.SyntheticEvent<HTMLElement>) => {
