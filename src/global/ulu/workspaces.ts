@@ -1,4 +1,5 @@
 import type { ChatTimeSnapshot, Workspace } from '../../types';
+import { WorkspaceSchema } from '../../types';
 
 import { DEFAULT_WORKSPACE, LOCAL_STORAGE_KEYS, WORKSPACE_CHAT_TIME_SNAPSHOT_STALE_MINUTES } from '../../config';
 import { LocalStorage } from '../../lib/localStorage';
@@ -8,10 +9,14 @@ import { actualizeChatTimeSnapshot, buildChatTimeSnapshot } from '../helpers';
 const lsWorkspaces = new LocalStorage<Workspace[]>();
 const lsCurrentWorkspaceId = new LocalStorage<string>();
 
+export function isWorkspaceValid(workspace: Workspace) {
+  return WorkspaceSchema.safeParse(workspace).success;
+}
+
 function reconstructPersonalWorkspace(savedPersonalWorkspace: Workspace) {
   return {
     ...DEFAULT_WORKSPACE,
-    ...savedPersonalWorkspace,
+    ...(isWorkspaceValid(savedPersonalWorkspace) ? savedPersonalWorkspace : {}),
   };
 }
 
