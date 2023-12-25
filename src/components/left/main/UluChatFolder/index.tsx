@@ -3,6 +3,8 @@ import React, { memo } from '../../../../lib/teact/teact';
 
 import buildClassName from '../../../../util/buildClassName';
 
+import { useFocusMode } from '../../../../hooks/useFocusMode';
+
 import SvgArchivedChats from './SvgArchivedChats';
 import SvgInbox from './SvgInbox';
 import SvgSavedMessages from './SvgSavedMessages';
@@ -28,6 +30,7 @@ const UluChatFolder: FC<OwnProps> = ({
   active, type, title, messagesUnreadCount, onClick, shouldStressUnreadMessages,
 }) => {
   const IconComponent = componentByType[type];
+  const { isFocusModeEnabled } = useFocusMode();
 
   const classNameWrapper = buildClassName(
     styles.wrapper,
@@ -54,7 +57,11 @@ const UluChatFolder: FC<OwnProps> = ({
           {title}
         </div>
       </div>
-      { !!messagesUnreadCount && (<div className={styles.unread}>{ messagesUnreadCount }</div>) }
+      { !!messagesUnreadCount && !isFocusModeEnabled && (
+        <div className={styles.unread}>
+          { messagesUnreadCount }
+        </div>
+      ) }
     </div>
   );
 };
