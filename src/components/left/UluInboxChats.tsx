@@ -51,13 +51,15 @@ const UluInboxChats: FC<OwnProps> = ({
   const lang = useLang();
 
   const { doneAllReadChats } = useDone();
-  const { isInitialMarkAsDone, setIsInitialMarkAsDone } = useStorage();
+  const { isArchiveWhenDoneEnabled, isInitialMarkAsDone, setIsInitialMarkAsDone } = useStorage();
   useEffect(() => {
     if (!isInitialMarkAsDone) {
       setIsInitialMarkAsDone(true);
-      doneAllReadChats();
+      if (!isArchiveWhenDoneEnabled) {
+        doneAllReadChats();
+      }
     }
-  }, [isInitialMarkAsDone, setIsInitialMarkAsDone, doneAllReadChats]);
+  }, [isInitialMarkAsDone, isArchiveWhenDoneEnabled, setIsInitialMarkAsDone, doneAllReadChats]);
 
   useHistoryBack({
     isActive,
