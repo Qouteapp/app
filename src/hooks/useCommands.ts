@@ -15,6 +15,7 @@ type TCommand = (
   | 'LOCK_SCREEN'
   | 'OPEN_WORKSPACE_SETTINGS'
   | 'OPEN_AUTOMATION_SETTINGS'
+  | 'OPEN_NOTIFICATION_SETTINGS'
 );
 
 export default function useCommands() {

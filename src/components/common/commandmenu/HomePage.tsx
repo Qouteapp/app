@@ -1,12 +1,13 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react/jsx-no-bind */
-import React from 'react';
+import React, { useCallback } from 'react';
 // eslint-disable-next-line react/no-deprecated
 import { Command } from 'cmdk';
 
 import type { ApiUser } from '../../../api/types';
 import type { Workspace } from '../../../types';
 
+import useCommands from '../../../hooks/useCommands';
 import useLang from '../../../hooks/useLang';
 
 import AIGroup from './HomePage/AIGroup';
@@ -89,6 +90,12 @@ const HomePage: React.FC<OwnProps> = ({
 }) => {
   const lang = useLang();
 
+  const { runCommand } = useCommands();
+  const handleOpenNotificationScreen = useCallback(() => {
+    runCommand('OPEN_NOTIFICATION_SETTINGS');
+    close();
+  }, [close, runCommand]);
+
   return (
     <>
       <AIGroup
@@ -163,6 +170,12 @@ const HomePage: React.FC<OwnProps> = ({
         >
           <i className="icon icon-darkmode" />
           <span>Change interface theme</span>
+        </Command.Item>
+        <Command.Item
+          onSelect={handleOpenNotificationScreen}
+        >
+          <i className="icon icon-unmute" />
+          <span>Notifications settings</span>
         </Command.Item>
         <Command.Item onSelect={commandDoneAll}>
           <i className="icon icon-readchats" />

@@ -152,6 +152,12 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     }
   });
 
+  const handleOpenNotificationScreen = useLastCallback(() => {
+    requestNextSettingsScreen({ screen: SettingsScreens.Notifications });
+  });
+
+  useCommand('OPEN_NOTIFICATION_SETTINGS', handleOpenNotificationScreen);
+
   useHotkeys(canSetPasscode ? {
     'Meta+L': handleLockScreenHotkey,
     ...(IS_APP && { 'Meta+L': handleLockScreenHotkey }),
