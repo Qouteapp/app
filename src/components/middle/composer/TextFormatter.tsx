@@ -347,6 +347,10 @@ const TextFormatter: FC<OwnProps> = ({
   });
 
   const handleKeyDown = useLastCallback((e: KeyboardEvent) => {
+    const selectedText = window.getSelection()?.toString() || '';
+    if (selectedText.length === 0) {
+      return;
+    }
     const HANDLERS_BY_KEY: Record<string, AnyToVoidFunction> = {
       // k: openLinkControl,
       b: handleBoldText,

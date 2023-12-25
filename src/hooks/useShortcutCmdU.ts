@@ -12,6 +12,10 @@ function useShortcutCmdU() {
   const { track } = useJune();
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const selectedText = window.getSelection()?.toString() || '';
+    if (selectedText.length > 0) {
+      return;
+    }
     if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && !e.shiftKey && e.code === 'KeyU') {
       e.preventDefault();
       const global = getGlobal();
