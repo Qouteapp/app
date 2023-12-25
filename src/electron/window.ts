@@ -85,12 +85,12 @@ export function createWindow(url?: string) {
     },
     ...(IS_WINDOWS && {
       material: 'acrylic',
-      transparent: true,
+      /* transparent: true, */
     }),
     ...(IS_MAC_OS && {
       titleBarStyle: 'hidden',
       trafficLightPosition: TRAFFIC_LIGHT_POSITION.standard,
-      transparent: true,
+      /* transparent: true, */
       vibrancy: 'sidebar',
     }),
   });
