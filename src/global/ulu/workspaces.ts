@@ -8,6 +8,34 @@ import { actualizeChatTimeSnapshot, buildChatTimeSnapshot } from '../helpers';
 const lsWorkspaces = new LocalStorage<Workspace[]>();
 const lsCurrentWorkspaceId = new LocalStorage<string>();
 
+function reconstructPersonalWorkspace(savedPersonalWorkspace: Workspace) {
+  return {
+    ...DEFAULT_WORKSPACE,
+    ...savedPersonalWorkspace,
+  };
+}
+
+export function prepareWorkspaces(workspaces: Workspace[]) {
+  const workspacesFiltered = [...workspaces];
+  let personalWorkspace: Workspace = { ...DEFAULT_WORKSPACE };
+
+  const savedPersonalWorkspaceIndex = workspacesFiltered.findIndex((ws) => ws.id === DEFAULT_WORKSPACE.id);
+  if (savedPersonalWorkspaceIndex !== -1) {
+    personalWorkspace = workspacesFiltered.splice(savedPersonalWorkspaceIndex, 1)[0];
+  }
+
+  const reconstructedPersonalWorkspace = reconstructPersonalWorkspace(personalWorkspace);
+  const allWorkspaces = [reconstructedPersonalWorkspace, ...workspacesFiltered];
+
+  return { allWorkspaces, filteredWorkspaces: workspacesFiltered };
+}
+
+export function getWorkspaceById(workspaces: Workspace[]) {
+  return (wsId: string) => {
+    return workspaces.find((ws: Workspace) => ws.id === wsId) || DEFAULT_WORKSPACE;
+  };
+}
+
 export function getWorkspaces() {
   const savedWorkspaces = lsWorkspaces.getOrFallback(LOCAL_STORAGE_KEYS.WORKSPACES, [])!;
   const currentWorkspaceId = lsCurrentWorkspaceId.getOrFallback(
@@ -15,19 +43,16 @@ export function getWorkspaces() {
     DEFAULT_WORKSPACE.id,
   );
 
-  const getWorkspaceById = (wsId: string) => (
-    savedWorkspaces.find((ws: Workspace) => ws.id === wsId)
-    || DEFAULT_WORKSPACE
-  );
+  const getWSById = getWorkspaceById(savedWorkspaces);
 
-  const currentWorkspace = getWorkspaceById(currentWorkspaceId!);
+  const currentWorkspace = getWSById(currentWorkspaceId!);
 
-  const allWorkspaces = [DEFAULT_WORKSPACE, ...savedWorkspaces];
+  const { allWorkspaces, filteredWorkspaces } = prepareWorkspaces(savedWorkspaces);
 
   return {
     currentWorkspaceId,
     currentWorkspace,
-    savedWorkspaces,
+    savedWorkspaces: filteredWorkspaces,
     allWorkspaces,
   };
 }

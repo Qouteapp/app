@@ -1,4 +1,4 @@
-import { DEFAULT_WORKSPACE } from '../config';
+import { getWorkspaceById, prepareWorkspaces } from '../global/ulu/workspaces';
 import { useStorage } from './useStorage';
 
 export function useWorkspaces() {
@@ -6,13 +6,14 @@ export function useWorkspaces() {
     currentWorkspaceId, setCurrentWorkspaceId, savedWorkspaces, setSavedWorkspaces,
   } = useStorage();
 
-  const savedWorkspacesFiltered = savedWorkspaces.filter((ws) => ws.id !== DEFAULT_WORKSPACE.id);
+  const {
+    filteredWorkspaces: savedWorkspacesFiltered,
+    allWorkspaces,
+  } = prepareWorkspaces(savedWorkspaces);
 
-  const allWorkspaces = [DEFAULT_WORKSPACE, ...savedWorkspacesFiltered];
+  const getWSById = getWorkspaceById(allWorkspaces);
 
-  const getWorkspaceById = (wsId: string) => allWorkspaces.find((ws) => ws.id === wsId) || DEFAULT_WORKSPACE; // todo;
-
-  const currentWorkspace = getWorkspaceById(currentWorkspaceId);
+  const currentWorkspace = getWSById(currentWorkspaceId);
 
   return {
     currentWorkspaceId,
@@ -21,6 +22,6 @@ export function useWorkspaces() {
     savedWorkspaces: savedWorkspacesFiltered,
     setSavedWorkspaces,
     allWorkspaces,
-    getWorkspaceById,
+    getWorkspaceById: getWSById,
   };
 }
