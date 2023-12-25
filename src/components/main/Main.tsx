@@ -52,6 +52,7 @@ import {
   IS_ANDROID, IS_ELECTRON, IS_FIREFOX, IS_IOS, IS_LINUX, IS_MAC_OS, IS_SAFARI, IS_WINDOWS, IS_YA_BROWSER,
 } from '../../util/windowEnvironment';
 
+import useAIHotkeys from '../../hooks/useAIHotkeys';
 import useAppLayout from '../../hooks/useAppLayout';
 import useArchiver from '../../hooks/useArchiver';
 import useBackgroundMode from '../../hooks/useBackgroundMode';
@@ -398,6 +399,7 @@ const Main: FC<OwnProps & StateProps> = ({
   useShortcutCmdShiftL();
   useShortcutCmdShiftM();
   useShortcutCmdG();
+  useAIHotkeys();
 
   useEffect(() => {
     if (!IS_ELECTRON) {
