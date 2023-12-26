@@ -23,9 +23,6 @@ export type OwnProps = {
   isReminder?: boolean;
 };
 
-const calendarElement = document.getElementById('calendar-root');
-const calendarRoot = createRoot(calendarElement!);
-
 const CommandMenuCalendar = ({
   isOpen,
   setOpen,
@@ -292,6 +289,12 @@ const CommandMenuCalendar = ({
     </Command.Dialog>
   );
 
+  const calendarRoot = useMemo(() => {
+    // const calendarElement = document.getElementById('calendar-root');
+    const calendarRootElement = document.createElement('div');
+    // calendarElement!.appendChild(calendarRootElement);
+    return createRoot(calendarRootElement!);
+  }, []);
   calendarRoot.render(CommandMenuInner);
   return <div />;
 };

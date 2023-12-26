@@ -11,9 +11,11 @@ function useShortcutCmdH() {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const global = getGlobal();
     const currentChatId = selectCurrentChat(global)?.id;
-    if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code === 'KeyH' && currentChatId) {
+    if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code === 'KeyH') {
       e.preventDefault();
-      snooze({ chatId: currentChatId });
+      if (currentChatId) {
+        snooze({ chatId: currentChatId });
+      }
     }
   }, [snooze]);
 
