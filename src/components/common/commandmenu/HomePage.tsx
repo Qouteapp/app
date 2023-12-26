@@ -125,6 +125,10 @@ const HomePage: React.FC<OwnProps> = ({
           >
             <i className="icon icon-schedule" />
             <span>Set a reminder for this chat</span>
+            <span className="shortcuts">
+              <span className="kbd">⌘</span>
+              <span className="kbd">H</span>
+            </span>
           </Command.Item>
           <Command.Item onSelect={handleToggleChatUnread}>
             <i
