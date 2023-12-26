@@ -1,8 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable react/no-deprecated */
-/* eslint-disable no-null/no-null */
-/* eslint-disable react/jsx-no-bind */
-import { unmountComponentAtNode } from 'react-dom';
 import React, { useEffect, useState } from '../lib/teact/teact';
 
 import { SCHEDULED_WHEN_ONLINE } from '../config';
@@ -33,24 +28,21 @@ const useSchedule = (
     handleMessageSchedule(new Date(SCHEDULED_WHEN_ONLINE * 1000), true);
   });
 
-  const cmdkRoot = document.getElementById('cmdk-root');
   const handleCloseCalendar = useLastCallback(() => {
     setOnScheduled(undefined);
     onCancel?.();
     setMenuOpen(false);
-    if (cmdkRoot) {
-      unmountComponentAtNode(cmdkRoot);
-    }
-    return null;
   });
 
   const requestCalendar = useLastCallback((whenScheduled: OnScheduledCallback) => {
+    // eslint-disable-next-line no-console
     console.log('requestCalendar called. Opening calendar...');
     setMenuOpen(true);
     setOnScheduled(() => whenScheduled);
   });
 
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.log('useSchedule: isMenuOpen state changed:', isMenuOpen);
   }, [isMenuOpen]);
 

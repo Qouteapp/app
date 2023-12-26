@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { useMemo } from '../lib/teact/teact';
 import TeactDOM from '../lib/teact/teact-dom';
 import { getActions, getGlobal } from '../global';
@@ -6,21 +5,22 @@ import { getActions, getGlobal } from '../global';
 import {
   getChatLink, getMainUsername,
 } from '../global/helpers';
+import { selectCurrentChat } from '../global/selectors';
 import useLastCallback from './useLastCallback';
 import useSchedule from './useSchedule';
 
 export default function useSnooze() {
-  const global = getGlobal();
   const { sendMessage } = getActions();
-  const currentUserId = global.currentUserId || ''; // Ensure currentUserId is a string
 
   // Используем useSchedule здесь, а не внутри других функций
   const [requestCalendar, calendar] = useSchedule(true, true);
 
   // Обработчик, который будет вызван после выбора времени в календаре
   const handleScheduledMessage = useLastCallback((chatId: string, scheduledAt: number, threadId: number = 0) => {
+    // eslint-disable-next-line no-console
     console.log('handleScheduledMessage called', { chatId, scheduledAt });
-
+    const global = getGlobal();
+    const currentUserId = global.currentUserId || ''; // Ensure currentUserId is a string
     const chat = global.chats.byId[chatId];
     const mainUsername = getMainUsername(chat);
 
@@ -42,12 +42,15 @@ export default function useSnooze() {
     });
   });
 
-  const snooze = useLastCallback(({ chatId, threadId = 0 }: { chatId: string; threadId?: number }) => {
-    console.log('snooze called', { chatId });
-
+  const snooze = useLastCallback(({ chatId, threadId = 0 }: { chatId?: string; threadId?: number }) => {
+    const global = getGlobal();
+    const currentChatId = selectCurrentChat(global)?.id;
+    const chatIdSafe = chatId || currentChatId;
+    if (!chatIdSafe) {
+      return;
+    }
     const scheduledMessageHandler = (scheduledAt: number) => {
-      console.log('scheduledMessageHandler called', { scheduledAt });
-      handleScheduledMessage(chatId, scheduledAt, threadId);
+      handleScheduledMessage(chatIdSafe, scheduledAt, threadId);
     };
 
     requestCalendar(scheduledMessageHandler);

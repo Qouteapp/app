@@ -9,8 +9,8 @@ import type { Workspace } from '../../../types';
 
 import useCommands from '../../../hooks/useCommands';
 import useLang from '../../../hooks/useLang';
-import useSnooze from '../../../hooks/useSnooze';
 
+// import useSnooze from '../../../hooks/useSnooze';
 import AIGroup from './HomePage/AIGroup';
 import BillingGroup from './HomePage/BillingGroup';
 import CreateNewGroup from './HomePage/CreateNewGroup';
@@ -97,7 +97,12 @@ const HomePage: React.FC<OwnProps> = ({
     close();
   }, [close, runCommand]);
 
-  const { snooze } = useSnooze();
+  const handleSnoozeChat = useCallback(() => {
+    close();
+    setTimeout(() => {
+      runCommand('SNOOZE_CHAT');
+    }, 100); // for focus
+  }, [close, runCommand]);
 
   return (
     <>
@@ -118,11 +123,7 @@ const HomePage: React.FC<OwnProps> = ({
               </span>
             </Command.Item>
           )}
-          <Command.Item onSelect={() => {
-            snooze({ chatId: currentChatId });
-            close();
-          }}
-          >
+          <Command.Item onSelect={handleSnoozeChat}>
             <i className="icon icon-schedule" />
             <span>Set a reminder for this chat</span>
             <span className="shortcuts">
