@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable react/jsx-no-bind */
 /* eslint-disable no-async-without-await/no-async-without-await */
 import React from 'react';
@@ -38,13 +37,6 @@ const CommandMenuCalendar = ({
   const customFilter = (value: string, search: string) => {
     return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
   };
-
-  useEffect(() => {
-    console.log('CommandMenuCalendar: isOpen prop changed:', isOpen);
-    if (isOpen) {
-      console.log('CommandMenuCalendar: Rendering calendar dialog...');
-    }
-  }, [isOpen]);
 
   const placeholderText = isReminder
     ? 'Remind me at... [Try: 8 am, 3 days, aug 7]' : 'Schedule at... [Try: 8 am, 3 days, aug 7]';
