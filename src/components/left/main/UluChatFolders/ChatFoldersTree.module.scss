@@ -2,3 +2,7 @@
 	max-height: 100%;
 	overflow-y: overlay;
 }
+
+body.is-macos.is-electron .infinite-scroll {
+	max-height: calc(100% + 3.5rem);
+}

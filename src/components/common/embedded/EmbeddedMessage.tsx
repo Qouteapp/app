@@ -51,6 +51,7 @@ type OwnProps = {
   customText?: string;
   noUserColors?: boolean;
   isProtected?: boolean;
+  isInComposer?: boolean;
   chatTranslations?: ChatTranslatedMessages;
   requestedChatTranslationLanguage?: string;
   observeIntersectionForLoading?: ObserveFn;
@@ -59,6 +60,7 @@ type OwnProps = {
 };
 
 const NBSP = '\u00A0';
+const EMOJI_SIZE = 17;
 
 const EmbeddedMessage: FC<OwnProps> = ({
   className,
@@ -70,6 +72,7 @@ const EmbeddedMessage: FC<OwnProps> = ({
   title,
   customText,
   isProtected,
+  isInComposer,
   noUserColors,
   chatTranslations,
   requestedChatTranslationLanguage,
@@ -117,6 +120,7 @@ const EmbeddedMessage: FC<OwnProps> = ({
       return renderTextWithEntities({
         text: replyInfo.quoteText.text,
         entities: replyInfo.quoteText.entities,
+        noLineBreaks: isInComposer,
       });
     }
 
@@ -143,6 +147,7 @@ const EmbeddedMessage: FC<OwnProps> = ({
         translatedText={translatedText}
         observeIntersectionForLoading={observeIntersectionForLoading}
         observeIntersectionForPlaying={observeIntersectionForPlaying}
+        emojiSize={EMOJI_SIZE}
       />
     );
   }
@@ -168,10 +173,15 @@ const EmbeddedMessage: FC<OwnProps> = ({
     }
 
     const isChatSender = senderChat?.id === sender?.id;
+    const isReplyToQuote = isInComposer && Boolean(replyInfo && 'quoteText' in replyInfo && replyInfo?.quoteText);
 
     return (
       <>
-        {!isChatSender && <span className="embedded-sender">{renderText(senderTitle)}</span>}
+        {!isChatSender && (
+          <span className="embedded-sender">
+            {renderText(isReplyToQuote ? lang('ReplyToQuote', senderTitle) : senderTitle)}
+          </span>
+        )}
         {icon && <Icon name={icon} className="embedded-chat-icon" />}
         {icon && senderChatTitle && renderText(senderChatTitle)}
       </>
@@ -193,11 +203,14 @@ const EmbeddedMessage: FC<OwnProps> = ({
       onMouseDown={handleMouseDown}
     >
       {mediaThumbnail && renderPictogram(mediaThumbnail, mediaBlobUrl, isRoundVideo, isProtected, isSpoiler)}
-      {sender?.backgroundEmojiId && (
-        <EmojiIconBackground emojiDocumentId={sender.backgroundEmojiId} className="EmbeddedMessage--background-icons" />
+      {sender?.color?.backgroundEmojiId && (
+        <EmojiIconBackground
+          emojiDocumentId={sender.color.backgroundEmojiId}
+          className="EmbeddedMessage--background-icons"
+        />
       )}
       <div className="message-text">
-        <p className="embedded-text-wrapper">
+        <p className={buildClassName('embedded-text-wrapper', isQuote && 'multiline')}>
           {renderTextContent()}
         </p>
         <div className="message-title">

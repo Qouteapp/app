@@ -3,6 +3,8 @@ import React, { memo } from '../../../../lib/teact/teact';
 
 import buildClassName from '../../../../util/buildClassName';
 
+import { useFocusMode } from '../../../../hooks/useFocusMode';
+
 import SvgArchivedChats from './SvgArchivedChats';
 import SvgInbox from './SvgInbox';
 import SvgSavedMessages from './SvgSavedMessages';
@@ -13,7 +15,7 @@ type OwnProps = {
   type: 'inbox' | 'saved-messages' | 'archived-chats';
   title: string;
   messagesUnreadCount?: number;
-  active: boolean;
+  active?: boolean;
   shouldStressUnreadMessages: boolean;
   onClick: NoneToVoidFunction;
 };
@@ -28,13 +30,14 @@ const UluChatFolder: FC<OwnProps> = ({
   active, type, title, messagesUnreadCount, onClick, shouldStressUnreadMessages,
 }) => {
   const IconComponent = componentByType[type];
+  const { isFocusModeEnabled } = useFocusMode();
 
   const classNameWrapper = buildClassName(
     styles.wrapper,
     active && styles.active,
     !!messagesUnreadCount && shouldStressUnreadMessages && styles['has-unread-messages'],
   );
-  const svgFill = active ? 'var(--color-white)' : 'var(--color-gray)';
+  const svgFill = active ? 'var(--color-text)' : 'var(--color-text-secondary)';
 
   // TODO use <ListItem/> with <Ripple/>
   return (
@@ -54,7 +57,11 @@ const UluChatFolder: FC<OwnProps> = ({
           {title}
         </div>
       </div>
-      { !!messagesUnreadCount && (<div className={styles.unread}>{ messagesUnreadCount }</div>) }
+      { !!messagesUnreadCount && !isFocusModeEnabled && (
+        <div className={styles.unread}>
+          { messagesUnreadCount }
+        </div>
+      ) }
     </div>
   );
 };

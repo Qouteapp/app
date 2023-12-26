@@ -115,11 +115,12 @@ const PinMessageModal: FC<OwnProps & StateProps> = ({
         >
           {lang('PinMessageAlertTitle')}
           <div className="hotkey-frame">
-            <div className="hotkey-icon"></div>
+            <div className="enter-hotkey-icon"></div>
           </div>
         </Button>
         <Button
           className="confirm-dialog-button"
+          color="secondary"
           isText
           onClick={onClose}
         >

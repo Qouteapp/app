@@ -18,6 +18,9 @@ export type TreeItemChat<T extends any> = TreeItem<T> & {
   user?: ApiUser;
   canChangeFolder?: boolean;
   isPinned?: boolean;
+  isCurrentChat?: boolean;
+  isTempChat?: boolean;
+  isFirst?: boolean;
   folderId?: number;
 };
 

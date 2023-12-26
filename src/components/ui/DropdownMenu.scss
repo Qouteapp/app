@@ -8,16 +8,29 @@
     }
     .Placeholder-UluHeaderProfile {
       display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.5rem; /* или используйте var(--border-radius-default-tiny) если это уместно */
-    width: 24px;
-    height: 24px;
-    background: rgba(255, 255, 255, 0.094);; /* Серый фон */
-    color: rgba(255, 255, 255, 0.443); /* Цвет текста */
-    font-size: 14px; /* Размер шрифта для первой буквы */
-    font-weight: bold;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      height: 1.5rem;
+      width: 1.5rem;
+      background: var(--color-interactive-element-hover);
+      color: var(--color-text);
+      font-size: 14px;
+      font-weight: bold;
     }
 
+    .ProfilePhoto {
+    background-color: var(--color-interactive-element-hover);
+    border-radius: 0.5rem;
+    
+    
+    .thumb:not(.shown) {
+      display: none !important; 
+    }
+
+  }
+}
+.thumb:not(.shown) {
+  display: none !important; 
 }
 

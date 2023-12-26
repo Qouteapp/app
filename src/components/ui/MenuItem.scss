@@ -136,10 +136,10 @@
     transition: 0.15s ease-in-out transform;
 
     &.compact.secondary {
-      color: rgba(255, 255, 255, 0.24);
+      color: var(--color-text-secondary);
 
       &:hover {
-        color: rgba(255, 255, 255, 0.64);
+        color: var(--color-text);
       }
 
       .icon {
@@ -207,15 +207,23 @@
     font-size: small;
     line-height: 1.125rem;
   }
-}
 
-.MenuItem.ProfilePhoto {
-  height: 1.25rem;
-  width: 1.25rem;
-  background-size: cover;
-  border-radius: 6px;
-  margin-right: 0.5rem;
-  overflow: hidden;
+  .ProfilePhoto {
+    height: 1.25rem;
+    width: 1.25rem;
+    background-size: cover;
+    border-radius: 6px;
+    margin-right: 0.5rem;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    vertical-align: inherit;
+
+    :global(.no-photo) {
+      border-radius: inherit;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+  }
 }
 
 .MenuItem.placeholder {

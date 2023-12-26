@@ -3,6 +3,7 @@ import type { FC } from '../../../lib/teact/teact';
 import React, { memo, useCallback } from '../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../global';
 
+import type { ApiChat } from '../../../api/types';
 import type { ISettings } from '../../../types';
 import { LeftColumnContent } from '../../../types';
 
@@ -12,6 +13,7 @@ import { uluGetTranslatedString } from '../../../util/fallbackLangPackInitial';
 
 import useCommands from '../../../hooks/useCommands';
 import { useFolderManagerForOrderedIds, useFolderManagerForUnreadCounters } from '../../../hooks/useFolderManager';
+import { useJune } from '../../../hooks/useJune';
 import { useStorage } from '../../../hooks/useStorage';
 
 import UluChatFolder from './UluChatFolder';
@@ -28,15 +30,17 @@ type OwnProps = {
 type StateProps = {
   isSavedMessages: boolean;
   isInbox: boolean;
+  chatsById: Record<string, ApiChat>;
 } & Pick<ISettings, 'language'>;
 
 const UluSystemFolders: FC<OwnProps & StateProps> = ({
-  userId, language, content, isSavedMessages, onLeftColumnContentChange, isInbox, ref,
+  userId, language, isSavedMessages, onLeftColumnContentChange, ref,
+  chatsById,
 }) => {
   const titleInbox = uluGetTranslatedString('Sidebar.SystemFolders.Inbox', language);
   const titleSavedMessages = uluGetTranslatedString('Sidebar.SystemFolders.SavedMessages', language);
   const titleArchivedChats = uluGetTranslatedString('Sidebar.SystemFolders.ArchivedChats', language);
-
+  const { track } = useJune();
   const { focusLastMessage, openChat } = getActions();
 
   const handleOpenSavedMessages = useCallback(() => {
@@ -50,7 +54,8 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
 
   const handleOpenInbox = useCallback(() => {
     onLeftColumnContentChange(LeftColumnContent.UluInbox);
-  }, [onLeftColumnContentChange]);
+    track?.('Open Inbox');
+  }, [onLeftColumnContentChange, track]);
 
   const { useCommand } = useCommands();
   useCommand('OPEN_INBOX', handleOpenInbox);
@@ -63,13 +68,19 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
   const savedMessagesUnreadCount = userId ? unreadCounters[userId]?.chatsCount : 0;
 
   const orderedIdsAll = useFolderManagerForOrderedIds(ALL_FOLDER_ID);
-  const orderedIdsInbox = orderedIdsAll?.filter((orderedId) => !doneChatIds.includes(orderedId));
-  const inboxUnreadCount = (orderedIdsInbox || []).length;
+  const inboxChatIds = orderedIdsAll?.filter((orderedId) => !doneChatIds.includes(orderedId)) || [];
+  const inboxUnreadCount = inboxChatIds.reduce((acc, chatId) => {
+    const chat = chatsById[chatId];
+    return chat && !chat.isMuted && Boolean(chat.unreadCount || chat.unreadMentionsCount || chat.hasUnreadMark)
+      ? acc + 1
+      : acc;
+  }, 0);
+
+  window.electron?.updateTrayTitle(inboxUnreadCount);
 
   return (
     <UluChatFoldersWrapper ref={ref}>
       <UluChatFolder
-        active={isInbox}
         shouldStressUnreadMessages={false}
         type="inbox"
         title={titleInbox}
@@ -85,7 +96,6 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
         onClick={handleOpenSavedMessages}
       />
       <UluChatFolder
-        active={content === LeftColumnContent.Archived}
         shouldStressUnreadMessages={false}
         type="archived-chats"
         title={titleArchivedChats}
@@ -105,6 +115,7 @@ export default memo(withGlobal<OwnProps>(
       language: global.settings.byKey.language,
       isSavedMessages: isChatWithSelf,
       isInbox: activeChatFolder === ALL_FOLDER_ID && chatId === undefined,
+      chatsById: global.chats.byId,
     });
   },
 )(UluSystemFolders));

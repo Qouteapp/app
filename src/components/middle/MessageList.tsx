@@ -1,6 +1,7 @@
 import type { FC } from '../../lib/teact/teact';
 import React, {
   memo,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -53,7 +54,6 @@ import {
   selectScrollOffset,
   selectTabState,
   selectThreadInfo,
-  selectThreadTopMessageId,
 } from '../../global/selectors';
 import animateScroll, { isAnimatingScroll, restartCurrentScrollAnimation } from '../../util/animateScroll';
 import buildClassName from '../../util/buildClassName';
@@ -87,6 +87,7 @@ type OwnProps = {
   chatId: string;
   threadId: number;
   type: MessageListType;
+  isComments?: boolean;
   canPost: boolean;
   isReady: boolean;
   onFabToggle: (shouldShow: boolean) => void;
@@ -108,25 +109,26 @@ type StateProps = {
   isRepliesChat?: boolean;
   isCreator?: boolean;
   isBot?: boolean;
+  isSynced?: boolean;
   messageIds?: number[];
   messagesById?: Record<number, ApiMessage>;
   firstUnreadId?: number;
-  isComments?: boolean;
   isViewportNewest?: boolean;
   isRestricted?: boolean;
   restrictionReason?: ApiRestrictionReason;
   focusingId?: number;
   isSelectModeActive?: boolean;
   lastMessage?: ApiMessage;
-  threadTopMessageId?: number;
   hasLinkedChat?: boolean;
   topic?: ApiTopic;
   noMessageSendingAnimation?: boolean;
   isServiceNotificationsChat?: boolean;
+  isEmptyThread?: boolean;
+  isForum?: boolean;
 };
 
-const MESSAGE_REACTIONS_POLLING_INTERVAL = 15 * 1000;
-const MESSAGE_COMMENTS_POLLING_INTERVAL = 15 * 1000;
+const MESSAGE_REACTIONS_POLLING_INTERVAL = 20 * 1000;
+const MESSAGE_COMMENTS_POLLING_INTERVAL = 20 * 1000;
 const MESSAGE_STORY_POLLING_INTERVAL = 5 * 60 * 1000;
 const BOTTOM_THRESHOLD = 50;
 const UNREAD_DIVIDER_TOP = 10;
@@ -150,9 +152,11 @@ const MessageList: FC<OwnProps & StateProps> = ({
   // doesChatSupportThreads,
   isCurrentUserPremium,
   isChatLoaded,
+  isForum,
   isChannelChat,
   isGroupChat,
   canPost,
+  isSynced,
   isReady,
   isChatWithSelf,
   isRepliesChat,
@@ -165,10 +169,10 @@ const MessageList: FC<OwnProps & StateProps> = ({
   isViewportNewest,
   isRestricted,
   restrictionReason,
+  isEmptyThread,
   focusingId,
   isSelectModeActive,
   lastMessage,
-  threadTopMessageId,
   hasLinkedChat,
   withBottomShift,
   withDefaultBg,
@@ -234,6 +238,11 @@ const MessageList: FC<OwnProps & StateProps> = ({
 
     const handleScroll = (e: WheelEvent) => {
       if (containerRef.current && containerRef.current.contains(e.target as Node)) {
+        // Проверка на вертикальный скролл
+        if (Math.abs(e.deltaY) > 50) {
+          return; // Прекращаем выполнение, если был вертикальный скролл более 50 пикселей
+        }
+
         if (e.deltaX > minDeltaX) {
           handleSwipeLeftToRight();
         } else if (e.deltaX < -minDeltaX) {
@@ -250,10 +259,10 @@ const MessageList: FC<OwnProps & StateProps> = ({
   }, [containerRef]);
 
   useEffect(() => {
-    if (!isCurrentUserPremium && isChannelChat && isReady) {
+    if (!isCurrentUserPremium && isChannelChat && isSynced && isReady) {
       loadSponsoredMessages({ chatId });
     }
-  }, [isCurrentUserPremium, chatId, isReady, isChannelChat]);
+  }, [isCurrentUserPremium, chatId, isSynced, isReady, isChannelChat]);
 
   // Updated only once when messages are loaded (as we want the unread divider to keep its position)
   useSyncEffect(() => {
@@ -298,16 +307,20 @@ const MessageList: FC<OwnProps & StateProps> = ({
       : ['id'];
 
     return listedMessages.length
-      ? groupMessages(orderBy(listedMessages, orderRule), memoUnreadDividerBeforeIdRef.current)
+      ? groupMessages(
+        orderBy(listedMessages, orderRule),
+        memoUnreadDividerBeforeIdRef.current,
+        !isForum ? threadId : undefined,
+        isChatWithSelf,
+      )
       : undefined;
-  }, [messageIds, messagesByIdFiltered, type, isServiceNotificationsChat]);
+  }, [messageIds, messagesByIdFiltered, type, isServiceNotificationsChat, isForum, threadId, isChatWithSelf]);
 
   useInterval(() => {
     if (!messageIds || !messagesByIdFiltered || type === 'scheduled') {
       return;
     }
-    const ids = messageIds.filter((id) => messagesByIdFiltered[id]?.reactions);
-
+    const ids = messageIds.filter((id) => messagesById[id]?.reactions?.results.length);
     if (!ids.length) return;
 
     loadMessageReactions({ chatId, ids });
@@ -339,8 +352,9 @@ const MessageList: FC<OwnProps & StateProps> = ({
     if (!messageIds || !messagesById || threadId !== MAIN_THREAD_ID || type === 'scheduled') {
       return;
     }
-    const ids = messageIds.filter((id) => messagesById[id]?.repliesThreadInfo?.isComments
-      || messagesById[id]?.views !== undefined);
+    const global = getGlobal();
+    const ids = messageIds.filter((id) => selectThreadInfo(global, chatId, id)?.isCommentsInfo
+      || messagesById[id]?.viewsCount !== undefined);
 
     if (!ids.length) return;
 
@@ -446,6 +460,55 @@ const MessageList: FC<OwnProps & StateProps> = ({
     [getContainerHeight, rememberScrollPositionRef],
   );
 
+  const lastScrollTimeRef = useRef(0);
+  const isScrollingRef = useRef(false);
+
+  const scrollHalfPage = useCallback((direction: 'up' | 'down', smooth: boolean = true) => {
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const halfHeight = container.clientHeight / 2;
+
+      if (smooth) {
+        container.scrollTo({
+          top: direction === 'up'
+            ? container.scrollTop - halfHeight : container.scrollTop + halfHeight,
+          behavior: 'smooth',
+        });
+      } else {
+        container.scrollTop = direction === 'up' ? container.scrollTop - halfHeight : container.scrollTop + halfHeight;
+      }
+
+      lastScrollTimeRef.current = Date.now();
+      isScrollingRef.current = true;
+    }
+  }, []);
+
+  const keyDownHandler = useCallback((e) => {
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.altKey) {
+      e.preventDefault();
+      const currentTime = Date.now();
+      const smooth = (currentTime - lastScrollTimeRef.current) > 300 && !isScrollingRef.current;
+      scrollHalfPage(e.key === 'ArrowUp' ? 'up' : 'down', smooth);
+    }
+  }, [scrollHalfPage]); // зависимость от scrollHalfPage
+
+  const keyUpHandler = useCallback((e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      isScrollingRef.current = false;
+    }
+  }, []);
+
+  // Добавление и удаление обработчиков событий
+  useEffect(() => {
+    document.addEventListener('keydown', keyDownHandler);
+    document.addEventListener('keyup', keyUpHandler);
+
+    return () => {
+      document.removeEventListener('keydown', keyDownHandler);
+      document.removeEventListener('keyup', keyUpHandler);
+    };
+  }, [keyDownHandler, keyUpHandler]);
+
   // Handles updated message list, takes care of scroll repositioning
   useLayoutEffectWithPrevDeps(([prevMessageIds, prevIsViewportNewest]) => {
     if (process.env.APP_ENV === 'perf') {
@@ -468,6 +531,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
     }
 
     const container = containerRef.current!;
+
     listItemElementsRef.current = Array.from(container.querySelectorAll<HTMLDivElement>('.message-list-item'));
     const lastItemElement = listItemElementsRef.current[listItemElementsRef.current.length - 1];
     const firstUnreadElement = memoFirstUnreadIdRef.current
@@ -660,6 +724,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
           getContainerHeight={getContainerHeight}
           isViewportNewest={Boolean(isViewportNewest)}
           isUnread={Boolean(firstUnreadId)}
+          isEmptyThread={isEmptyThread}
           withUsers={withUsers}
           noAvatars={noAvatars}
           containerRef={containerRef}
@@ -669,7 +734,6 @@ const MessageList: FC<OwnProps & StateProps> = ({
           threadId={threadId}
           type={type}
           isReady={isReady}
-          threadTopMessageId={threadTopMessageId}
           hasLinkedChat={hasLinkedChat}
           isSchedule={messageGroups ? type === 'scheduled' : false}
           shouldRenderBotInfo={isBot}
@@ -696,12 +760,10 @@ export default memo(withGlobal<OwnProps>(
     const messagesById = type === 'scheduled'
       ? selectChatScheduledMessages(global, chatId)
       : selectChatMessages(global, chatId);
-    const threadTopMessageId = selectThreadTopMessageId(global, chatId, threadId);
-    const threadInfo = selectThreadInfo(global, chatId, threadId);
 
     if (
       threadId !== MAIN_THREAD_ID && !chat?.isForum
-      && !(messagesById && threadTopMessageId && messagesById[threadTopMessageId])
+      && !(messagesById && threadId && messagesById[threadId])
     ) {
       return {};
     }
@@ -718,6 +780,7 @@ export default memo(withGlobal<OwnProps>(
 
     const topic = chat.topics?.[threadId];
     const chatFullInfo = !isUserId(chatId) ? selectChatFullInfo(global, chatId) : undefined;
+    const isEmptyThread = !selectThreadInfo(global, chatId, threadId)?.messagesCount;
 
     return {
       isCurrentUserPremium: selectIsCurrentUserPremium(global),
@@ -731,18 +794,19 @@ export default memo(withGlobal<OwnProps>(
       isChatWithSelf: selectIsChatWithSelf(global, chatId),
       isRepliesChat: isChatWithRepliesBot(chatId),
       isBot: Boolean(chatBot),
+      isSynced: global.isSynced,
       messageIds,
       messagesById,
-      isComments: Boolean(threadInfo?.originChannelId),
       firstUnreadId: selectFirstUnreadId(global, chatId, threadId),
       isViewportNewest: type !== 'thread' || selectIsViewportNewest(global, chatId, threadId),
       focusingId,
       isSelectModeActive: selectIsInSelectMode(global),
-      threadTopMessageId,
       hasLinkedChat: chatFullInfo ? Boolean(chatFullInfo.linkedChatId) : undefined,
       topic,
       noMessageSendingAnimation: !selectPerformanceSettingsValue(global, 'messageSendingAnimations'),
       isServiceNotificationsChat: chatId === SERVICE_NOTIFICATIONS_USER_ID,
+      isForum: chat.isForum,
+      isEmptyThread,
       ...(withLastMessageWhenPreloading && { lastMessage }),
     };
   },

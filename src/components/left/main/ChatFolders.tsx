@@ -9,12 +9,11 @@ import { getActions, getGlobal, withGlobal } from '../../../global';
 import type { ApiChatFolder, ApiChatlistExportedInvite, ApiSession } from '../../../api/types';
 import type { GlobalState } from '../../../global/types';
 import type { FolderEditDispatch } from '../../../hooks/reducers/useFoldersReducer';
-import type { LeftColumnContent } from '../../../types';
+import type { LeftColumnContent, SettingsScreens } from '../../../types';
 import type { MenuItemContextAction } from '../../ui/ListItem';
 import type { TabWithProperties } from '../../ui/TabList';
-import { SettingsScreens } from '../../../types';
 
-import { ALL_FOLDER_ID, IS_STORIES_ENABLED } from '../../../config';
+import { ALL_FOLDER_ID, DEFAULT_WORKSPACE, IS_STORIES_ENABLED } from '../../../config';
 import { selectCanShareFolder, selectTabState } from '../../../global/selectors';
 import { selectCurrentLimit } from '../../../global/selectors/limits';
 import buildClassName from '../../../util/buildClassName';
@@ -29,13 +28,13 @@ import useLang from '../../../hooks/useLang';
 import useLastCallback from '../../../hooks/useLastCallback';
 import useShowTransition from '../../../hooks/useShowTransition';
 import { useStorage } from '../../../hooks/useStorage';
+import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
 import StoryRibbon from '../../story/StoryRibbon';
 import TabList from '../../ui/TabList';
 import Transition from '../../ui/Transition';
 import ChatList from './ChatList';
 import UluChatFoldersDivider from './UluChatFoldersDivider';
-import UluNewChatFolderButton from './UluNewChatFolderButton';
 import UluSystemFolders from './UluSystemChatFolders';
 
 type OwnProps = {
@@ -74,6 +73,7 @@ const SAVED_MESSAGES_HOTKEY = '0';
 const FIRST_FOLDER_INDEX = 0;
 const INVISIBLE_CHAT_TREE_STYLES = 'max-height: 0' as CSSProperties;
 const RECALCULATE_TREE_HEIGHT_INTERVAL_MS = 300;
+const COMMON_PADDING = 16;
 
 const ChatFolders: FC<OwnProps & StateProps> = ({
   leftMainHeaderRef,
@@ -100,8 +100,6 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
   chatId,
   userId,
   chatFoldersPortalRef,
-  dispatch,
-  onScreenSelect,
 }) => {
   const {
     loadChatFolders,
@@ -137,23 +135,35 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
     } satisfies ApiChatFolder;
   }, [orderedFolderIds, lang]);
 
+  const { savedWorkspaces, currentWorkspace } = useWorkspaces();
+
   const displayedFolders = useMemo(() => {
+    // Собираем все ID папок, которые принадлежат другим воркспейсам, кроме personal
+    const allFolderIdsInOtherWorkspaces = savedWorkspaces
+      .filter((ws) => ws.id !== DEFAULT_WORKSPACE.id && ws.folders)
+      .reduce((acc: number[], ws) => [...acc, ...(ws.folders || [])], [] as number[]);
+
     return orderedFolderIds
       ? orderedFolderIds.map((id) => {
-        if (id === ALL_FOLDER_ID) {
-          return allChatsFolder;
+        // Для personal воркспейса добавляем All Chats и папки, которые не входят в другие воркспейсы
+        if (currentWorkspace.id === DEFAULT_WORKSPACE.id) {
+          if (id === ALL_FOLDER_ID || !allFolderIdsInOtherWorkspaces.includes(id)) {
+            return id === ALL_FOLDER_ID ? allChatsFolder : chatFoldersById[id];
+          }
+        } else if (currentWorkspace.folders && currentWorkspace.folders.includes(id)) {
+          return chatFoldersById[id];
         }
-
-        return chatFoldersById[id] || {};
+        return undefined;
       }).filter(Boolean)
       : undefined;
-  }, [chatFoldersById, allChatsFolder, orderedFolderIds]);
+  }, [chatFoldersById, allChatsFolder, orderedFolderIds, currentWorkspace, savedWorkspaces]);
 
   const allChatsFolderIndex = displayedFolders?.findIndex((folder) => folder.id === ALL_FOLDER_ID);
   const isInAllChatsFolder = allChatsFolderIndex === activeChatFolder;
   const isInFirstFolder = FIRST_FOLDER_INDEX === activeChatFolder;
 
   const folderCountersById = useFolderManagerForUnreadCounters();
+
   const folderTabs = useMemo(() => {
     if (!displayedFolders || !displayedFolders.length) {
       return undefined;
@@ -225,11 +235,6 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
     displayedFolders, maxFolders, folderCountersById, lang, chatFoldersById, maxChatLists, folderInvitesById,
     maxFolderInvites,
   ]);
-
-  const handleCreateFolder = useCallback(() => {
-    dispatch({ type: 'reset' });
-    onScreenSelect(SettingsScreens.FoldersCreateFolder);
-  }, [onScreenSelect, dispatch]);
 
   const handleSwitchTab = useLastCallback((index: number) => {
     setActiveChatFolder({ activeChatFolder: index }, { forceOnHeavyAnimation: true });
@@ -348,10 +353,11 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
     let heightSubtractionPx = 0;
     heightSubtractionPx += leftMainHeaderRef.current.getBoundingClientRect().height;
     heightSubtractionPx += uluSystemFoldersRef.current.getBoundingClientRect().height;
+    heightSubtractionPx -= 2 * COMMON_PADDING;
 
-    // if for some reason modifier is still 0 we also hide the tree
+    // if for some reason modifier is still 0 or less we also hide the tree
     // for the same reasons as above
-    if (!heightSubtractionPx) {
+    if (heightSubtractionPx <= 0) {
       return INVISIBLE_CHAT_TREE_STYLES;
     }
 
@@ -395,8 +401,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
         content={content}
         onLeftColumnContentChange={onLeftColumnContentChange}
       />
-      <UluChatFoldersDivider />
-      <UluNewChatFolderButton onCreateFolder={handleCreateFolder} />
+      <UluChatFoldersDivider withBorder={false} />
       {IS_STORIES_ENABLED && shouldRenderStoryRibbon && <StoryRibbon isClosing={isStoryRibbonClosing} />}
       { isFoldersTreeEnabled && (
         <div

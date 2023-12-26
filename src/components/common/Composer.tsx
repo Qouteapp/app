@@ -22,6 +22,7 @@ import type {
   ApiReaction,
   ApiStealthMode,
   ApiSticker,
+  ApiTopic,
   ApiUser,
   ApiVideo,
 } from '../../api/types';
@@ -30,6 +31,7 @@ import type {
   MessageListType, TabState,
 } from '../../global/types';
 import type { IAnchorPosition, InlineBotSettings, ISettings } from '../../types';
+import { MAIN_THREAD_ID } from '../../api/types';
 
 import {
   BASE_EMOJI_KEYWORD_LANG,
@@ -78,17 +80,20 @@ import {
   selectScheduledIds,
   selectTabState,
   selectTheme,
+  selectTopicFromMessage,
   selectUser,
   selectUserFullInfo,
 } from '../../global/selectors';
 import { selectCurrentLimit } from '../../global/selectors/limits';
+import AIService from '../../util/AIService';
 import buildClassName from '../../util/buildClassName';
 import { processMessageInputForCustomEmoji } from '../../util/customEmojiManager';
 import { formatMediaDuration, formatVoiceRecordDuration } from '../../util/dateFormat';
 import deleteLastCharacterOutsideSelection from '../../util/deleteLastCharacterOutsideSelection';
+import EventBus from '../../util/EventBus';
 import focusEditableElement from '../../util/focusEditableElement';
 import { MEMO_EMPTY_ARRAY } from '../../util/memo';
-import parseMessageInput from '../../util/parseMessageInput';
+import parseHtmlAsFormattedText from '../../util/parseHtmlAsFormattedText';
 import { insertHtmlInSelection } from '../../util/selection';
 import { getServerTime } from '../../util/serverTime';
 import { IS_IOS, IS_VOICE_RECORDING_SUPPORTED } from '../../util/windowEnvironment';
@@ -119,6 +124,7 @@ import { useStateRef } from '../../hooks/useStateRef';
 import useSyncEffect from '../../hooks/useSyncEffect';
 import useTimeout from '../../hooks/useTimeout';
 import useAttachmentModal from '../middle/composer/hooks/useAttachmentModal';
+import useAttachTooltip from '../middle/composer/hooks/useAttachTooltip';
 import useBotCommandTooltip from '../middle/composer/hooks/useBotCommandTooltip';
 import useClipboardPaste from '../middle/composer/hooks/useClipboardPaste';
 import useCustomEmojiTooltip from '../middle/composer/hooks/useCustomEmojiTooltip';
@@ -132,6 +138,7 @@ import useVoiceRecording from '../middle/composer/hooks/useVoiceRecording';
 
 import AttachmentModal from '../middle/composer/AttachmentModal.async';
 import AttachMenu from '../middle/composer/AttachMenu';
+import AttachTooltip from '../middle/composer/AttachTooltip.async';
 import BotCommandMenu from '../middle/composer/BotCommandMenu.async';
 import BotCommandTooltip from '../middle/composer/BotCommandTooltip.async';
 import BotKeyboardMenu from '../middle/composer/BotKeyboardMenu';
@@ -187,6 +194,7 @@ type StateProps =
     editingMessage?: ApiMessage;
     chat?: ApiChat;
     draft?: ApiDraft;
+    replyToTopic?: ApiTopic;
     currentMessageList?: MessageList;
     isChatWithBot?: boolean;
     isChatWithSelf?: boolean;
@@ -285,6 +293,7 @@ const Composer: FC<OwnProps & StateProps> = ({
   messageListType,
   draft,
   chat,
+  replyToTopic,
   isForCurrentMessageList,
   isCurrentUserPremium,
   canSendVoiceByPrivacy,
@@ -352,6 +361,7 @@ const Composer: FC<OwnProps & StateProps> = ({
     openPollModal,
     closePollModal,
     loadScheduledHistory,
+    openThread,
     openChat,
     addRecentEmoji,
     sendInlineBotResult,
@@ -874,7 +884,7 @@ const Composer: FC<OwnProps & StateProps> = ({
       return;
     }
 
-    const { text, entities } = parseMessageInput(getHtml());
+    const { text, entities } = parseHtmlAsFormattedText(getHtml());
     if (!text && !attachmentsToSend.length) {
       return;
     }
@@ -945,7 +955,7 @@ const Composer: FC<OwnProps & StateProps> = ({
       }
     }
 
-    const { text, entities } = parseMessageInput(getHtml());
+    const { text, entities } = parseHtmlAsFormattedText(getHtml());
 
     if (currentAttachments.length) {
       if (shouldOpenRepliesChat) openChat(repliesChatToOpen);
@@ -1261,9 +1271,83 @@ const Composer: FC<OwnProps & StateProps> = ({
     removeSymbol(EDITABLE_INPUT_MODAL_ID);
   });
 
+  const removeSlashSymbol = useLastCallback((inInputId = editableInputId) => {
+    const inputElement = document.getElementById(inInputId) || inInputId; // Получаем элемент по ID
+    if (inputElement) {
+      const currentText = inputElement.textContent || '';
+      if (currentText.endsWith('/')) {
+        // Удаление последнего символа
+        inputElement.textContent = currentText.slice(0, -1);
+      }
+    }
+  });
+
+  const deleteSelectedTextAndInsertNew = useLastCallback((newText) => {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+
+    // Удаление выделенного текста
+    selection.deleteFromDocument();
+
+    // Вставка нового текста
+    const newHtml = renderText(newText, ['escape_html', 'emoji_html', 'br_html'])
+      .join('')
+      .replace(/\u200b+/g, '\u200b');
+    insertHtmlAndUpdateCursor(newHtml);
+  });
+
+  const handleSelectAICommand = useLastCallback((text, prompt) => {
+    const aiService = new AIService((updatedText) => {
+      deleteSelectedTextAndInsertNew(updatedText);
+    });
+
+    aiService.processText(text, prompt);
+  });
+
+  useEffect(() => {
+    // Подписываемся на событие EventBus
+    const handler = (text: string, prompt: string) => {
+      handleSelectAICommand(text, prompt);
+    };
+
+    EventBus.on('setAICommandHandler', handler);
+
+    // Отписка от события при размонтировании компонента
+    return () => {
+      EventBus.off('setAICommandHandler', handler);
+    };
+  }, [handleSelectAICommand]);
+
+  EventBus.emit('setAICommandHandler', handleSelectAICommand);
+
+  const removeSlashSymbolAttachmentModal = useLastCallback(() => {
+    removeSlashSymbol(EDITABLE_INPUT_MODAL_ID);
+  });
+
+  const {
+    filteredOptions,
+    isTooltipOpen,
+    closeTooltip,
+  } = useAttachTooltip(
+    Boolean(isInMessageList && isReady && isForCurrentMessageList && !hasAttachments),
+    inputRef,
+    getHtml,
+    getSelectionRange,
+    canAttachMedia,
+    canAttachPolls,
+    canSendPhotos,
+    canSendVideos,
+    canSendAudios,
+    canSendDocuments,
+    handleFileSelect,
+    openPollModal,
+    removeSlashSymbol,
+    removeSlashSymbolAttachmentModal,
+  );
+
   const handleAllScheduledClick = useLastCallback(() => {
-    openChat({
-      id: chatId, threadId, type: 'scheduled', noForumTopicPanel: true,
+    openThread({
+      chatId, threadId, type: 'scheduled', noForumTopicPanel: true,
     });
   });
 
@@ -1308,6 +1392,11 @@ const Composer: FC<OwnProps & StateProps> = ({
   || isCustomSendMenuOpen || Boolean(activeVoiceRecording) || attachments.length > 0 || isInputHasFocus;
   const isReactionSelectorOpen = isComposerHasFocus && !isReactionPickerOpen && isInStoryViewer && !isAttachMenuOpen
     && !isSymbolMenuOpen;
+  const placeholderForForumAsMessages = chat?.isForum && chat?.isForumAsMessages && threadId === MAIN_THREAD_ID
+    ? (replyToTopic
+      ? lang('Chat.InputPlaceholderReplyInTopic', replyToTopic.title)
+      : lang('Message.Placeholder.MessageInGeneral'))
+    : undefined;
 
   useEffect(() => {
     if (isComposerHasFocus) {
@@ -1414,7 +1503,7 @@ const Composer: FC<OwnProps & StateProps> = ({
         showCustomEmojiPremiumNotification();
         return;
       }
-      const customEmojiMessage = parseMessageInput(buildCustomEmojiHtml(sticker));
+      const customEmojiMessage = parseHtmlAsFormattedText(buildCustomEmojiHtml(sticker));
       text = customEmojiMessage.text;
       entities = customEmojiMessage.entities;
     }
@@ -1522,6 +1611,8 @@ const Composer: FC<OwnProps & StateProps> = ({
         onCustomEmojiSelect={handleCustomEmojiSelectAttachmentModal}
         onRemoveSymbol={removeSymbolAttachmentModal}
         onEmojiSelect={insertTextAndUpdateCursorAttachmentModal}
+        removeSlashSymbol={removeSlashSymbol}
+        removeSlashSymbolAttachmentModal={removeSlashSymbolAttachmentModal}
       />
       <PollModal
         isOpen={pollModal.isOpen}
@@ -1551,6 +1642,11 @@ const Composer: FC<OwnProps & StateProps> = ({
         filteredUsers={mentionFilteredUsers}
         onInsertUserName={insertMention}
         onClose={closeMentionTooltip}
+      />
+      <AttachTooltip
+        isOpen={isTooltipOpen}
+        filteredOptions={filteredOptions}
+        onClose={closeTooltip}
       />
       <BotCommandTooltip
         isOpen={isBotCommandTooltipOpen}
@@ -1696,7 +1792,7 @@ const Composer: FC<OwnProps & StateProps> = ({
               activeVoiceRecording && windowWidth <= SCREEN_WIDTH_TO_HIDE_PLACEHOLDER
                 ? ''
                 : (!isComposerBlocked
-                  ? (botKeyboardPlaceholder || inputPlaceholder || lang('Message'))
+                  ? (botKeyboardPlaceholder || inputPlaceholder || lang(placeholderForForumAsMessages || 'Message'))
                   : lang('Chat.PlaceholderTextNotAllowed'))
             }
             timedPlaceholderDate={timedPlaceholderDate}
@@ -1948,13 +2044,20 @@ export default memo(withGlobal<OwnProps>(
 
     const story = storyId && selectPeerStory(global, chatId, storyId);
     const sentStoryReaction = story && 'sentReaction' in story ? story.sentReaction : undefined;
+    const draft = selectDraft(global, chatId, threadId);
+    const replyToMessage = draft?.replyInfo
+      ? selectChatMessage(global, chatId, draft.replyInfo.replyToMsgId)
+      : undefined;
+    const replyToTopic = chat?.isForum && chat.isForumAsMessages && threadId === MAIN_THREAD_ID && replyToMessage
+      ? selectTopicFromMessage(global, replyToMessage)
+      : undefined;
 
     return {
       availableReactions: type === 'story' ? global.availableReactions : undefined,
       topReactions: type === 'story' ? global.topReactions : undefined,
       isOnActiveTab: !tabState.isBlurred,
       editingMessage: selectEditingMessage(global, chatId, threadId, messageListType),
-      draft: selectDraft(global, chatId, threadId),
+      draft,
       chat,
       isChatWithBot,
       isChatWithSelf,
@@ -2012,6 +2115,7 @@ export default memo(withGlobal<OwnProps>(
       shouldCollectDebugLogs: global.settings.byKey.shouldCollectDebugLogs,
       sentStoryReaction,
       stealthMode: global.stories.stealthMode,
+      replyToTopic,
     };
   },
 )(Composer));

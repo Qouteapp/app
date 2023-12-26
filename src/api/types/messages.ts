@@ -293,6 +293,7 @@ export interface ApiAction {
   slug?: string;
   isGiveaway?: boolean;
   isUnclaimed?: boolean;
+  pluralValue?: number;
 }
 
 export interface ApiWebPage {
@@ -308,6 +309,12 @@ export interface ApiWebPage {
   document?: ApiDocument;
   video?: ApiVideo;
   story?: ApiWebPageStoryData;
+}
+
+export interface ApiSponsoredWebPage {
+  url: string;
+  siteName: string;
+  photo?: ApiPhoto;
 }
 
 export type ApiReplyInfo = ApiMessageReplyInfo | ApiStoryReplyInfo;
@@ -357,6 +364,12 @@ export interface ApiMessageForwardInfo {
   fromMessageId?: number;
   hiddenUserName?: string;
   postAuthorTitle?: string;
+}
+
+export interface ApiStoryForwardInfo {
+  fromPeerId?: string;
+  fromName?: string;
+  storyId?: number;
 }
 
 export type ApiMessageEntityDefault = {
@@ -459,8 +472,8 @@ export interface ApiMessage {
   forwardInfo?: ApiMessageForwardInfo;
   isDeleting?: boolean;
   previousLocalId?: number;
-  views?: number;
-  forwards?: number;
+  viewsCount?: number;
+  forwardsCount?: number;
   isEdited?: boolean;
   editDate?: number;
   isMentioned?: boolean;
@@ -474,7 +487,6 @@ export interface ApiMessage {
   isKeyboardSingleUse?: boolean;
   isKeyboardSelective?: boolean;
   viaBotId?: string;
-  repliesThreadInfo?: ApiThreadInfo;
   postAuthorTitle?: string;
   isScheduled?: boolean;
   shouldHideKeyboardButtons?: boolean;
@@ -494,6 +506,7 @@ export interface ApiMessage {
     reactions: ApiPeerReaction[];
   };
   reactions?: ApiReactions;
+  hasComments?: boolean;
 }
 
 export interface ApiReactions {
@@ -553,17 +566,30 @@ export type ApiReactionCustomEmoji = {
 
 export type ApiReaction = ApiReactionEmoji | ApiReactionCustomEmoji;
 
-export interface ApiThreadInfo {
-  isComments?: boolean;
-  threadId: number;
+interface ApiBaseThreadInfo {
   chatId: string;
-  topMessageId?: number;
-  originChannelId?: string;
   messagesCount: number;
   lastMessageId?: number;
   lastReadInboxMessageId?: number;
   recentReplierIds?: string[];
 }
+
+export interface ApiCommentsInfo extends ApiBaseThreadInfo {
+  isCommentsInfo: true;
+  threadId?: number;
+  originChannelId: string;
+  originMessageId: number;
+}
+
+export interface ApiMessageThreadInfo extends ApiBaseThreadInfo {
+  isCommentsInfo: false;
+  threadId: number;
+  // For linked messages in discussion
+  fromChannelId?: string;
+  fromMessageId?: number;
+}
+
+export type ApiThreadInfo = ApiCommentsInfo | ApiMessageThreadInfo;
 
 export type ApiMessageOutgoingStatus = 'read' | 'succeeded' | 'pending' | 'failed';
 
@@ -571,15 +597,19 @@ export type ApiSponsoredMessage = {
   chatId?: string;
   randomId: string;
   isRecommended?: boolean;
+  isAvatarShown?: boolean;
   isBot?: boolean;
   channelPostId?: number;
   startParam?: string;
   chatInviteHash?: string;
   chatInviteTitle?: string;
   text: ApiFormattedText;
+  webPage?: ApiSponsoredWebPage;
   expiresAt: number;
   sponsorInfo?: string;
   additionalInfo?: string;
+  buttonText?: string;
+  botApp?: ApiBotApp;
 };
 
 // KeyboardButtons
@@ -707,6 +737,9 @@ export type ApiBotApp = {
   description: string;
   photo?: ApiPhoto;
   document?: ApiDocument;
+};
+
+export type ApiMessagesBotApp = ApiBotApp & {
   isInactive?: boolean;
   shouldRequestWriteAccess?: boolean;
 };

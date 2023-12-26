@@ -1,12 +1,13 @@
 import type { ApiReactionEmoji } from './api/types';
 import type { ApiLimitType } from './global/types';
+import type { Workspace } from './types';
 
 export const APP_CODE_NAME = 'A';
 export const APP_NAME = process.env.APP_NAME || 'ulu';
 export const RELEASE_DATETIME = process.env.RELEASE_DATETIME;
 
 export const PRODUCTION_HOSTNAME = 'web.telegram.org';
-export const PRODUCTION_URL = 'https://web.telegram.org/a';
+export const PRODUCTION_URL = 'https://ulu.so';
 export const WEB_VERSION_BASE = 'https://web.telegram.org/'; // Used to redirect to other versions
 export const BASE_URL = process.env.BASE_URL;
 
@@ -52,7 +53,7 @@ export const CUSTOM_EMOJI_PREVIEW_CACHE_DISABLED = false;
 export const CUSTOM_EMOJI_PREVIEW_CACHE_NAME = 'tt-custom-emoji-preview';
 export const MEDIA_CACHE_MAX_BYTES = 512 * 1024; // 512 KB
 export const CUSTOM_BG_CACHE_NAME = 'tt-custom-bg';
-export const LANG_CACHE_NAME = 'tt-lang-packs-v26';
+export const LANG_CACHE_NAME = 'tt-lang-packs-v27';
 export const ASSET_CACHE_NAME = 'tt-assets';
 export const AUTODOWNLOAD_FILESIZE_MB_LIMITS = [1, 5, 10, 50, 100, 500];
 export const DATA_BROADCAST_CHANNEL_NAME = 'tt-global';
@@ -78,6 +79,7 @@ export const SHARED_MEDIA_SLICE = 42;
 export const MESSAGE_SEARCH_SLICE = 42;
 export const GLOBAL_SEARCH_SLICE = 20;
 export const GLOBAL_TOPIC_SEARCH_SLICE = 5;
+export const GLOBAL_SEARCH_CONTACTS_LIMIT = 20;
 export const MEMBERS_SLICE = 30;
 export const MEMBERS_LOAD_SLICE = 200;
 export const PINNED_MESSAGES_LIMIT = 50;
@@ -88,6 +90,8 @@ export const TOPIC_LIST_SENSITIVE_AREA = 600;
 export const COMMON_CHATS_LIMIT = 100;
 export const GROUP_CALL_PARTICIPANTS_LIMIT = 100;
 export const STORY_LIST_LIMIT = 100;
+export const API_GENERAL_ID_LIMIT = 100;
+export const STATISTICS_PUBLIC_FORWARDS_LIMIT = 50;
 
 export const STORY_VIEWS_MIN_SEARCH = 15;
 export const STORY_MIN_REACTIONS_SORT = 10;
@@ -309,10 +313,10 @@ export const STORY_EXPIRE_PERIOD = 86400; // 1 day
 export const STORY_VIEWERS_EXPIRE_PERIOD = 86400; // 1 day
 export const FRESH_AUTH_PERIOD = 86400; // 1 day
 
-export const LIGHT_THEME_BG_COLOR = '#0F0F0F';
-export const DARK_THEME_BG_COLOR = '#0F0F0F';
-export const DEFAULT_PATTERN_COLOR = '#0F0F0F';
-export const DARK_THEME_PATTERN_COLOR = '#0A0A0A8C';
+export const LIGHT_THEME_BG_COLOR = '#fefffe';
+export const DARK_THEME_BG_COLOR = '#0E0F0F';
+export const DEFAULT_PATTERN_COLOR = '#475aa030';
+export const DARK_THEME_PATTERN_COLOR = '#E9666F30';
 export const PEER_COLOR_BG_OPACITY = '1a';
 export const PEER_COLOR_BG_ACTIVE_OPACITY = '2b';
 export const PEER_COLOR_GRADIENT_STEP = 5; // px
@@ -345,5 +349,38 @@ export const ULU_APP = {
   CLIENT_NEWS_CHANNEL_USERNAME: 'uludotso',
   CLIENT_NEWS_CHANNEL_ID: '-1001916758340',
   SIDEBAR_CHAT_FOLDERS_TREE_ITEM_HEIGHT_REM: 2.25,
-  PRODUCTION_URL: 'https://ulu.so',
 };
+
+export const DEFAULT_WORKSPACE: Workspace = {
+  id: 'personal',
+  name: 'Personal',
+  logoUrl: undefined,
+  folders: [],
+};
+
+export const WORKSPACE_CHAT_TIME_SNAPSHOT_STALE_MINUTES = 30;
+
+export const LOCAL_STORAGE_KEYS = {
+  WORKSPACES: 'workspaces',
+  CURRENT_WORKSPACE_ID: 'current_workspace_id',
+  IS_AUTO_DONE_ENABLED: 'ulu_is_auto_done_enabled',
+  IS_INITIAL_MARK_AS_DONE: 'ulu_is_initial_mark_as_done',
+  IS_AUTO_ARCHIVER_ENABLED: 'ulu_is_autoarchiver_enabled',
+  IS_ARCHIVE_WHEN_DONE_ENABLED: 'ulu_is_archive_when_done_enabled',
+  IS_FOLDERS_TREE_ENABLED: 'ulu_is_folders_tree_enabled',
+  IS_FOCUS_MODE_ENABLED: 'ulu_is_focus_mode_enabled',
+  FOCUS_MODE_END_TIME: 'ulu_focus_mode_end_time',
+  DONE_CHAT_IDS: 'ulu_done_chat_ids',
+};
+
+function determineCmdKey() {
+  if (typeof window !== 'undefined' && typeof window.navigator !== 'undefined') {
+    // Использование navigator только если он доступен
+    return /Mac|iPod|iPhone|iPad/.test(window.navigator.platform) ? '⌘' : 'Ctrl';
+  } else {
+    // Значение по умолчанию, если navigator недоступен
+    return 'Ctrl';
+  }
+}
+
+export const cmdKey = determineCmdKey();

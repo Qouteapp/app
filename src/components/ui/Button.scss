@@ -1,3 +1,12 @@
+.theme-light {
+  --button-shadow: var(--button-shadow-light);
+}
+
+.theme-dark {
+  --button-shadow: var(--button-shadow-dark);
+}
+
+
 @mixin active-styles() {
   &:not(.disabled):not(:disabled) {
     &:active,
@@ -54,8 +63,12 @@
   }
 
   &.disabled {
-    opacity: 0.5 !important;
     cursor: var(--custom-cursor, default);
+
+    &:not(.non-interactive) {
+      opacity: 0.5 !important;
+    }
+
     &:not(.click-allowed) {
       pointer-events: none;
     }
@@ -74,7 +87,7 @@
   &.primary {
     box-shadow: var(--button-shadow);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0) 100%), var(--color-primary);
-    color: var(--color-text);
+    color: #e3e3e3;
     --ripple-color: rgba(0, 0, 0, 0.08);
     cursor: pointer;
 
@@ -94,13 +107,12 @@
 
   &.secondary {
     background-color: var(--color-background);
-    color: rgba(var(--color-text-secondary-rgb), 0.75);
+    color: var(--color-text);
     --ripple-color: rgba(0, 0, 0, 0.08);
     cursor: pointer;
 
     @include active-styles() {
-      background-color: var(--color-primary);
-      color: white;
+      background-color: var(--color-interactive-element-hover);
       cursor: pointer;
     }
 
@@ -126,22 +138,26 @@
 
   &.danger {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0) 100%) ,var(--color-error);
-    color: var(--color-text);
+    color: #e3e3e3;
     --ripple-color: rgba(var(--color-error-rgb), 0.16);
     box-shadow: var(--button-shadow);
     cursor: pointer;
 
     @include active-styles() {
       background: linear-gradient(180deg, rgb(255 255 255 / 20%), rgb(255 255 255 / 5%) 100%),var(--color-error);
-      color: var(--color-text);
+      color: #e3e3e3;
       box-shadow: var(--button-shadow);
       cursor: pointer;
     }
 
     @include no-ripple-styles() {
+      color: #e3e3e3;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.125), rgba(255, 255, 255, 0) 100%), var(--color-error);
       box-shadow: var(--button-shadow);
       cursor: pointer;
+    }
+    &.danger:hover {
+      color: #e3e3e3;
     }
   }
 
@@ -150,7 +166,7 @@
 
     &.primary {
       color: var(--color-text);
-      background-color: rgb(255 255 255 / 4%);
+      background-color: rgb(255 255 255 / 34%);
       cursor: pointer;
 
       @include active-styles() {
@@ -166,7 +182,7 @@
 
     &.secondary {
       background-color: transparent;
-      color: var(--color-text-secondary);
+      color: var(--color-text);
       cursor: pointer;
     }
 
@@ -455,12 +471,23 @@
   margin-left: 6px;
   box-shadow: 1px 1px 0px 0px rgba(27, 26, 29, 0.25);
 
-  .hotkey-icon {
+  .enter-hotkey-icon {
     width: 12px;
     height: 12px;
     background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxMiAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkuOTQ3MzUgNi43MUM5Ljk0NzM1IDcuMDAxNSA5LjcwODg1IDcuMjQgOS40MTczNSA3LjI0SDMuODA0NjVMNS4wMjM2NSA4LjQ1MzdDNS4yMzAzNSA4LjY2MDQgNS4yMzAzNSA4Ljk5OTYgNS4wMjM2NSA5LjIwNjNDNC45MTc2NSA5LjMwNyA0Ljc4NTE1IDkuMzYgNC42NDczNSA5LjM2QzQuNTA5NTUgOS4zNiA0LjM3NzA1IDkuMzA3IDQuMjcxMDUgOS4yMDYzTDIuMTUxMDUgNy4wODYzQzIuMTAzMzUgNy4wMzg2IDIuMDY2MjUgNi45NzUgMi4wMzk3NSA2LjkxMTRDMS45ODY3NSA2Ljc4NDIgMS45ODY3NSA2LjYzNTggMi4wMzk3NSA2LjUwODZDMi4wNjYyNSA2LjQ0NSAyLjEwMzM1IDYuMzgxNCAyLjE1MTA1IDYuMzMzN0w0LjI3MTA1IDQuMjEzN0M0LjQ3Nzc1IDQuMDA3IDQuODE2OTUgNC4wMDcgNS4wMjM2NSA0LjIxMzdDNS4yMzAzNSA0LjQyMDQgNS4yMzAzNSA0Ljc1OTYgNS4wMjM2NSA0Ljk2NjNMMy44MDQ2NSA2LjE4SDguODg3MzVWNC4wNkg3LjgyNzM1QzcuNTM1ODUgNC4wNiA3LjI5NzM1IDMuODIxNSA3LjI5NzM1IDMuNTNDNy4yOTczNSAzLjIzODUgNy41MzU4NSAzIDcuODI3MzUgM0g5LjQxNzM1QzkuNzA4ODUgMyA5Ljk0NzM1IDMuMjM4NSA5Ljk0NzM1IDMuNTNWNi43MVoiIGZpbGw9IiNFM0UzRUIiLz4KPC9zdmc+Cg==");
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
+  }
+
+  .hotkey-text {
+    font-size: 1rem;
+    font-weight: 500;
+    min-width: 16px;
+    text-align: center;
+    padding: 2px;
+    color: var(--color-text-secondary);
+    line-height: normal;
+    align-items: center;
   }
 }

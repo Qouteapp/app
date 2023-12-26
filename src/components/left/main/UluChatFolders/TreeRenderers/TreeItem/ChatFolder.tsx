@@ -13,6 +13,7 @@ import { MouseButton } from '../../../../../../util/windowEnvironment';
 
 import useContextMenuHandlers from '../../../../../../hooks/useContextMenuHandlers.react';
 import { useFastClick } from '../../../../../../hooks/useFastClick.react';
+import { useFocusMode } from '../../../../../../hooks/useFocusMode.react';
 import useLastCallback from '../../../../../../hooks/useLastCallback.react';
 import useMenuPosition from '../../../../../../hooks/useMenuPosition.react';
 
@@ -25,6 +26,8 @@ import SvgFolderOpen from './SvgFolderOpen';
 import stylesUluChatFolder from '../../../UluChatFolder/UluChatFolder.module.scss';
 import styles from './ChatFolder.module.scss';
 
+const svgFill = 'var(--color-text-secondary)';
+
 const ChatFolder: FC<{
   children: ReactNode;
   item: TreeItemChat<any>;
@@ -36,7 +39,7 @@ const ChatFolder: FC<{
   contextRootElementSelector?: string;
   onClick?: (arg: string | number) => void;
 }> = ({
-  children, active, expanded, title, shouldStressUnreadMessages, item, context, onClick, contextRootElementSelector,
+  children, expanded, title, shouldStressUnreadMessages, item, context, onClick, contextRootElementSelector,
 }) => {
   const {
     contextActions, index, unreadCount: messagesUnreadCount, ref,
@@ -44,10 +47,8 @@ const ChatFolder: FC<{
 
   const classNameWrapper = buildClassName(
     stylesUluChatFolder.wrapper,
-    active && stylesUluChatFolder.active,
     !!messagesUnreadCount && shouldStressUnreadMessages && stylesUluChatFolder['has-unread-messages'],
   );
-  const svgFill = active ? 'var(--color-white)' : 'var(--color-gray)';
   const [SvgComponent, svgComponentProps] = expanded
     ? [SvgFolderOpen, { height: 17, width: 20 }]
     : [SvgFolderClosed, { height: 17, width: 18 }];
@@ -85,7 +86,7 @@ const ChatFolder: FC<{
     () => document.querySelector('#chat-folders-tree-context-menu-root')!.querySelector('.Tab-context-menu .bubble'),
   );
   const getLayout = useLastCallback(() => ({ withPortal: true }));
-
+  const { isFocusModeEnabled } = useFocusMode();
   const {
     positionX, positionY, transformOriginX, transformOriginY, style: menuStyle,
   } = useMenuPosition(
@@ -121,7 +122,11 @@ const ChatFolder: FC<{
             {title}
           </div>
         </div>
-        { !!messagesUnreadCount && (<div className={stylesUluChatFolder.unread}>{ messagesUnreadCount }</div>) }
+        { !!messagesUnreadCount && !isFocusModeEnabled && (
+          <div className={stylesUluChatFolder.unread}>
+            { messagesUnreadCount }
+          </div>
+        ) }
         {contextActions && contextMenuPosition !== undefined && (
           <Menu
             isOpen={isContextMenuOpen}

@@ -105,6 +105,46 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
     exitMessageSelectMode();
   });
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isActive || isDeleteModalOpen || isReportModalOpen || isAnyModalOpen) {
+        return;
+      }
+
+      switch (e.code) {
+        case 'KeyF':
+          if (canForwardMessages) {
+            openForwardMenuForSelectedMessages();
+          }
+          break;
+        case 'KeyR':
+          if (canReportMessages) {
+            openReportModal();
+          }
+          break;
+        case 'KeyD':
+          if (canDownloadMessages && !hasProtectedMessage) {
+            handleDownload();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [
+    isActive, isDeleteModalOpen, isReportModalOpen, isAnyModalOpen,
+    canForwardMessages, openForwardMenuForSelectedMessages,
+    canReportMessages, openReportModal,
+    canDownloadMessages, hasProtectedMessage, handleDownload,
+    handleCopy,
+  ]);
+
   const prevSelectedMessagesCount = usePrevious(selectedMessagesCount || undefined, true);
   const renderingSelectedMessagesCount = isActive ? selectedMessagesCount : prevSelectedMessagesCount;
 
@@ -117,7 +157,7 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
   );
 
   const renderButton = (
-    icon: IconName, label: string, onClick: AnyToVoidFunction, destructive?: boolean,
+    icon: IconName, label: string, onClick: AnyToVoidFunction, hotkey?: string, destructive?: boolean,
   ) => {
     return (
       <div
@@ -130,8 +170,14 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
         )}
         onClick={onClick}
         title={label}
+        aria-label={label}
       >
         <i className={buildClassName('icon', `icon-${icon}`)} />
+        {hotkey && (
+          <div className="hotkey-frame">
+            <div className="hotkey-text">{hotkey}</div>
+          </div>
+        )}
       </div>
     );
   };
@@ -146,6 +192,9 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
           ariaLabel="Exit select mode"
         >
           <i className="icon icon-close" />
+          <div className="hotkey-frame">
+            <div className="hotkey-text">Esc</div>
+          </div>
         </Button>
         <span className="MessageSelectToolbar-count" title={formattedMessagesCount}>
           {formattedMessagesCount}
@@ -155,20 +204,20 @@ const MessageSelectToolbar: FC<OwnProps & StateProps> = ({
           <div className="MessageSelectToolbar-actions">
             {messageListType !== 'scheduled' && canForwardMessages && (
               renderButton(
-                'forward', lang('Chat.ForwardActionHeader'), openForwardMenuForSelectedMessages,
+                'forward', lang('Chat.ForwardActionHeader'), openForwardMenuForSelectedMessages, 'F',
               )
             )}
             {canReportMessages && (
-              renderButton('flag', lang('Conversation.ReportMessages'), openReportModal)
+              renderButton('flag', lang('Conversation.ReportMessages'), openReportModal, 'R')
             )}
             {canDownloadMessages && !hasProtectedMessage && (
-              renderButton('download', lang('lng_media_download'), handleDownload)
+              renderButton('download', lang('lng_media_download'), handleDownload, 'D')
             )}
             {!hasProtectedMessage && (
               renderButton('copy', lang('lng_context_copy_selected_items'), handleCopy)
             )}
             {canDeleteMessages && (
-              renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, true)
+              renderButton('delete', lang('EditAdminGroupDeleteMessages'), openDeleteModal, '⌫', true)
             )}
           </div>
         )}

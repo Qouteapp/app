@@ -22,10 +22,11 @@ export { default as StatusPickerMenu } from '../components/left/main/StatusPicke
 export { default as BoostModal } from '../components/modals/boost/BoostModal';
 export { default as GiftCodeModal } from '../components/modals/giftcode/GiftCodeModal';
 export { default as ChatlistModal } from '../components/modals/chatlist/ChatlistModal';
+export { default as UluWorkspaceSettingsModal } from '../components/main/UluWorkspaceSettingsModal.react';
 
 export { default as AboutAdsModal } from '../components/common/AboutAdsModal';
 export { default as CalendarModal } from '../components/common/CalendarModal';
-export { default as CommandMenuCalendar } from '../components/common/CommandMenuCalendar';
+export { default as CommandMenuCalendar } from '../components/common/commandmenu/CommandMenuCalendar';
 export { default as DeleteMessageModal } from '../components/common/DeleteMessageModal';
 export { default as PinMessageModal } from '../components/common/PinMessageModal';
 export { default as UnpinAllMessagesModal } from '../components/common/UnpinAllMessagesModal';
@@ -61,6 +62,7 @@ export { default as SymbolMenu } from '../components/middle/composer/SymbolMenu'
 export { default as BotCommandTooltip } from '../components/middle/composer/BotCommandTooltip';
 export { default as BotCommandMenu } from '../components/middle/composer/BotCommandMenu';
 export { default as MentionTooltip } from '../components/middle/composer/MentionTooltip';
+export { default as AttachTooltip } from '../components/middle/composer/AttachTooltip';
 export { default as StickerTooltip } from '../components/middle/composer/StickerTooltip';
 export { default as CustomEmojiTooltip } from '../components/middle/composer/CustomEmojiTooltip';
 export { default as CustomSendMenu } from '../components/middle/composer/CustomSendMenu';
@@ -75,6 +77,7 @@ export { default as StickerSearch } from '../components/right/StickerSearch';
 export { default as GifSearch } from '../components/right/GifSearch';
 export { default as Statistics } from '../components/right/statistics/Statistics';
 export { default as MessageStatistics } from '../components/right/statistics/MessageStatistics';
+export { default as StoryStatistics } from '../components/right/statistics/StoryStatistics';
 export { default as PollResults } from '../components/right/PollResults';
 export { default as CreateTopic } from '../components/right/CreateTopic';
 export { default as EditTopic } from '../components/right/EditTopic';
@@ -83,3 +86,4 @@ export { default as Management } from '../components/right/management/Management
 
 export { default as PaymentModal } from '../components/payment/PaymentModal';
 export { default as ReceiptModal } from '../components/payment/ReceiptModal';
+export { default as InviteViaLinkModal } from '../components/main/InviteViaLinkModal';

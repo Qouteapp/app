@@ -32,6 +32,7 @@ import {
 } from '../../global/selectors';
 import { ARE_CALLS_SUPPORTED, IS_APP } from '../../util/windowEnvironment';
 
+import useCommands from '../../hooks/useCommands';
 import { useHotkeys } from '../../hooks/useHotkeys';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
@@ -130,6 +131,7 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
     openChatLanguageModal,
     setSettingOption,
     unblockUser,
+    setViewForumAsMessages,
   } = getActions();
   // eslint-disable-next-line no-null/no-null
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -208,7 +210,8 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
   });
 
   const handleAsMessagesClick = useLastCallback(() => {
-    openChat({ id: chatId, threadId: MAIN_THREAD_ID });
+    openChat({ id: chatId });
+    setViewForumAsMessages({ chatId, isEnabled: true });
   });
 
   function handleRequestCall() {
@@ -221,6 +224,14 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
     }
 
     e.preventDefault();
+    handleSearchClick();
+  });
+
+  const { useCommand } = useCommands();
+  useCommand('OPEN_CHAT_SEARCH', () => {
+    if (!canSearch || isForForum) {
+      return;
+    }
     handleSearchClick();
   });
 
@@ -368,7 +379,7 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
               color="translucent"
               size="smaller"
               onClick={handleSearchClick}
-              ariaLabel={lang('Conversation.SearchPlaceholder')}
+              ariaLabel={isForForum ? lang('Conversation.SearchPlaceholder') : lang('SearchForMessagesLabelHotkey')}
             >
               <i className="icon icon-search" aria-hidden />
             </Button>

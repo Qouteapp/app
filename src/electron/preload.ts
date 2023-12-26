@@ -14,13 +14,10 @@ const electronApi: ElectronApi = {
     (position: TrafficLightPosition) => ipcRenderer.invoke(ElectronAction.SET_TRAFFIC_LIGHT_POSITION, position),
   setIsAutoUpdateEnabled: (value: boolean) => ipcRenderer.invoke(ElectronAction.SET_IS_AUTO_UPDATE_ENABLED, value),
   getIsAutoUpdateEnabled: () => ipcRenderer.invoke(ElectronAction.GET_IS_AUTO_UPDATE_ENABLED),
+  updateTrayTitle: (unreadCount: number) => ipcRenderer.invoke(ElectronAction.UPDATE_TRAY_TITLE, unreadCount),
   setIsTrayIconEnabled: (value: boolean) => ipcRenderer.invoke(ElectronAction.SET_IS_TRAY_ICON_ENABLED, value),
   getIsTrayIconEnabled: () => ipcRenderer.invoke(ElectronAction.GET_IS_TRAY_ICON_ENABLED),
   restoreLocalStorage: () => ipcRenderer.invoke(ElectronAction.RESTORE_LOCAL_STORAGE),
-  canGoBack: () => ipcRenderer.invoke(ElectronAction.CAN_GO_BACK),
-  canGoForward: () => ipcRenderer.invoke(ElectronAction.CAN_GO_FORWARD),
-  goBack: () => ipcRenderer.send(ElectronAction.GO_BACK),
-  goForward: () => ipcRenderer.send(ElectronAction.GO_FORWARD),
 
   on: (eventName: ElectronEvent, callback) => {
     const subscription = (event: IpcRendererEvent, ...args: any) => callback(...args);

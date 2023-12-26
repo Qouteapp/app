@@ -16,7 +16,7 @@ import { copyHtmlToClipboard } from '../../../util/clipboard';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import { compact, findLast } from '../../../util/iteratees';
 import * as langProvider from '../../../util/langProvider';
-import parseMessageInput from '../../../util/parseMessageInput';
+import parseHtmlAsFormattedText from '../../../util/parseHtmlAsFormattedText';
 import { getServerTime } from '../../../util/serverTime';
 import { IS_TOUCH_ENV } from '../../../util/windowEnvironment';
 import versionNotification from '../../../versionNotification.txt';
@@ -386,7 +386,7 @@ addActionHandler('focusNextReply', (global, actions, payload): ActionReturnType 
 addActionHandler('focusMessage', (global, actions, payload): ActionReturnType => {
   const {
     chatId, threadId = MAIN_THREAD_ID, messageListType = 'thread', noHighlight, groupedId, groupedChatId,
-    replyMessageId, isResizingContainer, shouldReplaceHistory, noForumTopicPanel,
+    replyMessageId, isResizingContainer, shouldReplaceHistory, noForumTopicPanel, quote,
     tabId = getCurrentTabId(),
   } = payload;
 
@@ -412,12 +412,20 @@ addActionHandler('focusMessage', (global, actions, payload): ActionReturnType =>
   }
   blurTimeout = window.setTimeout(() => {
     global = getGlobal();
-    global = updateFocusedMessage(global, undefined, undefined, undefined, undefined, undefined, tabId);
+    global = updateFocusedMessage({ global }, tabId);
     global = updateFocusDirection(global, undefined, tabId);
     setGlobal(global);
   }, noHighlight ? FOCUS_NO_HIGHLIGHT_DURATION : FOCUS_DURATION);
 
-  global = updateFocusedMessage(global, chatId, messageId, threadId, noHighlight, isResizingContainer, tabId);
+  global = updateFocusedMessage({
+    global,
+    chatId,
+    messageId,
+    threadId,
+    noHighlight,
+    isResizingContainer,
+    quote,
+  }, tabId);
   global = updateFocusDirection(global, undefined, tabId);
 
   if (replyMessageId) {
@@ -432,8 +440,8 @@ addActionHandler('focusMessage', (global, actions, payload): ActionReturnType =>
   const viewportIds = selectViewportIds(global, chatId, threadId, tabId);
   if (viewportIds && viewportIds.includes(messageId)) {
     setGlobal(global, { forceOnHeavyAnimation: true });
-    actions.openChat({
-      id: chatId,
+    actions.openThread({
+      chatId,
       threadId,
       type: messageListType,
       shouldReplaceHistory,
@@ -454,8 +462,8 @@ addActionHandler('focusMessage', (global, actions, payload): ActionReturnType =>
 
   setGlobal(global, { forceOnHeavyAnimation: true });
 
-  actions.openChat({
-    id: chatId,
+  actions.openThread({
+    chatId,
     threadId,
     type: messageListType,
     shouldReplaceHistory,
@@ -463,6 +471,8 @@ addActionHandler('focusMessage', (global, actions, payload): ActionReturnType =>
     tabId,
   });
   actions.loadViewportMessages({
+    chatId,
+    threadId,
     tabId,
     shouldForceRender: true,
   });
@@ -682,7 +692,7 @@ addActionHandler('checkVersionNotification', (global, actions): ActionReturnType
     chatId: SERVICE_NOTIFICATIONS_USER_ID,
     date: getServerTime(),
     content: {
-      text: parseMessageInput(versionNotification, true),
+      text: parseHtmlAsFormattedText(versionNotification, true),
     },
     isOutgoing: false,
   };

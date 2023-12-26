@@ -11,8 +11,8 @@
     border-radius: 6px; /* или используйте var(--border-radius-default-tiny) если это уместно */
     width: 1.25rem;
     height: 1.25rem;
-    background: rgba(255, 255, 255, 0.094);; /* Серый фон */
-    color: rgba(255, 255, 255, 0.443); /* Цвет текста */
+    background: var(--color-interactive-element-hover); /* Серый фон */
+    color: var(--color-text); /* Цвет текста */
     font-size: 0.8125rem; /* Размер шрифта для первой буквы */
     font-weight: bold;
     margin-right: 0.5rem;
@@ -25,6 +25,7 @@
     border-radius: 6px;
     margin-right: 0.5rem;
     overflow: hidden;
+    vertical-align: inherit !important;
   }
 
   .ProfilePhoto .no-photo {
@@ -36,7 +37,6 @@
     overflow: hidden;
     font-size: 9px;
   }
-
 
   .backdrop {
     position: fixed;
@@ -63,7 +63,8 @@
     color: var(--color-text);
 
     transform: scale(0.85);
-    transition: opacity 150ms cubic-bezier(0.2, 0, 0.2, 1), transform 150ms cubic-bezier(0.2, 0, 0.2, 1) !important;
+    transition: opacity 150ms cubic-bezier(0.2, 0, 0.2, 1),
+      transform 150ms cubic-bezier(0.2, 0, 0.2, 1) !important;
 
     &.open {
       transform: scale(1);
@@ -121,12 +122,19 @@
   &.compact {
     .bubble {
       background: var(--color-background-compact-menu);
-      backdrop-filter: blur(10px);
+      /* backdrop-filter: blur(10px) saturate(190%) contrast(70%) brightness(80%); */
       padding: 0.25rem;
       width: 15rem;
 
       body.no-menu-blur & {
-        background: var(--color-background);
+        background: var(--color-background-no-blur);
+        backdrop-filter: none;
+      }
+    }
+
+    .left-main {
+      body.is-electron & {
+        background: var(--color-background-no-blur);
         backdrop-filter: none;
       }
     }
@@ -138,6 +146,31 @@
     &.no-blur .bubble {
       background: var(--color-background);
     }
+  }
+
+  &.ListItem-context-menu{
+    .bubble {
+      body.is-electron & {
+        background: var(--color-background-no-blur);
+        backdrop-filter: none;
+      }
+    }
+  }
+
+  &.left-main {
+    .bubble {
+      body.is-electron & {
+        background: var(--color-background-no-blur);
+        backdrop-filter: none;
+      }
+    }
+  }
+
+  .theme-light &.compact .bubble {
+    backdrop-filter: blur(10px) saturate(190%) contrast(50%) brightness(130%);
+  }
+  .theme-dark &.compact .bubble {
+    backdrop-filter: blur(14px) saturate(190%) contrast(70%) brightness(80%);
   }
 
   .menu-loading-row {

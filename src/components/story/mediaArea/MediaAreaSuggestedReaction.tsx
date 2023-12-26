@@ -44,7 +44,8 @@ const MediaAreaSuggestedReaction = ({
   const ref = useRef<HTMLDivElement>(null);
   const [customEmojiSize, setCustomEmojiSize] = useState(1.5 * REM);
 
-  const { peerId, id, reactions } = story;
+  const { peerId, id, views } = story;
+  const { reactions } = views || {};
   const { reaction, isDark, isFlipped } = mediaArea;
 
   const isChannel = !isUserId(peerId);
@@ -88,15 +89,17 @@ const MediaAreaSuggestedReaction = ({
       <div
         className={buildClassName(styles.background, isFlipped && styles.flipped)}
       />
-      <ReactionAnimatedEmoji
-        className={buildClassName(styles.reaction, shouldDisplayCount && styles.withCount)}
-        reaction={reaction}
-        containerId={containerId}
-        size={customEmojiSize}
-        effectSize={customEmojiSize * EFFECT_SIZE_MULTIPLIER}
-        shouldPause={isPreview}
-        shouldLoop={!isPreview}
-      />
+      {Boolean(customEmojiSize) && (
+        <ReactionAnimatedEmoji
+          className={buildClassName(styles.reaction, shouldDisplayCount && styles.withCount)}
+          reaction={reaction}
+          containerId={containerId}
+          size={customEmojiSize}
+          effectSize={customEmojiSize * EFFECT_SIZE_MULTIPLIER}
+          shouldPause={isPreview}
+          shouldLoop={!isPreview}
+        />
+      )}
       {shouldDisplayCount && (
         <span className={styles.reactionCount}>{reactionCount}</span>
       )}

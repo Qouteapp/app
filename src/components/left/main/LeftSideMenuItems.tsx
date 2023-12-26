@@ -13,6 +13,7 @@ import {
   ANIMATION_LEVEL_MIN,
   ARCHIVED_FOLDER_ID,
   BETA_CHANGELOG_URL,
+  DEFAULT_WORKSPACE,
   FEEDBACK_URL,
   IS_BETA,
   IS_TEST,
@@ -31,8 +32,10 @@ import { IS_ELECTRON, IS_MAC_OS } from '../../../util/windowEnvironment';
 
 import useCommands from '../../../hooks/useCommands';
 import { useFolderManagerForUnreadCounters } from '../../../hooks/useFolderManager';
+import { useJune } from '../../../hooks/useJune';
 import useLang from '../../../hooks/useLang';
 import useLastCallback from '../../../hooks/useLastCallback';
+import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
 import AttachBotItem from '../../middle/composer/AttachBotItem';
 import MenuItem from '../../ui/MenuItem';
@@ -49,19 +52,11 @@ type OwnProps = {
   onBotMenuClosed: NoneToVoidFunction;
 };
 
-export type Workspace = {
-  id: string;
-  name: string;
-  logoUrl?: string;
-};
-
 type StateProps = {
   animationLevel: AnimationLevel;
   theme: ThemeKey;
   canInstall?: boolean;
   attachBots: GlobalState['attachMenu']['bots'];
-  currentWorkspace: Workspace;
-  savedWorkspaces: Workspace[];
 } & Pick<GlobalState, 'currentUserId' | 'archiveSettings'>;
 
 const LeftSideMenuItems = ({
@@ -76,8 +71,6 @@ const LeftSideMenuItems = ({
   onSelectSettings,
   onBotMenuOpened,
   onBotMenuClosed,
-  currentWorkspace,
-  savedWorkspaces,
 }: OwnProps & StateProps) => {
   const {
     setSettingOption,
@@ -87,11 +80,6 @@ const LeftSideMenuItems = ({
     openChatWithInfo,
   } = getActions();
   const lang = useLang();
-
-  const personalWorkspace : Workspace = {
-    id: 'personal',
-    name: 'Personal',
-  };
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) { // Shortcut: settings
@@ -119,8 +107,13 @@ const LeftSideMenuItems = ({
   const archivedUnreadChatsCount = useFolderManagerForUnreadCounters()[ARCHIVED_FOLDER_ID]?.chatsCount || 0;
 
   const bots = useMemo(() => Object.values(attachBots).filter((bot) => bot.isForSideMenu), [attachBots]);
-  const allWorkspaces = [personalWorkspace, ...savedWorkspaces];
-  const { runCommand } = useCommands();
+
+  const {
+    allWorkspaces, currentWorkspace, currentWorkspaceId, setCurrentWorkspaceId,
+  } = useWorkspaces();
+  const [workspaceHistory, setWorkspaceHistory] = useState<string[]>([currentWorkspaceId]);
+
+  const { runCommand, useCommand } = useCommands();
 
   const handleOpenWorkspaceSettings = (workspaceId?: string) => {
     runCommand('OPEN_WORKSPACE_SETTINGS', workspaceId);
@@ -130,44 +123,48 @@ const LeftSideMenuItems = ({
     runCommand('OPEN_AUTOMATION_SETTINGS');
   };
 
-  const saveCurrentWorkspaceToLocalStorage = (workspaceId: string) => {
-    localStorage.setItem('currentWorkspace', workspaceId);
-  };
-
-  const [workspaceHistory, setWorkspaceHistory] = useState<string[]>([]);
   const { showNotification } = getActions();
+  const { track } = useJune();
   const handleSelectWorkspace = useCallback((workspaceId: string) => {
-    saveCurrentWorkspaceToLocalStorage(workspaceId);
-    showNotification({ message: 'Workspace is changing...' });
+    setCurrentWorkspaceId(workspaceId);
     setWorkspaceHistory((prevHistory) => {
-      if (prevHistory[prevHistory.length - 1] !== workspaceId) {
-        return [...prevHistory, workspaceId];
+      const newHistory = prevHistory[prevHistory.length - 1] !== workspaceId
+        ? [...prevHistory, workspaceId]
+        : prevHistory;
+      if (newHistory.length > 2) {
+        newHistory.shift(); // Удаляем самую старую запись, если в истории более двух элементов
       }
-      return prevHistory;
+      return newHistory;
     });
-  }, []);
+    showNotification({ message: 'Workspace is changing...' });
+    track?.('Switch workspace', { source: 'Left Side Menu' });
+  }, [track, setCurrentWorkspaceId]); // Убедитесь в правильности зависимостей
+
+  const prevWorkspaceShortcut = IS_ELECTRON ? 'Ctrl + Tab' : 'Ctrl + `';
+
+  const handleSwitchToPreviousWorkspace = useLastCallback(() => {
+    const lastWorkspaceId = workspaceHistory[workspaceHistory.length - 2];
+    if (lastWorkspaceId) {
+      handleSelectWorkspace(lastWorkspaceId);
+      showNotification({ message: 'Workspace is changing...' });
+    } else {
+      // Логика для ситуации, когда нет предыдущего воркспейса
+    }
+  });
+
+  useCommand('SELECT_LAST_WORKSPACE', handleSwitchToPreviousWorkspace);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'Tab') {
+      if (e.ctrlKey && (IS_ELECTRON ? (e.code === 'Tab' || e.keyCode === 9) : e.code === 'Backquote')) {
         e.preventDefault();
-        const lastWorkspaceId = workspaceHistory[workspaceHistory.length - 2]; // Получаем предпоследний воркспейс
-        if (lastWorkspaceId) {
-          handleSelectWorkspace(lastWorkspaceId);
-        }
+        handleSwitchToPreviousWorkspace();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [workspaceHistory, handleSelectWorkspace]);
-
-  const getCurrentWorkspaceId = (): string | undefined => {
-    const workspaceId = localStorage.getItem('currentWorkspace');
-    return workspaceId || undefined;
-  };
-
-  const currentWorkspaceId = getCurrentWorkspaceId();
+  }, [handleSwitchToPreviousWorkspace]);
 
   /*
   const handleDarkModeToggle = useLastCallback((e: React.SyntheticEvent<HTMLElement>) => {
@@ -178,25 +175,6 @@ const LeftSideMenuItems = ({
     setSettingOption({ shouldUseSystemTheme: false });
   });
 */
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | undefined>();
-
-  // Функция для обновления текущего рабочего пространства
-  const updateCurrentWorkspace = useCallback(() => {
-    const workspaceId = getCurrentWorkspaceId();
-    setSelectedWorkspaceId(workspaceId);
-  }, []);
-
-  // Использование useEffect для отслеживания изменений
-  useEffect(() => {
-  // Подписка на событие изменения localStorage
-    window.addEventListener('storage', updateCurrentWorkspace);
-
-    // Вызов функции при первом рендеринге компонента
-    updateCurrentWorkspace();
-
-    // Отписка от события при размонтировании компонента
-    return () => window.removeEventListener('storage', updateCurrentWorkspace);
-  }, [updateCurrentWorkspace]);
 
   const handleAnimationLevelChange = useLastCallback((e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -277,11 +255,12 @@ const LeftSideMenuItems = ({
           key={workspace.id}
           className="workspace-item"
           onClick={() => handleSelectWorkspace(workspace.id)}
-          userProfile={workspace.id === 'personal'}
+          shortcut={workspace.id === workspaceHistory[workspaceHistory.length - 2] ? prevWorkspaceShortcut : undefined}
+          userProfile={workspace.id === DEFAULT_WORKSPACE.id}
           isSelected={currentWorkspace.id === workspace.id} // Updated
           customImageUrl={workspace.logoUrl}
           customPlaceholderText={workspace.id
-            !== 'personal' && !workspace.logoUrl ? workspace.name[0].toUpperCase() : undefined}
+            !== DEFAULT_WORKSPACE.id && !workspace.logoUrl ? workspace.name[0].toUpperCase() : undefined}
         >
           {workspace.name}
         </MenuItem>
@@ -302,11 +281,11 @@ const LeftSideMenuItems = ({
       <MenuSeparator />
       <MenuItem
         onClick={onSelectSettings}
-        shortcut="⌘ ,"
+        shortcut="⌘ + ,"
       >
         Personal settings
       </MenuItem>
-      {currentWorkspaceId !== 'personal' && (
+      {currentWorkspaceId !== DEFAULT_WORKSPACE.id && (
         <MenuItem
           onClick={() => handleOpenWorkspaceSettings(currentWorkspaceId)}
         >
@@ -385,19 +364,6 @@ export default memo(withGlobal<OwnProps>(
     const { animationLevel } = global.settings.byKey;
     const attachBots = global.attachMenu.bots;
 
-    // Получение идентификатора текущего воркспейса
-    const currentWorkspaceId = localStorage.getItem('currentWorkspace');
-
-    // Получение списка сохраненных воркспейсов
-    const savedWorkspacesString = localStorage.getItem('workspaces') || '[]';
-    const savedWorkspaces = JSON.parse(savedWorkspacesString) as Workspace[];
-
-    // Определение текущего воркспейса
-    let currentWorkspace = savedWorkspaces.find((ws) => ws.id === currentWorkspaceId);
-    if (!currentWorkspace) {
-      currentWorkspace = { id: 'personal', name: 'Personal', logoUrl: undefined };
-    }
-
     return {
       currentUserId,
       theme: selectTheme(global),
@@ -405,8 +371,6 @@ export default memo(withGlobal<OwnProps>(
       canInstall: Boolean(tabState.canInstall),
       archiveSettings,
       attachBots,
-      currentWorkspace,
-      savedWorkspaces,
     };
   },
 )(LeftSideMenuItems));

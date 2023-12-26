@@ -113,6 +113,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
 }) => {
   const {
     setGlobalSearchDate,
+    openUrl,
     setSettingOption,
     setGlobalSearchChatId,
     lockScreen,
@@ -151,9 +152,15 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     }
   });
 
+  const handleOpenNotificationScreen = useLastCallback(() => {
+    requestNextSettingsScreen({ screen: SettingsScreens.Notifications });
+  });
+
+  useCommand('OPEN_NOTIFICATION_SETTINGS', handleOpenNotificationScreen);
+
   useHotkeys(canSetPasscode ? {
-    'Meta+Shift+L': handleLockScreenHotkey,
-    ...(IS_APP && { 'Mod+L': handleLockScreenHotkey }),
+    'Meta+L': handleLockScreenHotkey,
+    ...(IS_APP && { 'Meta+L': handleLockScreenHotkey }),
   } : undefined);
 
   const handleSearchFocus = useLastCallback(() => {
@@ -162,19 +169,43 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     }
   });
 
+  const openNewMeetLink = useLastCallback(() => {
+    openUrl({
+      url: 'https://meet.new',
+      shouldSkipModal: true,
+    });
+  });
+
+  const openLinkNewLinearTask = useLastCallback(() => {
+    openUrl({
+      url: 'https://linear.app/new',
+      shouldSkipModal: true,
+    });
+  });
+
+  useCommand('NEW_LINEAR_TASK', openLinkNewLinearTask);
+  useCommand('NEW_MEET', openNewMeetLink);
   useCommand('OPEN_SEARCH', handleSearchFocus);
   useCommand('LOCK_SCREEN', handleLockScreenHotkey);
 
   // Cmd+/ to open search
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code === 'Slash') {
-        if (hasMenu) {
+      // Проверяем, что нажата клавиша Slash
+      if (e.code === 'Slash') {
+        // Для Mac: CMD (Meta) + Slash, для остальных: Ctrl + Slash
+        const isCmdOrCtrlPressed = (IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey);
+
+        // Для открытой средней колонки требуется нажатие Cmd или Ctrl вместе со Slash
+        if (isMessageListOpen && isCmdOrCtrlPressed) {
           handleSearchFocus();
           return;
         }
 
-        onReset();
+        // Для закрытой средней колонки достаточно простого нажатия Slash
+        if (!isMessageListOpen) {
+          handleSearchFocus();
+        }
       }
     }
 
@@ -183,19 +214,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [hasMenu, onReset]);
-
-  /* const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
-
-  const openWorkspaceDropdown = useCallback(() => {
-    // eslint-disable-next-line no-console
-    console.log(isWorkspaceDropdownOpen);
-    setIsWorkspaceDropdownOpen(true);
-  }, [isWorkspaceDropdownOpen]);
-
-  const closeWorkspaceDropdown = useCallback(() => {
-    setIsWorkspaceDropdownOpen(false);
-  }, []); */
+  }, [isMessageListOpen, handleSearchFocus]);
 
   const MainButton: FC<{ onTrigger: () => void }> = useMemo(() => {
     return ({ onTrigger }) => (

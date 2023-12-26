@@ -7,7 +7,7 @@ import type {
 } from '../types';
 
 import { DEBUG, GENERAL_TOPIC_ID } from '../../config';
-import { omit, pick } from '../../util/iteratees';
+import { compact, omit, pick } from '../../util/iteratees';
 import { getServerTimeOffset, setServerTimeOffset } from '../../util/serverTime';
 import { buildApiBotMenuButton } from './apiBuilders/bots';
 import {
@@ -38,6 +38,7 @@ import {
   buildApiMessageFromNotification,
   buildApiMessageFromShort,
   buildApiMessageFromShortChat,
+  buildApiThreadInfoFromMessage,
   buildMessageDraft,
 } from './apiBuilders/messages';
 import {
@@ -125,6 +126,16 @@ export function dispatchUserAndChatUpdates(entities: (GramJs.TypeUser | GramJs.T
     });
 }
 
+export function dispatchThreadInfoUpdates(messages: (GramJs.TypeMessage | undefined)[]) {
+  const threadInfoUpdates = compact(messages).map(buildApiThreadInfoFromMessage).filter(Boolean);
+  if (!threadInfoUpdates.length) return;
+
+  onUpdate({
+    '@type': 'updateThreadInfos',
+    threadInfoUpdates,
+  });
+}
+
 export function sendUpdate(update: ApiUpdate) {
   onUpdate(update);
 }
@@ -199,6 +210,8 @@ export function updater(update: Update) {
       }
 
       message = buildApiMessage(update.message)!;
+      dispatchThreadInfoUpdates([update.message]);
+
       shouldForceReply = 'replyMarkup' in update.message
         && update.message?.replyMarkup instanceof GramJs.ReplyKeyboardForceReply
         && (!update.message.replyMarkup.selective || message.isMentioned);
@@ -348,6 +361,7 @@ export function updater(update: Update) {
 
     // Workaround for a weird server behavior when own message is marked as incoming
     const message = omit(buildApiMessage(update.message)!, ['isOutgoing']);
+    dispatchThreadInfoUpdates([update.message]);
 
     onUpdate({
       '@type': 'updateMessage',
@@ -508,7 +522,7 @@ export function updater(update: Update) {
       '@type': 'updateMessage',
       chatId: buildApiPeerId(update.channelId, 'channel'),
       id: update.id,
-      message: { views: update.views },
+      message: { viewsCount: update.views },
     });
 
     // Chats
@@ -548,12 +562,12 @@ export function updater(update: Update) {
     });
   } else if (update instanceof GramJs.UpdateReadChannelDiscussionInbox) {
     onUpdate({
-      '@type': 'updateThreadInfo',
-      chatId: buildApiPeerId(update.channelId, 'channel'),
-      threadId: update.topMsgId,
-      threadInfo: {
+      '@type': 'updateThreadInfos',
+      threadInfoUpdates: [{
+        chatId: buildApiPeerId(update.channelId, 'channel'),
+        threadId: update.topMsgId,
         lastReadInboxMessageId: update.readMaxId,
-      },
+      }],
     });
   } else if (update instanceof GramJs.UpdateReadChannelDiscussionOutbox) {
     onUpdate({
@@ -1116,6 +1130,12 @@ export function updater(update: Update) {
       device: update.device,
       location: update.location,
       isUnconfirmed: update.unconfirmed,
+    });
+  } else if (update instanceof GramJs.UpdateChannelViewForumAsMessages) {
+    onUpdate({
+      '@type': 'updateViewForumAsMessages',
+      chatId: buildApiPeerId(update.channelId, 'channel'),
+      isEnabled: update.enabled ? true : undefined,
     });
   } else if (DEBUG) {
     const params = typeof update === 'object' && 'className' in update ? update.className : update;

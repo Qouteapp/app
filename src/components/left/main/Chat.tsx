@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { FC } from '../../../lib/teact/teact';
 import React, { memo, useEffect } from '../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../global';
@@ -72,6 +73,7 @@ import './Chat.scss';
 type OwnProps = {
   chatId: string;
   folderId?: number;
+  isInbox?: boolean;
   orderDiff: number;
   animationType: ChatAnimationTypes;
   isPinned?: boolean;
@@ -105,6 +107,7 @@ type StateProps = {
 const Chat: FC<OwnProps & StateProps> = ({
   chatId,
   folderId,
+  isInbox,
   orderDiff,
   animationType,
   isPinned,
@@ -149,7 +152,7 @@ const Chat: FC<OwnProps & StateProps> = ({
   const [shouldRenderChatFolderModal, markRenderChatFolderModal, unmarkRenderChatFolderModal] = useFlag();
   const [shouldRenderReportModal, markRenderReportModal, unmarkRenderReportModal] = useFlag();
 
-  const { lastMessage, isForum } = chat || {};
+  const { lastMessage, isForum, isForumAsMessages } = chat || {};
 
   const { renderSubtitle, ref } = useChatListEntry({
     chat,
@@ -171,17 +174,23 @@ const Chat: FC<OwnProps & StateProps> = ({
   const getIsForumPanelClosed = useSelectorSignal(selectIsForumPanelClosed);
 
   const handleClick = useLastCallback(() => {
+    const noForumTopicPanel = isMobile && isForumAsMessages;
+
     if (isForum) {
       if (isForumPanelOpen) {
         closeForumPanel(undefined, { forceOnHeavyAnimation: true });
-      } else {
-        openForumPanel({ chatId }, { forceOnHeavyAnimation: true });
-      }
 
-      return;
+        return;
+      } else {
+        if (!noForumTopicPanel) {
+          openForumPanel({ chatId }, { forceOnHeavyAnimation: true });
+        }
+
+        if (!isForumAsMessages) return;
+      }
     }
 
-    openChat({ id: chatId, shouldReplaceHistory: true }, { forceOnHeavyAnimation: true });
+    openChat({ id: chatId, noForumTopicPanel, shouldReplaceHistory: true }, { forceOnHeavyAnimation: true });
 
     if (isSelected && canScrollDown) {
       focusLastMessage();
@@ -221,6 +230,7 @@ const Chat: FC<OwnProps & StateProps> = ({
     handleChatFolderChange,
     handleReport,
     folderId,
+    isInbox,
     isPinned,
     isMuted,
     canChangeFolder,
@@ -274,7 +284,12 @@ const Chat: FC<OwnProps & StateProps> = ({
         />
         <div className="avatar-badge-wrapper">
           <div className={buildClassName('avatar-online', isAvatarOnlineShown && 'avatar-online-shown')} />
-          <ChatBadge chat={chat} isMuted={isMuted} shouldShowOnlyMostImportant forceHidden={getIsForumPanelClosed} />
+          <ChatBadge
+            chat={chat}
+            isMuted={isMuted}
+            shouldShowOnlyMostImportant
+            forceHidden={getIsForumPanelClosed}
+          />
         </div>
         {chat.isCallActive && chat.isCallNotEmpty && (
           <ChatCallStatus isMobile={isMobile} isSelected={isSelected} isActive={withInterfaceAnimations} />
@@ -295,6 +310,7 @@ const Chat: FC<OwnProps & StateProps> = ({
             <LastMessageMeta
               message={chat.lastMessage}
               outgoingStatus={lastMessageOutgoingStatus}
+              draftDate={draft?.date}
             />
           )}
         </div>

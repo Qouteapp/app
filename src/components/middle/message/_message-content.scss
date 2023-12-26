@@ -237,7 +237,7 @@
     }
   }
 
-  .matching-text-highlight {
+  .matching-text-highlight:not(.is-quote) {
     color: var(--color-text);
     background: #ffffffcc;
     border-radius: 0.25rem;
@@ -245,6 +245,23 @@
 
     .theme-dark & {
       --color-text: #000;
+    }
+  }
+
+  .matching-text-highlight.is-quote {
+    background: transparent;
+    border-radius: 0.25rem;
+
+    &.animate {
+      color: var(--color-text);
+      animation: quote-highlight 0.5s;
+      animation-delay: 1.5s;
+      background-color: #cae3f7;
+
+      .theme-dark & {
+        animation-name: quote-highlight-dark;
+        color: #000;
+      }
     }
   }
 
@@ -343,7 +360,6 @@
   &.has-background,
   .is-album & {
     background: var(--background-color);
-    box-shadow: var(--button-shadow);
   }
 
   &.has-solid-background {
@@ -937,6 +953,12 @@
   font-size: 0.875rem;
 }
 
+// Remove extra bottom padding from `blockquote`
+.text-entity-blockquote-wrapper {
+  display: inline-block;
+  width: 100%
+}
+
 blockquote, .blockquote {
   display: inline-block;
   position: relative;
@@ -989,5 +1011,35 @@ blockquote, .blockquote {
   100% {
     background-position-x: var(--background-gradient-size);
     opacity: 1;
+  }
+}
+
+html.theme-light div.message-content:not(.emoji-only , .no-text)  {
+  box-shadow: var(--button-shadow-light);
+}
+
+html.theme-dark div.message-content:not(.emoji-only , .no-text)  {
+  box-shadow: var(--button-shadow-dark);
+}
+
+@keyframes quote-highlight {
+  0% {
+    background-color: #cae3f7;
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes quote-highlight-dark {
+  0% {
+    background-color: #cae3f7;
+    color: #000;
+  }
+
+  100% {
+    background-color: transparent;
+    color: var(--color-text);
   }
 }

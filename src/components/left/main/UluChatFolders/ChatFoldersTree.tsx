@@ -16,13 +16,16 @@ import type { ApiChat, ApiChatFolder, ApiChatlistExportedInvite } from '../../..
 import type { MenuItemContextAction } from '../../../ui/ListItem';
 import type { TreeItemChat, TreeItemFolder } from './types';
 
-import { ALL_FOLDER_ID } from '../../../../config';
-import { selectCanShareFolder } from '../../../../global/selectors';
+import { ALL_FOLDER_ID, DEFAULT_WORKSPACE } from '../../../../config';
+import { selectCanShareFolder, selectCurrentChat } from '../../../../global/selectors';
 import { selectCurrentLimit } from '../../../../global/selectors/limits';
+import { isWorkspaceChatTimeSnapshotStale } from '../../../../global/ulu/workspaces';
 import buildClassName from '../../../../util/buildClassName';
+import { getOrderedIds as getOrderedChatIds } from '../../../../util/folderManager';
 
 import { useFolderManagerForUnreadCounters } from '../../../../hooks/useFolderManager.react';
 import useLang from '../../../../hooks/useLang.react';
+import { useWorkspaces } from '../../../../hooks/useWorkspaces.react';
 
 import InfiniteScroll from '../../../ui/InfiniteScroll.react';
 import TreeRenders from './TreeRenderers';
@@ -30,26 +33,17 @@ import UluControlledTreeEnvironment from './UluControlledTreeEnvironment';
 
 import styles from './ChatFoldersTree.module.scss';
 
-export type Workspace = {
-  id: string;
-  name: string;
-  logoUrl?: string;
-  folders?: number[];
-};
-
 type OwnProps = {};
 type StateProps = {
   orderedFolderIds?: number[];
   folderInvitesById: Record<number, ApiChatlistExportedInvite[]>;
   chatFoldersById: Record<number, ApiChatFolder>;
   orderedPinnedChatIds: string[] | undefined;
-  chatsById: Record<number, ApiChat>;
+  chatsById: Record<string, ApiChat>;
   maxFolderInvites: number;
   maxChatLists: number;
   maxFolders: number;
-  currentWorkspace: Workspace;
-  savedWorkspaces: Workspace[];
-
+  currentChat: ApiChat | undefined;
 };
 
 // TODO clean-up
@@ -61,8 +55,7 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
   maxChatLists,
   maxFolders,
   maxFolderInvites,
-  currentWorkspace,
-  savedWorkspaces,
+  currentChat,
 }) => {
   const lang = useLang();
 
@@ -78,25 +71,36 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
     openLimitReachedModal,
   } = getActions();
 
+  const { currentWorkspaceId, currentWorkspace, savedWorkspaces } = useWorkspaces();
+  const { chatSnapshotsTemp = [] } = currentWorkspace;
   const allFolderIdsInWorkspaces = savedWorkspaces
     .filter((ws) => ws.id !== currentWorkspace.id)
     .reduce((acc, ws) => {
       return [...acc, ...(ws.folders || [])];
     }, [] as number[]); // Указываем явно тип начального значения как number[]
 
+  const workspaceTempChatIds = useMemo(() => {
+    if (chatSnapshotsTemp.length === 0) { return []; }
+    return chatSnapshotsTemp
+      .filter((chatSnapshot) => !isWorkspaceChatTimeSnapshotStale(chatSnapshot))
+      .map((chat) => chat.id);
+  // eslint-disable-next-line react-hooks-static-deps/exhaustive-deps
+  }, [currentWorkspaceId, chatSnapshotsTemp]);
+
   const displayedFolders = (() => {
     return orderedFolderIds
       ? orderedFolderIds.map((id) => {
         // Пропускаем папки, которые уже назначены другим воркспейсам, если выбран Personal Workspace
-        if (currentWorkspace.id === 'personal' && allFolderIdsInWorkspaces.includes(id)) {
+        if (currentWorkspace.id === DEFAULT_WORKSPACE.id && allFolderIdsInWorkspaces.includes(id)) {
           return undefined;
         }
 
         const folder = chatFoldersById[id];
 
         // Показываем папку только если она принадлежит текущему воркспейсу
-        if (currentWorkspace.id !== 'personal'
-    && !savedWorkspaces.find((ws) => ws.id === currentWorkspace.id)?.folders?.includes(id)) {
+        if (
+          currentWorkspace.id !== DEFAULT_WORKSPACE.id
+          && !savedWorkspaces.find((ws) => ws.id === currentWorkspace.id)?.folders?.includes(id)) {
           return undefined;
         }
 
@@ -112,7 +116,7 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
 
     return displayedFolders.map((folder, i) => {
       const {
-        id, title, includedChatIds = [], pinnedChatIds = [],
+        id, title, pinnedChatIds = [],
       } = folder;
       const isBlocked = i > maxFolders - 1;
       const canShareFolder = selectCanShareFolder(getGlobal(), id);
@@ -165,7 +169,7 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
         });
       }
 
-      const chatIds = [...new Set(pinnedChatIds.concat(includedChatIds))];
+      const orderedChatIds = getOrderedChatIds(id) || [];
 
       return {
         id,
@@ -174,9 +178,9 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
         isBadgeActive: Boolean(folderCountersById[id]?.notificationsCount),
         isBlocked,
         contextActions: contextActions?.length ? contextActions : undefined,
-        chatIds,
+        chatIds: orderedChatIds,
         chats: Object.values(chatsById)
-          .filter((chat) => chatIds.includes(chat.id))
+          .filter((chat) => orderedChatIds.includes(chat.id))
           .reduce((p, c) => {
             p[c.id] = { ...c, isPinned: pinnedChatIds.includes(c.id), folderId: id } as ApiChat;
             return p;
@@ -190,6 +194,9 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
 
   const foldersToDisplay = useMemo(() => {
     const chatsLength = folders.reduce((length, folder) => length + folder.chatIds.length, 0);
+    const tempChatsToDisplay = [...workspaceTempChatIds];
+    let lastAdjustedIndex = 0;
+
     const items = folders.reduce((record, folder, index) => {
       const adjustedIndex = index + 1; // "inbox" (all chats) is not here
 
@@ -202,16 +209,24 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
           return;
         }
 
+        const tempIndex = tempChatsToDisplay.findIndex((c) => c === chat.id);
+        if (tempIndex !== -1) {
+          tempChatsToDisplay.splice(tempIndex, 1);
+        }
+
         const chatAdjustedIndex = (folders.length + 1) * (adjustedIndex + 1) + chatsLength * (i + 1) + i + 1;
         record[chatAdjustedIndex] = {
           index: chatAdjustedIndex,
           type: 'chat',
-          contextActions: [], // TODO
+          contextActions: [],
           id: chat.id,
           chat,
           isPinned: chat.isPinned,
+          isFirst: i === 0,
           folderId: chat.folderId,
           isFolder: false,
+          canChangeFolder: folders.length > 1,
+          isCurrentChat: currentChat && chat.id === currentChat.id,
           // isFolder: isChatSuperGroupWithTopics(chat),
           canRename: false,
           children: undefined, // TODO threads for supergroups
@@ -220,6 +235,7 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
           ref: createRef<HTMLDivElement>(),
         };
         chatIndexes.push(chatAdjustedIndex);
+        lastAdjustedIndex = chatAdjustedIndex;
       });
 
       record[adjustedIndex] = {
@@ -238,6 +254,34 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
       return record;
     }, {} as Record<TreeItemIndex, TreeItemChat<any>>);
 
+    tempChatsToDisplay.forEach((id, i) => {
+      const chat = chatsById[id];
+      if (!chat) {
+        return;
+      }
+      const tempChatAdjustedIndex = lastAdjustedIndex * tempChatsToDisplay.length + i + 1;
+
+      items[tempChatAdjustedIndex] = {
+        index: tempChatAdjustedIndex,
+        type: 'chat',
+        contextActions: [],
+        id: chat.id,
+        chat,
+        isPinned: false,
+        isFirst: i === 0,
+        folderId: chat.folderId,
+        isFolder: false,
+        canChangeFolder: folders.length > 1,
+        isCurrentChat: currentChat && chat.id === currentChat.id,
+        isTempChat: true,
+        canRename: false,
+        children: undefined, // TODO threads for supergroups
+        data: chat.title,
+        unreadCount: chat.unreadCount,
+        ref: createRef<HTMLDivElement>(),
+      };
+    });
+
     return {
       items: {
         ...items,
@@ -246,14 +290,14 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
           canMove: true,
           isFolder: true,
           children: Object.values(items)
-            .filter((item) => item.type === 'folder')
+            .filter((item) => item.type === 'folder' || item.isTempChat)
             .map((item) => item.index),
           data: 'root',
           canRename: true,
         } as TreeItemChat<any>,
       } as Record<TreeItemIndex, TreeItemChat<any>>,
     };
-  }, [folders]);
+  }, [folders, workspaceTempChatIds, currentChat, chatsById]);
 
   const classNameInfiniteScroll = buildClassName(
     'custom-scroll',
@@ -265,7 +309,9 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
       <UluControlledTreeEnvironment
         ref={treeEnvironmentRef}
         id="chat-folders-tree"
+        currentWorkspaceId={currentWorkspace.id}
         items={foldersToDisplay.items}
+        totalFolders={folders.length}
         renderTreeContainer={TreeRenders.renderTreeContainer}
         renderLiveDescriptorContainer={TreeRenders.renderLiveDescriptorContainer}
         renderItemsContainer={TreeRenders.renderItemsContainer}
@@ -281,17 +327,8 @@ const ChatFoldersTree: FC<OwnProps & StateProps> = ({
 
 export default withGlobal(
   (global): StateProps => {
-    // Получение текущего воркспейса и списка сохраненных воркспейсов
-    const currentWorkspaceId = localStorage.getItem('currentWorkspace');
-    const savedWorkspacesString = localStorage.getItem('workspaces') || '[]';
-    const savedWorkspaces = JSON.parse(savedWorkspacesString) as Workspace[];
+    const currentChat = selectCurrentChat(global);
 
-    let currentWorkspace = savedWorkspaces.find((ws: {
-      id: string;
-    }) => ws.id === currentWorkspaceId);
-    if (!currentWorkspace) {
-      currentWorkspace = { id: 'personal', name: 'Personal Workspace', logoUrl: undefined };
-    }
     const {
       chatFolders: {
         byId: chatFoldersById,
@@ -323,8 +360,7 @@ export default withGlobal(
       maxFolders: selectCurrentLimit(global, 'dialogFilters'),
       maxFolderInvites: selectCurrentLimit(global, 'chatlistInvites'),
       maxChatLists: selectCurrentLimit(global, 'chatlistJoined'),
-      currentWorkspace,
-      savedWorkspaces,
+      currentChat,
       // archiveSettings,
       // sessions,
     };

@@ -1,13 +1,15 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import type { ReactNode } from 'react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import type { TreeItemRenderContext } from 'react-complex-tree';
 import type { FC } from '../../../../../../../lib/teact/teact';
 import { getActions } from '../../../../../../../global';
 
+import type { ApiTopic } from '../../../../../../../api/types';
 import type { TreeItemChat } from '../../../types';
 
 import { ULU_APP } from '../../../../../../../config';
+import { getOrderedTopics } from '../../../../../../../global/helpers';
 import buildClassName from '../../../../../../../util/buildClassName';
 import { MouseButton } from '../../../../../../../util/windowEnvironment';
 import renderText from '../../../../../../common/helpers/renderText.react';
@@ -17,6 +19,7 @@ import useChatContextActions from '../../../../../../../hooks/useChatContextActi
 import useContextMenuHandlers from '../../../../../../../hooks/useContextMenuHandlers.react';
 import { useFastClick } from '../../../../../../../hooks/useFastClick.react';
 import useFlag from '../../../../../../../hooks/useFlag.react';
+import { useFocusMode } from '../../../../../../../hooks/useFocusMode.react';
 import useLastCallback from '../../../../../../../hooks/useLastCallback.react';
 import useMenuPosition from '../../../../../../../hooks/useMenuPosition.react';
 
@@ -28,6 +31,7 @@ import MenuSeparator from '../../../../../../ui/MenuSeparator.react';
 import ChatFolderModal from '../../../../../ChatFolderModal.react';
 import MuteChatModal from '../../../../../MuteChatModal.react';
 import ChatAvatar from './ChatAvatar';
+// import Cross from './Cross';
 import SvgPin from './SvgPin';
 
 import stylesUluChatFolder from '../../../../UluChatFolder/UluChatFolder.module.scss';
@@ -44,16 +48,22 @@ const Chat: FC<{
   shouldStressUnreadMessages: boolean;
   contextRootElementSelector?: string;
 }> = ({
-  children, active, title, shouldStressUnreadMessages, item, context,
+  children, title, shouldStressUnreadMessages, item, context,
 }) => {
   const {
-    unreadCount: messagesUnreadCount, ref,
+    unreadCount: messagesUnreadCount, ref, isCurrentChat,
   } = item;
 
   const classNameWrapper = buildClassName(
     stylesUluChatFolder.wrapper,
-    active && stylesUluChatFolder.active,
+    styles.wrapper,
+    isCurrentChat && stylesUluChatFolder.active,
     !!messagesUnreadCount && shouldStressUnreadMessages && stylesUluChatFolder['has-unread-messages'],
+  );
+
+  const dividerClassName = buildClassName(
+    item.isFirst && styles.first,
+    item.isTempChat && styles.temp,
   );
 
   // const { isMobile } = useAppLayout(); TODO use this
@@ -96,7 +106,7 @@ const Chat: FC<{
     folderId: item.folderId,
     isPinned: item.isPinned,
     isMuted: item.chat?.isMuted,
-    canChangeFolder: item.canChangeFolder, // TODO
+    canChangeFolder: item.canChangeFolder,
   });
 
   const {
@@ -105,8 +115,17 @@ const Chat: FC<{
   } = useContextMenuHandlers(ref!, !contextActions);
 
   const {
-    closeForumPanel, openForumPanel, openChat, focusLastMessage,
+    closeForumPanel, openForumPanel, openChat, openThread, focusLastMessage,
   } = getActions();
+
+  const [lastActiveTopic] = useMemo(() => {
+    if (!item.chat?.topics) {
+      return [] as ApiTopic[];
+    }
+
+    const unreadTopics = Object.values(item.chat.topics).filter((topic) => topic.unreadCount);
+    return getOrderedTopics(unreadTopics, item.chat.orderedPinnedTopicIds, true);
+  }, [item.chat?.orderedPinnedTopicIds, item.chat?.topics]);
 
   // TODO
   const isForumPanelOpen = false;
@@ -125,12 +144,19 @@ const Chat: FC<{
       return;
     }
 
-    openChat({ id: chatId, shouldReplaceHistory: true }, { forceOnHeavyAnimation: true });
+    if (lastActiveTopic) {
+      openThread({ chatId, threadId: lastActiveTopic.id, shouldReplaceHistory: true });
+    } else {
+      openChat(
+        { id: chatId, shouldReplaceHistory: true },
+        { forceOnHeavyAnimation: true },
+      );
+    }
 
     if (isSelected && canScrollDown) {
       focusLastMessage();
     }
-  }, [canScrollDown, isForumPanelOpen, isSelected, item.id, item.isFolder]);
+  }, [canScrollDown, isForumPanelOpen, isSelected, item, lastActiveTopic]);
 
   const { handleClick, handleMouseDown } = useFastClick((e: React.MouseEvent<HTMLDivElement>) => {
     if (contextActions && (e.button === MouseButton.Secondary)) {
@@ -162,13 +188,23 @@ const Chat: FC<{
     getLayout,
   );
 
+  const shouldRenderDivider = item.isFirst && item.isTempChat;
+
   const shouldRenderPin = item.isPinned;
   const shouldRenderMute = item.chat?.isMuted;
   const shouldRenderControl = shouldRenderPin || shouldRenderMute;
+  const classNameControl = buildClassName(styles['mini-items'], styles.control);
+
+  // const shouldRenderCross = item.isTempChat || true; // TODO
+  const shouldRenderUnreadCounter = !!messagesUnreadCount;
+  const shouldRenderRightItems = shouldRenderUnreadCounter;
+  const classNameRight = buildClassName(styles['mini-items'], styles.right);
+  const { isFocusModeEnabled } = useFocusMode();
 
   // TODO use <ListItem/> with <Ripple/>
   return (
     <>
+      {shouldRenderDivider && <div className={dividerClassName} />}
       <div
         className={classNameWrapper}
         ref={ref}
@@ -188,7 +224,7 @@ const Chat: FC<{
             {title}
           </div>
           { shouldRenderControl && (
-            <div className={styles.control}>
+            <div className={classNameControl}>
               { shouldRenderMute && <i className="icon icon-muted" /> }
               { shouldRenderPin && (
                 <SvgPin className={styles.pin} width={13} height={13} fill="var(--color-text-secondary)" />
@@ -196,7 +232,16 @@ const Chat: FC<{
             </div>
           ) }
         </div>
-        { !!messagesUnreadCount && (<div className={stylesUluChatFolder.unread}>{ messagesUnreadCount }</div>) }
+        { shouldRenderRightItems && (
+          <div className={classNameRight}>
+            { shouldRenderUnreadCounter && !isFocusModeEnabled && (
+              <div className={stylesUluChatFolder.unread}>
+                { messagesUnreadCount }
+              </div>
+            ) }
+            {/* { shouldRenderCross && <Cross className={styles.cross} /> } */}
+          </div>
+        ) }
         {contextActions && contextMenuPosition !== undefined && (
           <Menu
             isOpen={isContextMenuOpen}

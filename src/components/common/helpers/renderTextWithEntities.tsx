@@ -24,6 +24,7 @@ interface IOrganizedEntity {
   organizedIndexes: Set<number>;
   nestedEntities: IOrganizedEntity[];
 }
+type RenderTextParams = Parameters<typeof renderText>[2];
 
 const HQ_EMOJI_THRESHOLD = 64;
 
@@ -36,6 +37,7 @@ export function renderTextWithEntities({
   containerId,
   isSimple,
   isProtected,
+  noLineBreaks,
   observeIntersectionForLoading,
   observeIntersectionForPlaying,
   withTranslucentThumbs,
@@ -43,6 +45,7 @@ export function renderTextWithEntities({
   sharedCanvasHqRef,
   cacheBuster,
   forcePlayback,
+  focusedQuote,
 }: {
   text: string;
   entities?: ApiMessageEntity[];
@@ -52,6 +55,7 @@ export function renderTextWithEntities({
   containerId?: string;
   isSimple?: boolean;
   isProtected?: boolean;
+  noLineBreaks?: boolean;
   observeIntersectionForLoading?: ObserveFn;
   observeIntersectionForPlaying?: ObserveFn;
   withTranslucentThumbs?: boolean;
@@ -59,9 +63,18 @@ export function renderTextWithEntities({
   sharedCanvasHqRef?: React.RefObject<HTMLCanvasElement>;
   cacheBuster?: string;
   forcePlayback?: boolean;
+  focusedQuote?: string;
 }) {
   if (!entities?.length) {
-    return renderMessagePart(text, highlight, emojiSize, shouldRenderAsHtml, isSimple);
+    return renderMessagePart({
+      content: text,
+      highlight,
+      focusedQuote,
+      emojiSize,
+      shouldRenderAsHtml,
+      isSimple,
+      noLineBreaks,
+    });
   }
 
   const result: TextPart[] = [];
@@ -89,9 +102,15 @@ export function renderTextWithEntities({
         deleteLineBreakAfterPre = false;
       }
       if (textBefore) {
-        renderResult.push(...renderMessagePart(
-          textBefore, highlight, emojiSize, shouldRenderAsHtml, isSimple,
-        ) as TextPart[]);
+        renderResult.push(...renderMessagePart({
+          content: textBefore,
+          highlight,
+          focusedQuote,
+          emojiSize,
+          shouldRenderAsHtml,
+          isSimple,
+          noLineBreaks,
+        }) as TextPart[]);
       }
     }
 
@@ -138,8 +157,10 @@ export function renderTextWithEntities({
         entityContent,
         nestedEntityContent,
         highlight,
+        focusedQuote,
         containerId,
         isSimple,
+        noLineBreaks,
         isProtected,
         observeIntersectionForLoading,
         observeIntersectionForPlaying,
@@ -165,9 +186,15 @@ export function renderTextWithEntities({
         textAfter = textAfter.substring(1);
       }
       if (textAfter) {
-        renderResult.push(...renderMessagePart(
-          textAfter, highlight, emojiSize, shouldRenderAsHtml, isSimple,
-        ) as TextPart[]);
+        renderResult.push(...renderMessagePart({
+          content: textAfter,
+          highlight,
+          focusedQuote,
+          emojiSize,
+          shouldRenderAsHtml,
+          isSimple,
+          noLineBreaks,
+        }) as TextPart[]);
       }
     }
 
@@ -214,18 +241,36 @@ export function getTextWithEntitiesAsHtml(formattedText?: ApiFormattedText) {
   return result;
 }
 
-function renderMessagePart(
-  content: TextPart | TextPart[],
-  highlight?: string,
-  emojiSize?: number,
-  shouldRenderAsHtml?: boolean,
-  isSimple?: boolean,
-) {
+function renderMessagePart({
+  content,
+  highlight,
+  focusedQuote,
+  emojiSize,
+  shouldRenderAsHtml,
+  isSimple,
+  noLineBreaks,
+} : {
+  content: TextPart | TextPart[];
+  highlight?: string;
+  focusedQuote?: string;
+  emojiSize?: number;
+  shouldRenderAsHtml?: boolean;
+  isSimple?: boolean;
+  noLineBreaks?: boolean;
+}) {
   if (Array.isArray(content)) {
     const result: TextPart[] = [];
 
     content.forEach((c) => {
-      result.push(...renderMessagePart(c, highlight, emojiSize, shouldRenderAsHtml, isSimple));
+      result.push(...renderMessagePart({
+        content: c,
+        highlight,
+        focusedQuote,
+        emojiSize,
+        shouldRenderAsHtml,
+        isSimple,
+        noLineBreaks,
+      }));
     });
 
     return result;
@@ -238,15 +283,21 @@ function renderMessagePart(
   const emojiFilter = emojiSize && emojiSize > HQ_EMOJI_THRESHOLD ? 'hq_emoji' : 'emoji';
 
   const filters: TextFilter[] = [emojiFilter];
-  if (!isSimple) {
+  const params: RenderTextParams = {};
+  if (!isSimple && !noLineBreaks) {
     filters.push('br');
   }
 
   if (highlight) {
-    return renderText(content, filters.concat('highlight'), { highlight });
-  } else {
-    return renderText(content, filters);
+    filters.push('highlight');
+    params.highlight = highlight;
   }
+  if (focusedQuote) {
+    filters.push('quote');
+    params.quote = focusedQuote;
+  }
+
+  return renderText(content, filters, params);
 }
 
 // Organize entities in a tree-like structure to better represent how the text will be displayed
@@ -320,8 +371,10 @@ function processEntity({
   entityContent,
   nestedEntityContent,
   highlight,
+  focusedQuote,
   containerId,
   isSimple,
+  noLineBreaks,
   isProtected,
   observeIntersectionForLoading,
   observeIntersectionForPlaying,
@@ -336,8 +389,10 @@ function processEntity({
   entityContent: TextPart;
   nestedEntityContent: TextPart[];
   highlight?: string;
+  focusedQuote?: string;
   containerId?: string;
   isSimple?: boolean;
+  noLineBreaks?: boolean;
   isProtected?: boolean;
   observeIntersectionForLoading?: ObserveFn;
   observeIntersectionForPlaying?: ObserveFn;
@@ -352,9 +407,14 @@ function processEntity({
   const renderedContent = nestedEntityContent.length ? nestedEntityContent : entityContent;
 
   function renderNestedMessagePart() {
-    return renderMessagePart(
-      renderedContent, highlight, undefined, undefined, isSimple,
-    );
+    return renderMessagePart({
+      content: renderedContent,
+      highlight,
+      focusedQuote,
+      emojiSize,
+      isSimple,
+      noLineBreaks,
+    });
   }
 
   if (!entityText) {
@@ -392,11 +452,11 @@ function processEntity({
       return <strong data-entity-type={entity.type}>{renderNestedMessagePart()}</strong>;
     case ApiMessageEntityTypes.Blockquote:
       return (
-        <div className="text-entity-blockquote-wrapper">
+        <span className="text-entity-blockquote-wrapper">
           <blockquote data-entity-type={entity.type}>
             {renderNestedMessagePart()}
           </blockquote>
-        </div>
+        </span>
       );
     case ApiMessageEntityTypes.BotCommand:
       return (
@@ -446,9 +506,8 @@ function processEntity({
     case ApiMessageEntityTypes.Email:
       return (
         <a
-          href={`mailto:${entityText}`}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={entityText}
+          onClick={handleEmailClick}
           className="text-entity-link"
           dir="auto"
           data-entity-type={entity.type}
@@ -575,10 +634,10 @@ function processEntityAsHtml(
     case ApiMessageEntityTypes.CustomEmoji:
       return buildCustomEmojiHtmlFromEntity(rawEntityText, entity);
     case ApiMessageEntityTypes.Blockquote:
-      return `<span
+      return `<blockquote
         class="blockquote"
         data-entity-type="${ApiMessageEntityTypes.Blockquote}"
-        >${renderedContent}</span>`;
+        >${renderedContent}</blockquote>`;
     default:
       return renderedContent;
   }
@@ -603,4 +662,14 @@ function handleCodeClick(e: React.MouseEvent<HTMLElement>) {
   getActions().showNotification({
     message: translate('TextCopied'),
   });
+}
+function handleEmailClick(e: React.MouseEvent<HTMLAnchorElement>) {
+  e.preventDefault(); // Предотвращаем переход по ссылке
+  const url = e.currentTarget.getAttribute('href');
+  if (url) {
+    copyTextToClipboard(url);
+    getActions().showNotification({
+      message: translate('EmailCopied'),
+    });
+  }
 }

@@ -190,6 +190,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 10rem;
 
       body.is-ios & {
         font-size: 0.9375rem !important;

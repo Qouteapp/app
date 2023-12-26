@@ -19,6 +19,7 @@ import type {
   ApiReplyInfo,
   ApiReplyKeyboard,
   ApiSponsoredMessage,
+  ApiSponsoredWebPage,
   ApiSticker,
   ApiStory,
   ApiStorySkipped,
@@ -28,7 +29,7 @@ import type {
   PhoneCallAction,
 } from '../../types';
 import {
-  ApiMessageEntityTypes,
+  ApiMessageEntityTypes, MAIN_THREAD_ID,
 } from '../../types';
 
 import {
@@ -40,7 +41,7 @@ import {
   SUPPORTED_VIDEO_CONTENT_TYPES,
 } from '../../../config';
 import { getEmojiOnlyCountForMessage } from '../../../global/helpers/getEmojiOnlyCountForMessage';
-import { pick } from '../../../util/iteratees';
+import { omitUndefined, pick } from '../../../util/iteratees';
 import { getServerTime, getServerTimeOffset } from '../../../util/serverTime';
 import { interpolateArray } from '../../../util/waveform';
 import { buildPeer } from '../gramjsBuilders';
@@ -49,6 +50,7 @@ import {
   resolveMessageApiChatId,
   serializeBytes,
 } from '../helpers';
+import { buildApiBotApp } from './bots';
 import { buildApiCallDiscardReason } from './calls';
 import {
   buildApiPhoto,
@@ -77,7 +79,7 @@ export function setMessageBuilderCurrentUserId(_currentUserId: string) {
 export function buildApiSponsoredMessage(mtpMessage: GramJs.SponsoredMessage): ApiSponsoredMessage | undefined {
   const {
     fromId, message, entities, startParam, channelPost, chatInvite, chatInviteHash, randomId, recommended, sponsorInfo,
-    additionalInfo,
+    additionalInfo, showPeerPhoto, webpage, buttonText, app,
   } = mtpMessage;
   const chatId = fromId ? getApiChatIdFromMtpPeer(fromId) : undefined;
   const chatInviteTitle = chatInvite
@@ -92,6 +94,8 @@ export function buildApiSponsoredMessage(mtpMessage: GramJs.SponsoredMessage): A
     text: buildMessageTextContent(message, entities),
     expiresAt: Math.round(Date.now() / 1000) + SPONSORED_MESSAGE_CACHE_MS,
     isRecommended: Boolean(recommended),
+    ...(webpage && { webPage: buildSponsoredWebPage(webpage) }),
+    ...(showPeerPhoto && { isAvatarShown: true }),
     ...(chatId && { chatId }),
     ...(chatInviteHash && { chatInviteHash }),
     ...(chatInvite && { chatInviteTitle }),
@@ -99,6 +103,8 @@ export function buildApiSponsoredMessage(mtpMessage: GramJs.SponsoredMessage): A
     ...(channelPost && { channelPostId: channelPost }),
     ...(sponsorInfo && { sponsorInfo }),
     ...(additionalInfo && { additionalInfo }),
+    ...(buttonText && { buttonText }),
+    ...(app && { botApp: buildApiBotApp(app) }),
   };
 }
 
@@ -175,12 +181,12 @@ export function buildApiMessageWithChatId(
   const isInvoiceMedia = mtpMessage.media instanceof GramJs.MessageMediaInvoice
     && Boolean(mtpMessage.media.extendedMedia);
 
-  const isEdited = mtpMessage.editDate && !mtpMessage.editHide;
+  const isEdited = Boolean(mtpMessage.editDate) && !mtpMessage.editHide;
   const {
     inlineButtons, keyboardButtons, keyboardPlaceholder, isKeyboardSingleUse, isKeyboardSelective,
   } = buildReplyButtons(mtpMessage, isInvoiceMedia) || {};
   const forwardInfo = mtpMessage.fwdFrom && buildApiMessageForwardInfo(mtpMessage.fwdFrom, isChatWithSelf);
-  const { replies, mediaUnread: isMediaUnread, postAuthor } = mtpMessage;
+  const { mediaUnread: isMediaUnread, postAuthor } = mtpMessage;
   const groupedId = mtpMessage.groupedId && String(mtpMessage.groupedId);
   const isInAlbum = Boolean(groupedId) && !(content.document || content.audio || content.sticker);
   const shouldHideKeyboardButtons = mtpMessage.replyMarkup instanceof GramJs.ReplyKeyboardHide;
@@ -189,16 +195,17 @@ export function buildApiMessageWithChatId(
   const isProtected = mtpMessage.noforwards || isInvoiceMedia;
   const isForwardingAllowed = !mtpMessage.noforwards;
   const emojiOnlyCount = getEmojiOnlyCountForMessage(content, groupedId);
+  const hasComments = mtpMessage.replies?.comments;
 
-  return {
+  return omitUndefined({
     id: mtpMessage.id,
     chatId,
     isOutgoing,
     content,
     date: mtpMessage.date,
     senderId: fromId || (mtpMessage.out && mtpMessage.post && currentUserId) || chatId,
-    views: mtpMessage.views,
-    forwards: mtpMessage.forwards,
+    viewsCount: mtpMessage.views,
+    forwardsCount: mtpMessage.forwards,
     isScheduled,
     isFromScheduled: mtpMessage.fromScheduled,
     isSilent: mtpMessage.silent,
@@ -206,12 +213,12 @@ export function buildApiMessageWithChatId(
     reactions: mtpMessage.reactions && buildMessageReactions(mtpMessage.reactions),
     emojiOnlyCount,
     ...(mtpMessage.replyTo && { replyInfo: buildApiReplyInfo(mtpMessage.replyTo) }),
-    ...(forwardInfo && { forwardInfo }),
-    ...(isEdited && { isEdited }),
-    ...(mtpMessage.editDate && { editDate: mtpMessage.editDate }),
-    ...(isMediaUnread && { isMediaUnread }),
-    ...(mtpMessage.mentioned && isMediaUnread && { hasUnreadMention: true }),
-    ...(mtpMessage.mentioned && { isMentioned: true }),
+    forwardInfo,
+    isEdited,
+    editDate: mtpMessage.editDate,
+    isMediaUnread,
+    hasUnreadMention: mtpMessage.mentioned && isMediaUnread,
+    isMentioned: mtpMessage.mentioned,
     ...(groupedId && {
       groupedId,
       isInAlbum,
@@ -222,11 +229,11 @@ export function buildApiMessageWithChatId(
     }),
     ...(shouldHideKeyboardButtons && { shouldHideKeyboardButtons, isHideKeyboardSelective }),
     ...(mtpMessage.viaBotId && { viaBotId: buildApiPeerId(mtpMessage.viaBotId, 'user') }),
-    ...(replies && { repliesThreadInfo: buildThreadInfo(replies, mtpMessage.id, chatId) }),
-    ...(postAuthor && { postAuthorTitle: postAuthor }),
+    postAuthorTitle: postAuthor,
     isProtected,
     isForwardingAllowed,
-  };
+    hasComments,
+  } satisfies ApiMessage);
 }
 
 export function buildMessageDraft(draft: GramJs.TypeDraftMessage): ApiDraft | undefined {
@@ -339,6 +346,7 @@ function buildAction(
   let slug: string | undefined;
   let isGiveaway: boolean | undefined;
   let isUnclaimed: boolean | undefined;
+  let pluralValue: number | undefined;
 
   const targetUserIds = 'users' in action
     ? action.users && action.users.map((id) => buildApiPeerId(id, 'user'))
@@ -538,6 +546,17 @@ function buildAction(
     if (action.boostPeer) {
       targetChatId = getApiChatIdFromMtpPeer(action.boostPeer);
     }
+  } else if (action instanceof GramJs.MessageActionGiveawayResults) {
+    if (!action.winnersCount) {
+      text = 'lng_action_giveaway_results_none';
+    } else if (action.unclaimedCount) {
+      text = 'lng_action_giveaway_results_some';
+    } else {
+      text = 'BoostingGiveawayServiceWinnersSelected';
+      translationValues.push('%amount%');
+      amount = action.winnersCount;
+      pluralValue = action.winnersCount;
+    }
   } else {
     text = 'ChatList.UnsupportedMessage';
   }
@@ -566,6 +585,7 @@ function buildAction(
     topicEmojiIconId,
     isTopicAction,
     isUnclaimed,
+    pluralValue,
   };
 }
 
@@ -827,8 +847,11 @@ export function buildLocalForwardedMessage({
     text: !shouldHideText ? strippedText : undefined,
   };
 
-  const replyInfo: ApiReplyInfo | undefined = toThreadId ? {
+  // TODO Prepare reply info between forwarded messages locally, to prevent height jumps
+  const isToMainThread = toThreadId === MAIN_THREAD_ID;
+  const replyInfo: ApiReplyInfo | undefined = toThreadId && !isToMainThread ? {
     type: 'message',
+    replyToMsgId: toThreadId,
     replyToTopId: toThreadId,
     isForumTopic: toChat.isForum || undefined,
   } : undefined;
@@ -879,6 +902,7 @@ function buildReplyInfo(inputInfo: ApiInputReplyInfo, isForum?: boolean): ApiRep
     replyToPeerId: inputInfo.replyToPeerId,
     quoteText: inputInfo.quoteText,
     isForumTopic: isForum && inputInfo.replyToTopId ? true : undefined,
+    ...(Boolean(inputInfo.quoteText) && { isQuote: true }),
   };
 }
 
@@ -965,7 +989,21 @@ function buildUploadingMedia(
   };
 }
 
-function buildThreadInfo(
+export function buildApiThreadInfoFromMessage(
+  mtpMessage: GramJs.TypeMessage,
+): ApiThreadInfo | undefined {
+  const chatId = resolveMessageApiChatId(mtpMessage);
+  if (
+    !chatId
+    || !(mtpMessage instanceof GramJs.Message)
+    || !mtpMessage.replies) {
+    return undefined;
+  }
+
+  return buildApiThreadInfo(mtpMessage.replies, mtpMessage.id, chatId);
+}
+
+export function buildApiThreadInfo(
   messageReplies: GramJs.TypeMessageReplies, messageId: number, chatId: string,
 ): ApiThreadInfo | undefined {
   const {
@@ -977,20 +1015,43 @@ function buildThreadInfo(
     return undefined;
   }
 
-  const isPostThread = apiChannelId && chatId !== apiChannelId;
+  const baseThreadInfo = {
+    messagesCount: replies,
+    ...(maxId && { lastMessageId: maxId }),
+    ...(readMaxId && { lastReadMessageId: readMaxId }),
+    ...(recentRepliers && { recentReplierIds: recentRepliers.map(getApiChatIdFromMtpPeer) }),
+  };
+
+  if (comments) {
+    return {
+      ...baseThreadInfo,
+      isCommentsInfo: true,
+      chatId: apiChannelId!,
+      originChannelId: chatId,
+      originMessageId: messageId,
+    };
+  }
 
   return {
-    isComments: comments,
+    ...baseThreadInfo,
+    isCommentsInfo: false,
+    chatId,
     threadId: messageId,
-    ...(isPostThread ? {
-      chatId: apiChannelId,
-      originChannelId: chatId,
-    } : {
-      chatId,
-    }),
-    messagesCount: replies,
-    lastMessageId: maxId,
-    lastReadInboxMessageId: readMaxId,
-    ...(recentRepliers && { recentReplierIds: recentRepliers.map(getApiChatIdFromMtpPeer) }),
+  };
+}
+
+function buildSponsoredWebPage(webPage: GramJs.TypeSponsoredWebPage): ApiSponsoredWebPage {
+  let photo: ApiPhoto | undefined;
+  if (webPage.photo instanceof GramJs.Photo) {
+    addPhotoToLocalDb(webPage.photo);
+    photo = buildApiPhoto(webPage.photo);
+  }
+
+  return {
+    ...pick(webPage, [
+      'url',
+      'siteName',
+    ]),
+    photo,
   };
 }

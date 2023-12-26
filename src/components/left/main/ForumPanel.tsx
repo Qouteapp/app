@@ -19,8 +19,7 @@ import buildClassName from '../../../util/buildClassName';
 import captureEscKeyListener from '../../../util/captureEscKeyListener';
 import { captureEvents, SwipeDirection } from '../../../util/captureEvents';
 import { waitForTransitionEnd } from '../../../util/cssAnimationEndListeners';
-import { createLocationHash } from '../../../util/routing';
-import { IS_TOUCH_ENV } from '../../../util/windowEnvironment';
+import { IS_ELECTRON, IS_MAC_OS, IS_TOUCH_ENV } from '../../../util/windowEnvironment';
 
 import useAppLayout from '../../../hooks/useAppLayout';
 import { dispatchHeavyAnimationEvent } from '../../../hooks/useHeavyAnimationCheck';
@@ -139,7 +138,6 @@ const ForumPanel: FC<OwnProps & StateProps> = ({
   useHistoryBack({
     isActive: isVisible,
     onBack: handleClose,
-    hash: chat ? createLocationHash(chat.id, 'thread', MAIN_THREAD_ID) : undefined,
   });
 
   useEffect(() => (isVisible ? captureEscKeyListener(handleClose) : undefined), [handleClose, isVisible]);
@@ -204,12 +202,14 @@ const ForumPanel: FC<OwnProps & StateProps> = ({
   }
 
   const isLoading = chat?.topics === undefined;
+  const bodyClass = IS_ELECTRON && IS_MAC_OS ? styles.isElectronIsMacos : styles.notIsElectronIsMacos;
 
   return (
     <div
       ref={ref}
       className={buildClassName(
         styles.root,
+        bodyClass,
         isScrolled && styles.scrolled,
         lang.isRtl && styles.rtl,
         !withInterfaceAnimations && styles.noAnimation,

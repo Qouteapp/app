@@ -24,7 +24,7 @@ import {
   BASE_EMOJI_KEYWORD_LANG, DEBUG, INACTIVE_MARKER,
 } from '../../config';
 import { requestNextMutation } from '../../lib/fasterdom/fasterdom';
-import { getUserFullName } from '../../global/helpers';
+import { getMainUsername, getUserFullName } from '../../global/helpers';
 import {
   selectCanAnimateInterface,
   selectChatFolder,
@@ -41,6 +41,7 @@ import {
   selectTabState,
   selectUser,
 } from '../../global/selectors';
+import { selectIsWorkspaceSettingsOpen, selectWorkspaceSettingsId } from '../../global/selectors/ulu/workspaces';
 import buildClassName from '../../util/buildClassName';
 import { waitForTransitionEnd } from '../../util/cssAnimationEndListeners';
 import { processDeepLink } from '../../util/deeplink';
@@ -51,6 +52,7 @@ import {
   IS_ANDROID, IS_ELECTRON, IS_FIREFOX, IS_IOS, IS_LINUX, IS_MAC_OS, IS_SAFARI, IS_WINDOWS, IS_YA_BROWSER,
 } from '../../util/windowEnvironment';
 
+import useAIHotkeys from '../../hooks/useAIHotkeys';
 import useAppLayout from '../../hooks/useAppLayout';
 import useArchiver from '../../hooks/useArchiver';
 import useBackgroundMode from '../../hooks/useBackgroundMode';
@@ -64,7 +66,12 @@ import { useJune } from '../../hooks/useJune';
 import useLastCallback from '../../hooks/useLastCallback';
 import usePreventPinchZoomGesture from '../../hooks/usePreventPinchZoomGesture';
 import useShortcutCmdE from '../../hooks/useShortcutCmdE';
+import useShortcutCmdF from '../../hooks/useShortcutCmdF';
+import useShortcutCmdG from '../../hooks/useShortcutCmdG';
 import useShortcutCmdH from '../../hooks/useShortcutCmdH';
+import useShortcutCmdI from '../../hooks/useShortcutCmdI';
+import useShortcutCmdShiftL from '../../hooks/useShortcutCmdShiftL';
+import useShortcutCmdShiftM from '../../hooks/useShortcutCmdShiftM';
 import useShortcutCmdU from '../../hooks/useShortcutCmdU';
 import useShowTransition from '../../hooks/useShowTransition';
 import useSyncEffect from '../../hooks/useSyncEffect';
@@ -81,6 +88,7 @@ import LeftColumn from '../left/LeftColumn';
 import UluChatFolders from '../left/main/UluChatFolders';
 import MediaViewer from '../mediaViewer/MediaViewer.async';
 import AudioPlayer from '../middle/AudioPlayer';
+import Header from '../middle/Header';
 import ReactionPicker from '../middle/message/ReactionPicker.async';
 import MessageListHistoryHandler from '../middle/MessageListHistoryHandler';
 import MiddleColumn from '../middle/MiddleColumn';
@@ -106,11 +114,13 @@ import DraftRecipientPicker from './DraftRecipientPicker.async';
 import ForwardRecipientPicker from './ForwardRecipientPicker.async';
 import GameModal from './GameModal';
 import HistoryCalendar from './HistoryCalendar.async';
+import InviteViaLinkModal from './InviteViaLinkModal.async';
 import NewContactModal from './NewContactModal.async';
 import Notifications from './Notifications.async';
 import PremiumLimitReachedModal from './premium/common/PremiumLimitReachedModal.async';
 import PremiumMainModal from './premium/PremiumMainModal.async';
 import SafeLinkModal from './SafeLinkModal.async';
+import UluWorkspaceSettingsModal from './UluWorkspaceSettingsModal.react';
 
 import './Main.scss';
 
@@ -172,6 +182,9 @@ type StateProps = {
   noRightColumnAnimation?: boolean;
   withInterfaceAnimations?: boolean;
   isSynced?: boolean;
+  inviteViaLinkModal?: TabState['inviteViaLinkModal'];
+  isWorkspaceSettingsOpen: boolean;
+  workspaceSettingsId: string | undefined;
 };
 
 const APP_OUTDATED_TIMEOUT_MS = 5 * 60 * 1000; // 5 min
@@ -234,6 +247,9 @@ const Main: FC<OwnProps & StateProps> = ({
   boostModal,
   noRightColumnAnimation,
   isSynced,
+  inviteViaLinkModal,
+  isWorkspaceSettingsOpen,
+  workspaceSettingsId,
 }) => {
   const {
     initMain,
@@ -265,7 +281,7 @@ const Main: FC<OwnProps & StateProps> = ({
     closePaymentModal,
     clearReceipt,
     checkAppVersion,
-    openChat,
+    openThread,
     toggleLeftColumn,
     loadRecentEmojiStatuses,
     updatePageTitle,
@@ -275,6 +291,8 @@ const Main: FC<OwnProps & StateProps> = ({
     setIsElectronUpdateAvailable,
     loadPremiumSetStickers,
     loadAuthorizations,
+    loadPeerColors,
+    closeWorkspaceSettings,
   } = getActions();
 
   if (DEBUG && !DEBUG_isLogged) {
@@ -312,9 +330,10 @@ const Main: FC<OwnProps & StateProps> = ({
   useEffect(() => {
     if (analytics && currentUser && currentUserName && !isIdentify) {
       setIsIdentify(true);
+      const handle = getMainUsername(currentUser);
       analytics.identify(currentUser.id, {
-        email: `user${currentUser.id}@ulu.so`,
-        fullName: currentUserName,
+        email: `${handle}@ulu.so`,
+        name: currentUserName,
         firstName: currentUser.firstName,
         lastName: currentUser.lastName,
         usernames: (currentUser.usernames || []).map((u) => u.username).join(', '),
@@ -345,14 +364,46 @@ const Main: FC<OwnProps & StateProps> = ({
     }
   }, [isDesktop, isLeftColumnOpen, isMiddleColumnOpen, isMobile, toggleLeftColumn]);
 
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      // Получаем текущее выделение
+      const selection = window.getSelection();
+
+      // Проверяем, есть ли выделенный текст
+      const hasSelection = selection && selection.toString() !== '';
+
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'KeyS' && !hasSelection) {
+        toggleLeftColumn();
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    // Add event listener only if the middle column is open
+    if (isMiddleColumnOpen) {
+      document.addEventListener('keydown', listener);
+      return () => document.removeEventListener('keydown', listener);
+    } else {
+      return () => {};
+    }
+  }, [toggleLeftColumn, isMiddleColumnOpen]);
+
   useInterval(checkAppVersion, isMasterTab ? APP_OUTDATED_TIMEOUT_MS : undefined, true);
 
   useArchiver({ isManual: false });
   useDoneUpdates();
 
   useShortcutCmdE();
+  useShortcutCmdF();
+  useShortcutCmdG();
   useShortcutCmdH();
+  useShortcutCmdI();
+
+  useShortcutCmdShiftL();
+  useShortcutCmdShiftM();
   useShortcutCmdU();
+
+  useAIHotkeys();
 
   useEffect(() => {
     if (!IS_ELECTRON) {
@@ -380,6 +431,7 @@ const Main: FC<OwnProps & StateProps> = ({
       updateIsOnline(true);
       loadConfig();
       loadAppConfig();
+      loadPeerColors();
       initMain();
       loadAvailableReactions();
       loadAnimatedEmojis();
@@ -476,8 +528,8 @@ const Main: FC<OwnProps & StateProps> = ({
     const parsedLocationHash = parseLocationHash();
     if (!parsedLocationHash) return;
 
-    openChat({
-      id: parsedLocationHash.chatId,
+    openThread({
+      chatId: parsedLocationHash.chatId,
       threadId: parsedLocationHash.threadId,
       type: parsedLocationHash.type,
     });
@@ -592,6 +644,7 @@ const Main: FC<OwnProps & StateProps> = ({
 
   return (
     <div ref={containerRef} id="Main" className={className}>
+      <Header />
       <LeftColumn ref={leftColumnRef} chatFoldersPortalRef={chatFoldersPortalRef} />
       <MiddleColumn leftColumnRef={leftColumnRef} isMobile={isMobile} />
       <RightColumn isMobile={isMobile} />
@@ -646,8 +699,14 @@ const Main: FC<OwnProps & StateProps> = ({
       <ReceiptModal isOpen={isReceiptModalOpen} onClose={clearReceipt} />
       <DeleteFolderDialog folder={deleteFolderDialog} />
       <ReactionPicker isOpen={isReactionPickerOpen} />
+      <InviteViaLinkModal userIds={inviteViaLinkModal?.restrictedUserIds} chatId={inviteViaLinkModal?.chatId} />
       <CommandMenu />
       <UluChatFolders portalRef={chatFoldersPortalRef} />
+      <UluWorkspaceSettingsModal
+        workspaceId={workspaceSettingsId}
+        isOpen={isWorkspaceSettingsOpen}
+        onClose={closeWorkspaceSettings}
+      />
     </div>
   );
 };
@@ -691,6 +750,7 @@ export default memo(withGlobal<OwnProps>(
       chatlistModal,
       boostModal,
       giftCodeModal,
+      inviteViaLinkModal,
     } = selectTabState(global);
 
     const { chatId: audioChatId, messageId: audioMessageId } = audioPlayer;
@@ -759,6 +819,9 @@ export default memo(withGlobal<OwnProps>(
       giftCodeModal,
       noRightColumnAnimation,
       isSynced: global.isSynced,
+      inviteViaLinkModal,
+      isWorkspaceSettingsOpen: selectIsWorkspaceSettingsOpen(global),
+      workspaceSettingsId: selectWorkspaceSettingsId(global),
     };
   },
 )(Main));

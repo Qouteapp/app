@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { FC } from '../../../lib/teact/teact';
 import React, {
   memo, useEffect,
@@ -120,19 +121,20 @@ const AttachMenu: FC<OwnProps> = ({
     );
   });
 
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.shiftKey && e.code === 'KeyU') {
-        e.preventDefault();
-        handleQuickSelect();
-      }
-    }
+  function debounce(func: Function, wait: number): Function {
+    // eslint-disable-next-line no-null/no-null
+    let timeout: NodeJS.Timeout | null = null;
 
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('keydown', handleKey);
+    return function executedFunction(...args: any[]) {
+      const later = () => {
+        clearTimeout(timeout!);
+        func(...args);
+      };
+
+      clearTimeout(timeout!);
+      timeout = setTimeout(later, wait);
     };
-  }, []);
+  }
 
   const handleDocumentSelect = useLastCallback(() => {
     openSystemFilesDialog(!canSendDocuments && canSendAudios
@@ -223,8 +225,8 @@ const AttachMenu: FC<OwnProps> = ({
         {canAttachPolls && (
           <MenuItem icon="poll" onClick={onPollCreate}>{lang('Poll')}</MenuItem>
         )}
-
-        {canAttachMedia && !isScheduled && bots?.map((bot) => (
+        {/* не разкомменчивать, у нас wallet не работает */}
+        {/* {canAttachMedia && !isScheduled && bots?.map((bot) => (
           <AttachBotItem
             bot={bot}
             chatId={chatId}
@@ -233,7 +235,7 @@ const AttachMenu: FC<OwnProps> = ({
             onMenuOpened={markAttachmentBotMenuOpen}
             onMenuClosed={unmarkAttachmentBotMenuOpen}
           />
-        ))}
+        ))} */}
       </Menu>
     </div>
   );

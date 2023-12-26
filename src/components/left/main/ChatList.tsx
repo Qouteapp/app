@@ -121,11 +121,11 @@ const ChatList: FC<OwnProps> = ({
 
   // Support <Alt>+<Up/Down> to navigate between chats
   useHotkeys(isActive && orderedIds?.length ? {
-    'Alt+ArrowUp': (e: KeyboardEvent) => {
+    'Alt+K': (e: KeyboardEvent) => {
       e.preventDefault();
       openNextChat({ targetIndexDelta: -1, orderedIds });
     },
-    'Alt+ArrowDown': (e: KeyboardEvent) => {
+    'Alt+J': (e: KeyboardEvent) => {
       e.preventDefault();
       openNextChat({ targetIndexDelta: 1, orderedIds });
     },
@@ -138,7 +138,9 @@ const ChatList: FC<OwnProps> = ({
     }
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code.startsWith('Digit')) {
+      const selection = window.getSelection();
+      const hasSelection = selection && selection.toString() !== '';
+      if (((IS_MAC_OS && e.metaKey) || (!IS_MAC_OS && e.ctrlKey)) && e.code.startsWith('Digit') && !hasSelection) {
         const [, digit] = e.code.match(/Digit(\d)/) || [];
         if (!digit || RESERVED_HOTKEYS.has(digit)) return;
 
@@ -227,6 +229,7 @@ const ChatList: FC<OwnProps> = ({
           isPinned={isPinned}
           isDone={isDone}
           folderId={folderId}
+          isInbox={isInbox}
           animationType={getAnimationType(id)}
           orderDiff={orderDiffById[id]}
           offsetTop={offsetTop}

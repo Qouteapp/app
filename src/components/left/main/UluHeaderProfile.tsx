@@ -6,7 +6,10 @@ import { withGlobal } from '../../../global';
 
 import type { ApiPhoto, ApiUser } from '../../../api/types';
 
+import { DEFAULT_WORKSPACE } from '../../../config';
 import { selectUser, selectUserFullInfo } from '../../../global/selectors';
+
+import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
 import ProfilePhoto from '../../common/ProfilePhoto';
 
@@ -16,15 +19,8 @@ type OwnProps = {
   onClick?: (e: ReactMouseEvent<HTMLDivElement, MouseEvent>) => void;
 };
 
-export type Workspace = {
-  id: string;
-  name: string;
-  logoUrl?: string;
-};
-
 type StateProps = {
   user?: ApiUser;
-  currentWorkspace?: Workspace;
   userPersonalPhoto?: ApiPhoto;
   userProfilePhoto?: ApiPhoto;
   userFallbackPhoto?: ApiPhoto;
@@ -44,12 +40,10 @@ const getUserFullName = (user?: ApiUser) => {
 };
 
 const UluHeaderProfile: FC<OwnProps & StateProps> = ({
-  user, currentWorkspace, userFallbackPhoto, userPersonalPhoto, userProfilePhoto, onClick,
+  user, userFallbackPhoto, userPersonalPhoto, userProfilePhoto, onClick,
 }) => {
-  console.log('Current Workspace:', currentWorkspace); // Debugging
-  console.log('User:', user); // Debugging
-  const isPersonalWorkspace = currentWorkspace?.id === 'personal';
-  console.log('Is Personal Workspace:', isPersonalWorkspace); // Debugging
+  const { currentWorkspace } = useWorkspaces();
+  const isPersonalWorkspace = currentWorkspace?.id === DEFAULT_WORKSPACE.id;
 
   function renderPhoto() {
     if (isPersonalWorkspace) {
@@ -67,7 +61,7 @@ const UluHeaderProfile: FC<OwnProps & StateProps> = ({
           <img
             className="ProfilePhoto-UluHeaderProfile"
             src={currentWorkspace.logoUrl}
-            alt={`${currentWorkspace.name} logo`}
+            alt="logo"
           />
         );
       }
@@ -98,23 +92,8 @@ export default memo(withGlobal<OwnProps>((global) => {
   const user = selectUser(global, currentUserId!);
   const userFullInfo = selectUserFullInfo(global, currentUserId!);
 
-  // Retrieve the current workspace ID from localStorage
-  const currentWorkspaceId = localStorage.getItem('currentWorkspace');
-  const savedWorkspacesString = localStorage.getItem('workspaces') || '[]';
-  const savedWorkspaces = JSON.parse(savedWorkspacesString) as Workspace[];
-
-  // Find the current workspace or default to personal if not found
-  let currentWorkspace = savedWorkspaces.find((ws: {
-    id: string;
-  }) => ws.id === currentWorkspaceId);
-  if (!currentWorkspaceId || !currentWorkspace) {
-    // Define a default personal workspace object
-    currentWorkspace = { id: 'personal', name: 'Personal Workspace', logoUrl: undefined };
-  }
-
   return {
     user,
-    currentWorkspace,
     userPersonalPhoto: userFullInfo?.personalPhoto,
     userProfilePhoto: userFullInfo?.profilePhoto,
     userFallbackPhoto: userFullInfo?.fallbackPhoto,

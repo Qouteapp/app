@@ -27,6 +27,7 @@ import {
   selectChat,
   selectChatFullInfo,
   selectCurrentMessageList,
+  selectIsChatWithSelf,
   selectIsPremiumPurchaseBlocked,
   selectIsRightColumnShown, selectNotifyExceptions,
   selectNotifySettings,
@@ -103,6 +104,7 @@ type StateProps = {
   isMuted?: boolean;
   isTopic?: boolean;
   isForum?: boolean;
+  isForumAsMessages?: true;
   canAddContact?: boolean;
   canReportChat?: boolean;
   canDeleteChat?: boolean;
@@ -116,6 +118,7 @@ type StateProps = {
   canTranslate?: boolean;
   isBlocked?: boolean;
   isBot?: boolean;
+  isChatWithSelf?: boolean;
 };
 
 const CLOSE_MENU_ANIMATION_DURATION = 200;
@@ -131,6 +134,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
   withForumActions,
   isTopic,
   isForum,
+  isForumAsMessages,
   isChatInfoShown,
   canStartBot,
   canSubscribe,
@@ -158,6 +162,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
   canTranslate,
   isBlocked,
   isBot,
+  isChatWithSelf,
   onJoinRequestsClick,
   onSubscribeChannel,
   onSearchClick,
@@ -178,7 +183,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
     toggleStatistics,
     openBoostStatistics,
     openGiftPremiumModal,
-    openChatWithInfo,
+    openThreadWithInfo,
     openCreateTopicPanel,
     openEditTopicPanel,
     openChat,
@@ -186,6 +191,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
     togglePeerTranslations,
     blockUser,
     unblockUser,
+    setViewForumAsMessages,
   } = getActions();
 
   const { isMobile } = useAppLayout();
@@ -228,7 +234,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
   });
 
   const handleViewGroupInfo = useLastCallback(() => {
-    openChatWithInfo({ id: chatId, threadId });
+    openThreadWithInfo({ chatId, threadId });
     setShouldCloseFast(!isRightColumnShown);
     closeMenu();
   });
@@ -277,6 +283,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
 
   const handleViewAsTopicsClick = useLastCallback(() => {
     openChat({ id: undefined });
+    setViewForumAsMessages({ chatId, isEnabled: false });
     closeMenu();
   });
 
@@ -466,7 +473,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
               <div className="right-badge">{pendingJoinRequests}</div>
             </MenuItem>
           )}
-          {withForumActions && !isTopic && (
+          {withForumActions && !isTopic && !isForumAsMessages && (
             <MenuItem
               icon="message"
               onClick={handleOpenAsMessages}
@@ -604,7 +611,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
               {isBlocked ? lang('BotRestart') : lang('Bot.Stop')}
             </MenuItem>
           )}
-          {isPrivate && !isBot && (
+          {isPrivate && !isChatWithSelf && !isBot && (
             <MenuItem
               icon={isBlocked ? 'user' : 'hand-stop'}
               onClick={isBlocked ? handleUnblock : handleBlock}
@@ -665,6 +672,7 @@ export default memo(withGlobal<OwnProps>(
     const user = isPrivate ? selectUser(global, chatId) : undefined;
     const canAddContact = user && getCanAddContact(user);
     const isMainThread = threadId === MAIN_THREAD_ID;
+    const isChatWithSelf = selectIsChatWithSelf(global, chatId);
     const canReportChat = isMainThread && (isChatChannel(chat) || isChatGroup(chat) || (user && !user.isSelf));
     const { chatId: currentChatId, threadId: currentThreadId } = selectCurrentMessageList(global) || {};
 
@@ -692,6 +700,7 @@ export default memo(withGlobal<OwnProps>(
       isPrivate,
       isTopic: chat?.isForum && !isMainThread,
       isForum: chat?.isForum,
+      isForumAsMessages: chat?.isForumAsMessages,
       canAddContact,
       canReportChat,
       canDeleteChat: getCanDeleteChat(chat),
@@ -707,6 +716,7 @@ export default memo(withGlobal<OwnProps>(
       canTranslate,
       isBlocked: userFullInfo?.isBlocked,
       isBot: Boolean(chatBot),
+      isChatWithSelf,
     };
   },
 )(HeaderMenuContainer));

@@ -8,7 +8,9 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  background-color: var(--color-background);
+
+  background-color: transparent !important;
+  margin-left: 0.5rem;
 
   h3 {
     margin-bottom: 0;
@@ -29,6 +31,10 @@
     @media (max-width: 600px) {
       max-width: calc(100% - 3rem);
     }
+  }
+
+  @media (min-width: 600px) {
+    margin-left: 0rem;
   }
 
   @media (max-width: 600px) {
@@ -66,19 +72,20 @@
       --offset-x: -4.125rem;
     }
   }
+
+  @media (max-width: 600px) {
+    background-color: var(--color-background);
+    margin-left: 0;
+  }
+
 }
 
-.electron-header {
-  display: none;
-}
-
-body.is-macos.is-electron .electron-header {
-  height: auto;
-  display: flex;
-  padding: 8px;
-  right: auto;
-  justify-content: flex-end;
-  background: var(--color-background);
+body.is-macos.is-electron .LeftBackground {
+  background: transparent;
+  
+  @media (max-width: 600px) {
+    background: var(--color-background);
+  }
 }
 
 .extra-spacing {

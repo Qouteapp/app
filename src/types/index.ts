@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { TeactNode } from '../lib/teact/teact';
 
 import type {
@@ -278,6 +279,7 @@ export enum RightColumnContent {
   Statistics,
   BoostStatistics,
   MessageStatistics,
+  StoryStatistics,
   StickerSearch,
   GifSearch,
   PollResults,
@@ -432,3 +434,19 @@ export type InlineBotSettings = {
   switchWebview?: ApiBotInlineSwitchWebview;
   cacheTime: number;
 };
+
+export const ChatTimeSnapshotSchema = z.object({
+  id: z.string(),
+  dateAdded: z.number(),
+  dateUpdated: z.number(),
+});
+export type ChatTimeSnapshot = z.infer<typeof ChatTimeSnapshotSchema>;
+
+export const WorkspaceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  logoUrl: z.string().optional(),
+  folders: z.array(z.number()).optional(),
+  chatSnapshotsTemp: z.array(ChatTimeSnapshotSchema).optional(),
+});
+export type Workspace = z.infer<typeof WorkspaceSchema>;

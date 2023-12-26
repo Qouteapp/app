@@ -12,13 +12,20 @@ import { processDeeplink } from './deeplink';
 import { captureLocalStorage, restoreLocalStorage } from './localStorage';
 import tray from './tray';
 import {
-  forceQuit, getAppTitle, getCurrentWebContents,
-  getCurrentWindow, getLastWindow, hasExtraWindows, IS_FIRST_RUN, IS_MAC_OS,
-  IS_PREVIEW, IS_WINDOWS, reloadWindows, store, TRAFFIC_LIGHT_POSITION, windows,
+  checkIsWebContentsUrlAllowed, forceQuit, getAppTitle, getCurrentWindow, getLastWindow, hasExtraWindows,
+  IS_FIRST_RUN, IS_MAC_OS, IS_PREVIEW, IS_WINDOWS, reloadWindows, store, TRAFFIC_LIGHT_POSITION, windows,
 } from './utils';
 import windowStateKeeper from './windowState';
 
 const ALLOWED_DEVICE_ORIGINS = ['http://localhost:1234', 'file://'];
+
+function updateWindowTransparency(isTransparent: boolean) {
+  const currentWindow = BrowserWindow.getFocusedWindow();
+  if (currentWindow) {
+    // eslint-disable-next-line no-null/no-null
+    currentWindow.setVibrancy(isTransparent ? 'sidebar' : null);
+  }
+}
 
 export function createWindow(url?: string) {
   const windowState = windowStateKeeper({
@@ -52,6 +59,18 @@ export function createWindow(url?: string) {
     height = windowState.height;
   }
 
+  const splash = new BrowserWindow({
+    width,
+    height,
+    x,
+    y,
+    transparent: true,
+    vibrancy: 'sidebar',
+    titleBarStyle: 'hidden',
+  });
+
+  splash.loadFile(path.join(__dirname, 'components', 'splash.html'));
+
   const window = new BrowserWindow({
     show: false,
     x,
@@ -64,13 +83,27 @@ export function createWindow(url?: string) {
       preload: path.join(__dirname, 'preload.js'),
       devTools: process.env.APP_ENV !== 'production',
     },
+    ...(IS_WINDOWS && {
+      material: 'acrylic',
+      /* transparent: true, */
+    }),
     ...(IS_MAC_OS && {
       titleBarStyle: 'hidden',
       trafficLightPosition: TRAFFIC_LIGHT_POSITION.standard,
+      /* transparent: true, */
+      vibrancy: 'sidebar',
     }),
   });
 
   windowState.manage(window);
+
+  window.on('enter-full-screen', () => {
+    updateWindowTransparency(false); // Сделать фон непрозрачным в полноэкранном режиме
+  });
+
+  window.on('leave-full-screen', () => {
+    updateWindowTransparency(true); // Вернуть прозрачность при выходе из полноэкранного режима
+  });
 
   window.webContents.setWindowOpenHandler((details: HandlerDetails) => {
     shell.openExternal(details.url);
@@ -79,6 +112,12 @@ export function createWindow(url?: string) {
 
   window.webContents.session.setDevicePermissionHandler(({ deviceType, origin }) => {
     return deviceType === 'hid' && ALLOWED_DEVICE_ORIGINS.includes(origin);
+  });
+
+  window.webContents.on('will-navigate', (event, newUrl) => {
+    if (!checkIsWebContentsUrlAllowed(newUrl)) {
+      event.preventDefault();
+    }
   });
 
   window.on('page-title-updated', (event: Event) => {
@@ -100,11 +139,21 @@ export function createWindow(url?: string) {
   });
 
   window.on('close', (event) => {
-    if (IS_MAC_OS || (IS_WINDOWS && tray.isEnabled)) {
-      if (forceQuit.isEnabled) {
-        app.exit(0);
-        forceQuit.disable();
-      } else if (hasExtraWindows()) {
+    const focusedWindow = getCurrentWindow();
+    if (forceQuit.isEnabled) {
+      app.exit(0);
+      return;
+    }
+
+    if (focusedWindow && focusedWindow.isFullScreen()) {
+      event.preventDefault();
+      focusedWindow.once('leave-full-screen', () => {
+        focusedWindow.close();
+      });
+      focusedWindow.setFullScreen(false);
+    } else if (IS_MAC_OS || (IS_WINDOWS && tray.isEnabled)) {
+      // Обычная логика закрытия
+      if (hasExtraWindows()) {
         windows.delete(window);
         windowState.unmanage();
       } else {
@@ -120,7 +169,7 @@ export function createWindow(url?: string) {
     window.removeMenu();
   }
 
-  if (IS_WINDOWS && tray.isEnabled) {
+  if ((IS_MAC_OS || IS_WINDOWS) && tray.isEnabled) {
     tray.setupListeners(window);
     tray.create();
   }
@@ -137,8 +186,11 @@ export function createWindow(url?: string) {
       await captureLocalStorage();
       reloadWindows();
     }
+  });
 
-    window.show();
+  window.once('ready-to-show', () => {
+    splash.close(); // Закрыть сплеш-скрин
+    window.show(); // Показать основное окно
   });
 
   windows.add(window);
@@ -146,11 +198,10 @@ export function createWindow(url?: string) {
 }
 
 function loadWindowUrl(window: BrowserWindow, url?: string, hash?: string): void {
-  if (url) {
+  if (url && checkIsWebContentsUrlAllowed(url)) {
     window.loadURL(url);
   } else if (!app.isPackaged) {
     window.loadURL(`http://localhost:1234${hash}`);
-    window.webContents.openDevTools();
   } else if (getIsAutoUpdateEnabled()) {
     window.loadURL(`${process.env.BASE_URL}${hash}`);
   } else if (getIsAutoUpdateEnabled() === undefined && IS_FIRST_RUN) {
@@ -172,30 +223,6 @@ export function setupElectronActionHandlers() {
 
   ipcMain.handle(ElectronAction.GET_IS_FULLSCREEN, () => {
     getCurrentWindow()?.isFullScreen();
-  });
-
-  ipcMain.handle(ElectronAction.CAN_GO_BACK, () => {
-    const webContents = getCurrentWebContents();
-    return webContents ? webContents.canGoBack() : false;
-  });
-
-  ipcMain.handle(ElectronAction.CAN_GO_FORWARD, () => {
-    const webContents = getCurrentWebContents();
-    return webContents ? webContents.canGoForward() : false;
-  });
-
-  ipcMain.on(ElectronAction.GO_BACK, () => {
-    const webContents = getCurrentWebContents();
-    if (webContents && webContents.canGoBack()) {
-      webContents.goBack();
-    }
-  });
-
-  ipcMain.on(ElectronAction.GO_FORWARD, () => {
-    const webContents = getCurrentWebContents();
-    if (webContents && webContents.canGoForward()) {
-      webContents.goForward();
-    }
   });
 
   ipcMain.handle(ElectronAction.HANDLE_DOUBLE_CLICK, () => {
@@ -233,6 +260,10 @@ export function setupElectronActionHandlers() {
 
   ipcMain.handle(ElectronAction.GET_IS_AUTO_UPDATE_ENABLED, () => {
     return getIsAutoUpdateEnabled();
+  });
+
+  ipcMain.handle(ElectronAction.UPDATE_TRAY_TITLE, (_, unreadCount: number) => {
+    tray.updateTrayTitle(unreadCount);
   });
 
   ipcMain.handle(ElectronAction.SET_IS_TRAY_ICON_ENABLED, (_, isTrayIconEnabled: boolean) => {

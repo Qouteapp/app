@@ -128,10 +128,10 @@ const ReportModal: FC<OwnProps> = ({
         <Button color="danger" className="confirm-dialog-button" onClick={handleReport}>
           {lang('lng_report_button')}
           <div className="hotkey-frame">
-            <div className="hotkey-icon"></div>
+            <div className="enter-hotkey-icon"></div>
           </div>
         </Button>
-        <Button className="confirm-dialog-button" isText onClick={onClose}>{lang('Cancel')}</Button>
+        <Button className="confirm-dialog-button" color="secondary" isText onClick={onClose}>{lang('Cancel')}</Button>
       </div>
     </Modal>
   );
