@@ -10,7 +10,7 @@ import useLastCallback from './useLastCallback';
 import useSchedule from './useSchedule';
 
 export default function useSnooze() {
-  const { sendMessage } = getActions();
+  const { sendMessage, showNotification } = getActions();
 
   // Используем useSchedule здесь, а не внутри других функций
   const [requestCalendar, calendar] = useSchedule(true, true);
@@ -25,11 +25,11 @@ export default function useSnooze() {
     const mainUsername = getMainUsername(chat);
 
     let chatLink = chat ? getChatLink(chat) : `https://t.me/${mainUsername}`;
-    let reminderText = `Напоминание про чат: ${chatLink}`;
+    let reminderText = `Reminder about the chat: ${chatLink}`;
 
     if (threadId !== 0) {
       chatLink += '/threadId'; // Создаем ссылку на тред
-      reminderText = `Напоминание про тред в чате: ${chatLink}`; // Изменяем текст напоминания
+      reminderText = `Reminder about thread in chat: ${chatLink}`;
     }
     sendMessage({
       text: reminderText,
@@ -40,6 +40,7 @@ export default function useSnooze() {
         type: 'thread',
       },
     });
+    showNotification({ message: 'You will be reminded!' });
   });
 
   const snooze = useLastCallback(({ chatId, threadId = 0 }: { chatId?: string; threadId?: number }) => {
