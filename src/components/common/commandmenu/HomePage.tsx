@@ -96,6 +96,13 @@ const HomePage: React.FC<OwnProps> = ({
     close();
   }, [close, runCommand]);
 
+  const handleSnoozeChat = useCallback(() => {
+    close();
+    setTimeout(() => {
+      runCommand('SNOOZE_CHAT');
+    }, 100); // for focus
+  }, [close, runCommand]);
+
   return (
     <>
       <AIGroup
@@ -115,6 +122,14 @@ const HomePage: React.FC<OwnProps> = ({
               </span>
             </Command.Item>
           )}
+          <Command.Item onSelect={handleSnoozeChat}>
+            <i className="icon icon-schedule" />
+            <span>Set a reminder for this chat</span>
+            <span className="shortcuts">
+              <span className="kbd">⌘</span>
+              <span className="kbd">H</span>
+            </span>
+          </Command.Item>
           <Command.Item onSelect={handleToggleChatUnread}>
             <i
               className={`icon ${

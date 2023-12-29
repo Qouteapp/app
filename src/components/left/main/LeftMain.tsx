@@ -19,6 +19,7 @@ import { useJune } from '../../../hooks/useJune';
 import useLang from '../../../hooks/useLang';
 import useLastCallback from '../../../hooks/useLastCallback';
 import useShowTransition from '../../../hooks/useShowTransition';
+import useSnooze from '../../../hooks/useSnooze';
 
 import Button from '../../ui/Button';
 import Transition from '../../ui/Transition';
@@ -160,12 +161,18 @@ const LeftMain: FC<OwnProps> = ({
     onSettingsScreenSelect(SettingsScreens.FoldersCreateFolder);
   });
 
+  const { snooze } = useSnooze();
+  const handleSnoozeChat = useLastCallback(() => {
+    snooze({});
+  });
+
   useCommand('NEW_CHANNEL', handleSelectNewChannel);
   useCommand('NEW_GROUP', handleSelectNewGroup);
   useCommand('NEW_FOLDER', handleCreateFolder);
   useCommand('NEW_FOLDER', handleCreateFolder);
   useCommand('OPEN_SETTINGS', handleSelectSettings);
   useCommand('OPEN_ARCHIVED', handleSelectArchived);
+  useCommand('SNOOZE_CHAT', handleSnoozeChat);
 
   useEffect(() => {
     let autoCloseTimeout: number | undefined;

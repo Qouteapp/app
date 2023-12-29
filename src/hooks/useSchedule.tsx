@@ -1,7 +1,3 @@
-/* eslint-disable react/no-deprecated */
-/* eslint-disable no-null/no-null */
-/* eslint-disable react/jsx-no-bind */
-import { unmountComponentAtNode } from 'react-dom';
 import React, { useState } from '../lib/teact/teact';
 
 import { SCHEDULED_WHEN_ONLINE } from '../config';
@@ -32,15 +28,10 @@ const useSchedule = (
     handleMessageSchedule(new Date(SCHEDULED_WHEN_ONLINE * 1000), true);
   });
 
-  const cmdkRoot = document.getElementById('cmdk-root');
   const handleCloseCalendar = useLastCallback(() => {
     setOnScheduled(undefined);
     onCancel?.();
     setMenuOpen(false);
-    if (cmdkRoot) {
-      unmountComponentAtNode(cmdkRoot);
-    }
-    return null;
   });
 
   const requestCalendar = useLastCallback((whenScheduled: OnScheduledCallback) => {

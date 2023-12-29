@@ -68,6 +68,7 @@ import usePreventPinchZoomGesture from '../../hooks/usePreventPinchZoomGesture';
 import useShortcutCmdE from '../../hooks/useShortcutCmdE';
 import useShortcutCmdF from '../../hooks/useShortcutCmdF';
 import useShortcutCmdG from '../../hooks/useShortcutCmdG';
+import useShortcutCmdH from '../../hooks/useShortcutCmdH';
 import useShortcutCmdI from '../../hooks/useShortcutCmdI';
 import useShortcutCmdShiftL from '../../hooks/useShortcutCmdShiftL';
 import useShortcutCmdShiftM from '../../hooks/useShortcutCmdShiftM';
@@ -392,13 +393,16 @@ const Main: FC<OwnProps & StateProps> = ({
   useArchiver({ isManual: false });
   useDoneUpdates();
 
-  useShortcutCmdU();
   useShortcutCmdE();
-  useShortcutCmdI();
   useShortcutCmdF();
+  useShortcutCmdG();
+  useShortcutCmdH();
+  useShortcutCmdI();
+
   useShortcutCmdShiftL();
   useShortcutCmdShiftM();
-  useShortcutCmdG();
+  useShortcutCmdU();
+
   useAIHotkeys();
 
   useEffect(() => {

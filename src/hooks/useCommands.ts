@@ -17,6 +17,7 @@ type TCommand = (
   | 'OPEN_AUTOMATION_SETTINGS'
   | 'OPEN_NOTIFICATION_SETTINGS'
   | 'SELECT_LAST_WORKSPACE'
+  | 'SNOOZE_CHAT'
 );
 
 export default function useCommands() {
