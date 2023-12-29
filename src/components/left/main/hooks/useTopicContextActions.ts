@@ -117,7 +117,7 @@ export default function useTopicContextActions({
     } : undefined;
 
     return compact([
-      ...([] || [actionNotifyMe]), // todo: undo temphide
+      actionNotifyMe,
       actionOpenInNewTab,
       actionPin,
       actionUnreadMark,
