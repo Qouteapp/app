@@ -205,8 +205,12 @@ function unsafeMigrateCache(cached: GlobalState, initialState: GlobalState) {
     cached.stories.orderedPeerIds = initialState.stories.orderedPeerIds;
   }
 
+  if (!cached.chats.similarChannelsById) {
+    cached.chats.similarChannelsById = initialState.chats.similarChannelsById;
+  }
+
   // Clear old color storage to optimize cache size
-  if (untypedCached.appConfig.peerColors) {
+  if (untypedCached?.appConfig?.peerColors) {
     untypedCached.appConfig.peerColors = undefined;
     untypedCached.appConfig.darkPeerColors = undefined;
   }
@@ -373,6 +377,7 @@ function reduceChats<T extends GlobalState>(global: T): GlobalState['chats'] {
 
   return {
     ...global.chats,
+    similarChannelsById: {},
     isFullyLoaded: {},
     byId: pick(global.chats.byId, idsToSave),
     fullInfoById: pick(global.chats.fullInfoById, idsToSave),

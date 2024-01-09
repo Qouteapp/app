@@ -56,10 +56,10 @@ import type {
   ApiSticker,
   ApiStickerSet,
   ApiStickerSetInfo,
-  ApiStoryView,
   ApiThemeParameters,
   ApiThreadInfo,
   ApiTranscription,
+  ApiTypeStoryView,
   ApiTypingStatus,
   ApiUpdate,
   ApiUpdateAuthorizationStateType,
@@ -169,13 +169,23 @@ export interface ServiceNotification {
   isDeleted?: boolean;
 }
 
-export type ApiLimitType = (
-  'uploadMaxFileparts' | 'stickersFaved' | 'savedGifs' | 'dialogFiltersChats' | 'dialogFilters' | 'dialogFolderPinned' |
-  'captionLength' | 'channels' | 'channelsPublic' | 'aboutLength' | 'chatlistInvites' | 'chatlistJoined'
-);
+export type ApiLimitType =
+  | 'uploadMaxFileparts'
+  | 'stickersFaved'
+  | 'savedGifs'
+  | 'dialogFiltersChats'
+  | 'dialogFilters'
+  | 'dialogFolderPinned'
+  | 'captionLength'
+  | 'channels'
+  | 'channelsPublic'
+  | 'aboutLength'
+  | 'chatlistInvites'
+  | 'chatlistJoined'
+  | 'recommendedChannels';
 
 export type ApiLimitTypeWithModal = Exclude<ApiLimitType, (
-  'captionLength' | 'aboutLength' | 'stickersFaved' | 'savedGifs'
+  'captionLength' | 'aboutLength' | 'stickersFaved' | 'savedGifs' | 'recommendedChannels'
 )>;
 
 export type TranslatedMessage = {
@@ -368,7 +378,7 @@ export type TabState = {
     isStealthModalOpen?: boolean;
     viewModal?: {
       storyId: number;
-      viewsById?: Record<string, ApiStoryView>;
+      views?: ApiTypeStoryView[];
       nextOffset?: string;
       isLoading?: boolean;
     };
@@ -648,6 +658,10 @@ export type TabState = {
 
   giftCodeModal?: {
     slug: string;
+    message?: {
+      chatId: string;
+      messageId: number;
+    };
     info: ApiCheckedGiftCode;
   };
 
@@ -772,6 +786,7 @@ export type GlobalState = {
     forDiscussionIds?: string[];
     // Obtained from GetFullChat / GetFullChannel
     fullInfoById: Record<string, ApiChatFullInfo>;
+    similarChannelsById: Record<string, string[]>;
   };
 
   messages: {
@@ -1767,6 +1782,9 @@ export interface ActionPayloads {
   fetchChat: {
     chatId: string;
   };
+  fetchChannelRecommendations: {
+    chatId: string;
+  };
   updateChatMutedState: {
     chatId: string;
     isMuted?: boolean;
@@ -1872,6 +1890,10 @@ export interface ActionPayloads {
 
   checkGiftCode: {
     slug: string;
+    message?: {
+      chatId: string;
+      messageId: number;
+    };
   } & WithTabId;
   applyGiftCode: {
     slug: string;

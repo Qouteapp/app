@@ -35,15 +35,20 @@ import {
   selectChatFullInfo,
   selectChatMessages,
   selectCurrentMediaSearch,
+  selectIsCurrentUserPremium,
   selectIsRightColumnShown,
   selectPeerFullInfo,
   selectPeerStories,
+  selectSimilarChannelIds,
   selectTabState,
   selectTheme,
   selectUser,
 } from '../../global/selectors';
+import { selectPremiumLimit } from '../../global/selectors/limits';
+import buildClassName from '../../util/buildClassName';
 import { captureEvents, SwipeDirection } from '../../util/captureEvents';
 import { IS_TOUCH_ENV } from '../../util/windowEnvironment';
+import renderText from '../common/helpers/renderText';
 import { getSenderName } from '../left/search/helpers/getSenderName';
 
 import usePeerStoriesPolling from '../../hooks/polling/usePeerStoriesPolling';
@@ -67,6 +72,7 @@ import PrivateChatInfo from '../common/PrivateChatInfo';
 import ProfileInfo from '../common/ProfileInfo';
 import WebLink from '../common/WebLink';
 import MediaStory from '../story/MediaStory';
+import Button from '../ui/Button';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import InfiniteScroll from '../ui/InfiniteScroll';
 import ListItem, { type MenuItemContextAction } from '../ui/ListItem';
@@ -114,6 +120,9 @@ type StateProps = {
   isChatProtected?: boolean;
   nextProfileTab?: ProfileTabType;
   shouldWarnAboutSvg?: boolean;
+  similarChannels?: string[];
+  isCurrentUserPremium?: boolean;
+  limitSimilarChannels: number;
 };
 
 const TABS = [
@@ -159,6 +168,9 @@ const Profile: FC<OwnProps & StateProps> = ({
   isChatProtected,
   nextProfileTab,
   shouldWarnAboutSvg,
+  similarChannels,
+  isCurrentUserPremium,
+  limitSimilarChannels,
 }) => {
   const {
     setLocalMediaSearchType,
@@ -173,6 +185,8 @@ const Profile: FC<OwnProps & StateProps> = ({
     setNewChatMembersDialogState,
     loadPeerPinnedStories,
     loadStoriesArchive,
+    openPremiumModal,
+    fetchChannelRecommendations,
   } = getActions();
 
   // eslint-disable-next-line no-null/no-null
@@ -193,7 +207,19 @@ const Profile: FC<OwnProps & StateProps> = ({
     // in forum topics. Return it when it's fixed on the server side.
     ...(!topicId ? [{ type: 'voice', title: 'SharedVoiceTab2' }] : []),
     ...(hasCommonChatsTab ? [{ type: 'commonChats', title: 'SharedGroupsTab2' }] : []),
-  ]), [chatId, currentUserId, hasCommonChatsTab, hasMembersTab, hasStoriesTab, isChannel, topicId]);
+    ...(isChannel && similarChannels?.length
+      ? [{ type: 'similarChannels', title: 'SimilarChannelsTab' }]
+      : []),
+  ]), [
+    chatId,
+    currentUserId,
+    hasCommonChatsTab,
+    hasMembersTab,
+    hasStoriesTab,
+    isChannel,
+    topicId,
+    similarChannels,
+  ]);
 
   const initialTab = useMemo(() => {
     if (!nextProfileTab) {
@@ -213,6 +239,12 @@ const Profile: FC<OwnProps & StateProps> = ({
     if (index === -1) return;
     setActiveTab(index);
   }, [nextProfileTab, tabs]);
+
+  useEffect(() => {
+    if (isChannel) {
+      fetchChannelRecommendations({ chatId });
+    }
+  }, [chatId, isChannel]);
 
   const renderingActiveTab = activeTab > tabs.length - 1 ? tabs.length - 1 : activeTab;
   const tabType = tabs[renderingActiveTab].type as ProfileTabType;
@@ -241,6 +273,7 @@ const Profile: FC<OwnProps & StateProps> = ({
     topicId,
     storyIds,
     archiveStoryIds,
+    similarChannels,
   );
   const isFirstTab = (hasStoriesTab && resultType === 'stories')
     || resultType === 'members'
@@ -513,6 +546,35 @@ const Profile: FC<OwnProps & StateProps> = ({
               <GroupChatInfo chatId={id} />
             </ListItem>
           ))
+        ) : resultType === 'similarChannels' ? (
+          <div key={resultType}>
+            {(viewportIds as string[])!.map((channelId, i) => (
+              <ListItem
+                key={channelId}
+                teactOrderKey={i}
+                className={buildClassName(
+                  'chat-item-clickable search-result',
+                  !isCurrentUserPremium && i === similarChannels!.length - 1 && 'blured',
+                )}
+                // eslint-disable-next-line react/jsx-no-bind
+                onClick={() => openChat({ id: channelId })}
+              >
+                <GroupChatInfo avatarSize="large" chatId={channelId} withFullInfo />
+              </ListItem>
+            ))}
+            {!isCurrentUserPremium && (
+              <>
+                {/* eslint-disable-next-line react/jsx-no-bind */}
+                <Button className="show-more-channels" size="smaller" onClick={() => openPremiumModal()}>
+                  {lang('UnlockSimilar')}
+                  <i className="icon icon-unlock-badge" />
+                </Button>
+                <div className="more-similar">
+                  {renderText(lang('MoreSimilarText', limitSimilarChannels), ['simple_markdown'])}
+                </div>
+              </>
+            )}
+          </div>
         ) : undefined}
       </div>
     );
@@ -605,6 +667,8 @@ export default memo(withGlobal<OwnProps>(
       && (getHasAdminRight(chat, 'inviteUsers') || !isUserRightBanned(chat, 'inviteUsers') || chat.isCreator);
     const canDeleteMembers = hasMembersTab && chat && (getHasAdminRight(chat, 'banUsers') || chat.isCreator);
     const activeDownloads = selectActiveDownloads(global, chatId);
+    const similarChannels = selectSimilarChannelIds(global, chatId);
+    const isCurrentUserPremium = selectIsCurrentUserPremium(global);
 
     let hasCommonChatsTab;
     let resolvedUserId;
@@ -650,6 +714,9 @@ export default memo(withGlobal<OwnProps>(
       isChatProtected: chat?.isProtected,
       nextProfileTab: selectTabState(global).nextProfileTab,
       shouldWarnAboutSvg: global.settings.byKey.shouldWarnAboutSvg,
+      similarChannels,
+      isCurrentUserPremium,
+      limitSimilarChannels: selectPremiumLimit(global, 'recommendedChannels'),
       ...(hasMembersTab && members && { members, adminMembersById }),
       ...(hasCommonChatsTab && user && { commonChatIds: user.commonChats?.ids }),
     };

@@ -9,9 +9,7 @@ import type {
 } from '../../api/types';
 import type { LangFn } from '../../hooks/useLang';
 import type { ChatTimeSnapshot, NotifyException, NotifySettings } from '../../types';
-import {
-  MAIN_THREAD_ID,
-} from '../../api/types';
+import { MAIN_THREAD_ID } from '../../api/types';
 
 import {
   ARCHIVED_FOLDER_ID, CHANNEL_ID_LENGTH, GENERAL_TOPIC_ID, REPLIES_USER_ID, TME_LINK_PREFIX,
