@@ -10,3 +10,7 @@ export function getOnboardingLastStep() {
   const asKeyOf = UluOnboardingStep[UluOnboardingStep.__end - 1] as keyof typeof UluOnboardingStep;
   return UluOnboardingStep[asKeyOf];
 }
+
+export function getOnboardingStepsCount() {
+  return getOnboardingLastStep() - getOnboardingFirstStep() + 1;
+}

@@ -6,6 +6,8 @@ import { getActions, withGlobal } from '../../../global';
 import { UluOnboardingStep } from '../../../global/types';
 
 import { selectOnboardingStep } from '../../../global/selectors/ulu/onboarding';
+import { getOnboardingStepsCount } from '../../../global/ulu/onboarding';
+import StepsSlider from './util/StepsSlider';
 
 import useCurrentOrPrev from '../../../hooks/useCurrentOrPrev';
 import useElectronDrag from '../../../hooks/useElectronDrag';
@@ -81,6 +83,7 @@ const Onboarding: FC<StateProps> = ({
       <Button onClick={handleGoBack}>TODO GO BACK</Button>
       <Button onClick={handleGoForth}>TODO GO FORTH</Button>
       {screen}
+      <StepsSlider activeStep={onboardingStep - 1} stepsCount={getOnboardingStepsCount()} />
     </Transition>
   );
 };
