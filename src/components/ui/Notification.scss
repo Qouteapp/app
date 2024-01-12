@@ -22,14 +22,17 @@ body.is-electron {
   }
 }
 
-@keyframes slideInFromLeft {
+@keyframes scaleIn {
   0% {
-    transform: translateX(-100%); /* Старт слева за пределами экрана */
+    transform: scale(0); /* Начальное состояние: элемент сжат до 0 */
+    opacity: 0; /* Прозрачность для более плавного появления */
   }
   100% {
-    transform: translateX(0); /* Конец в исходном положении */
+    transform: scale(1); /* Конечное состояние: полный размер */
+    opacity: 1; /* Полная видимость */
   }
 }
+
 
 @keyframes gradient-border {
   0% {
@@ -55,14 +58,15 @@ body.is-electron {
   max-width: 100vw;
   margin: 4.25rem auto 0.25rem;
   z-index: var(--z-notification);
-  bottom: 3rem;
-  left: -0.5rem;
+  bottom: 1rem;
+  left: 0.75rem;
+  box-shadow: 0 2px 16px rgba(var(--color-background), 0.9);
 
     /* Анимация */
-    animation-name: slideInFromLeft;
-    animation-duration: 150ms;
-    animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); 
-    animation-fill-mode: both;
+    animation-name: scaleIn;
+    animation-duration: 300ms; /* Продолжительность анимации */
+    animation-timing-function: ease-in-out; /* Тип анимации */
+    animation-fill-mode: forwards;
 
   .has-header-tools & {
     margin-top: 7.375rem;
@@ -86,7 +90,7 @@ body.is-electron {
   url('data:image/svg+xml;utf8,<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15ZM8 6C8.55228 6 9 5.55228 9 5C9 4.44772 8.55228 4 8 4C7.44772 4 7 4.44772 7 5C7 5.55228 7.44772 6 8 6ZM6 8C6 7.58579 6.33579 7.25 6.75 7.25H7.5C8.19036 7.25 8.75 7.80964 8.75 8.5V11.25C8.75 11.6642 8.41421 12 8 12C7.58579 12 7.25 11.6642 7.25 11.25V8.75H6.75C6.33579 8.75 6 8.41421 6 8Z" fill="%23e3e3e3"/></svg>')
   no-repeat 0.9375rem center;
   background-size: 1.5rem;
-  border-radius: 0rem 0.5rem 0.5rem 0rem;
+  border-radius: 0.5rem;
   border-top: 1px solid var(--color-borders, #303030);
   border-right: 1px solid var(--color-borders, #303030);
   border-bottom: 1px solid var(--color-borders, #303030);
@@ -148,7 +152,7 @@ body.is-electron {
   left: -2px;
   z-index: -1;
   backdrop-filter: var(--backdrop-filter);
-  border-radius: 0rem 0.625rem 0.625rem 0rem;
+  border-radius: 0.625rem;
   box-shadow: 0 0 0 2px var(--color-primary); /* Используем тень для создания эффекта бордера */
   animation: gradient-shadow 10s linear infinite;
 }
