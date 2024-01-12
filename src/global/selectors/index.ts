@@ -12,3 +12,4 @@ export * from './statistics';
 export * from './stories';
 export * from './tabs';
 export * from './ulu/workspaces';
+export * from './ulu/onboarding';

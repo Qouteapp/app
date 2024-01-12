@@ -372,6 +372,7 @@ export const LOCAL_STORAGE_KEYS = {
   IS_FOCUS_MODE_ENABLED: 'ulu_is_focus_mode_enabled',
   FOCUS_MODE_END_TIME: 'ulu_focus_mode_end_time',
   DONE_CHAT_IDS: 'ulu_done_chat_ids',
+  ONBOARDING_STEP: 'ulu_onboarding_step',
 };
 
 function determineCmdKey() {

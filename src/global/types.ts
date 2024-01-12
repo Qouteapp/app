@@ -671,6 +671,18 @@ export type TabState = {
   };
 };
 
+export enum UluOnboardingStep {
+  alreadyOnboarded,
+  __start = 0,
+  inbox,
+  foldersStyle,
+  firstWorkspace,
+  foldersRules,
+  superSearch,
+  finish,
+  __end,
+}
+
 export type GlobalState = {
   config?: ApiConfig;
   appConfig?: ApiAppConfig;
@@ -968,6 +980,10 @@ export type GlobalState = {
     workspaceSettings: {
       isOpen: boolean;
       workspaceId: string | undefined;
+    };
+
+    onboardingState: {
+      onboardingStep: UluOnboardingStep;
     };
   };
 };
@@ -2893,6 +2909,10 @@ export interface ActionPayloads {
   // workspaceSettings
   openWorkspaceSettings: { workspaceId: string | undefined };
   closeWorkspaceSettings: undefined;
+
+  // onboarding
+  goToOnboardingNextStep: undefined;
+  goToOnboardingPreviousStep: undefined;
 }
 
 export type RequiredGlobalState = GlobalState & { _: never };
