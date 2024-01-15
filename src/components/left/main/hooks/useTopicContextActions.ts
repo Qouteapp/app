@@ -8,6 +8,7 @@ import { getCanManageTopic, getHasAdminRight } from '../../../../global/helpers'
 import { compact } from '../../../../util/iteratees';
 import { IS_OPEN_IN_NEW_TAB_SUPPORTED } from '../../../../util/windowEnvironment';
 
+import { useJune } from '../../../../hooks/useJune';
 import useLang from '../../../../hooks/useLang';
 import useSnooze from '../../../../hooks/useSnooze';
 
@@ -28,6 +29,7 @@ export default function useTopicContextActions({
 }) {
   const lang = useLang();
   const { snooze } = useSnooze();
+  const { track } = useJune();
 
   return useMemo(() => {
     const {
@@ -52,6 +54,7 @@ export default function useTopicContextActions({
       icon: 'schedule',
       handler: () => {
         snooze({ chatId: chat.id, threadId: topicId });
+        track?.('Snooze chat', { source: 'Topic Context Menu' });
       },
     };
 
@@ -125,5 +128,5 @@ export default function useTopicContextActions({
       actionCloseTopic,
       actionDelete,
     ]) as MenuItemContextAction[];
-  }, [topic, chat, wasOpened, lang, canDelete, handleDelete, handleMute, snooze]);
+  }, [topic, chat, wasOpened, lang, canDelete, handleDelete, handleMute, snooze, track]);
 }

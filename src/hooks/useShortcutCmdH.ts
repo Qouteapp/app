@@ -3,10 +3,12 @@ import { getGlobal } from '../global';
 
 import { selectCurrentChat } from '../global/selectors';
 import { IS_MAC_OS } from '../util/windowEnvironment';
+import { useJune } from './useJune';
 import useSnooze from './useSnooze';
 
 function useShortcutCmdH() {
   const { snooze } = useSnooze();
+  const { track } = useJune();
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const global = getGlobal();
@@ -15,9 +17,10 @@ function useShortcutCmdH() {
       e.preventDefault();
       if (currentChatId) {
         snooze({ chatId: currentChatId });
+        track?.('Snooze chat', { source: 'Shortcut' });
       }
     }
-  }, [snooze]);
+  }, [snooze, track]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);

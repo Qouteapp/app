@@ -164,6 +164,7 @@ const LeftMain: FC<OwnProps> = ({
   const { snooze } = useSnooze();
   const handleSnoozeChat = useLastCallback(() => {
     snooze({});
+    track?.('Snooze chat', { source: 'Command' });
   });
 
   useCommand('NEW_CHANNEL', handleSelectNewChannel);
