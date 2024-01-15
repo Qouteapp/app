@@ -1,4 +1,4 @@
-import { useMemo } from '../lib/teact/teact';
+// import { useMemo } from '../lib/teact/teact';
 import TeactDOM from '../lib/teact/teact-dom';
 import { getActions, getGlobal } from '../global';
 
@@ -71,7 +71,7 @@ export default function useSnooze() {
     requestCalendar(scheduledMessageHandler);
   });
 
-  const root = useMemo(() => document.createElement('div'), []);
+  const root = document.createElement('div');
   TeactDOM.render(calendar, root);
 
   return { snooze };

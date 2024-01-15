@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-no-bind */
 /* eslint-disable no-async-without-await/no-async-without-await */
 import React from 'react';
-import { createRoot } from 'react-dom/client';
 import { Chrono } from 'chrono-node';
 import { Command } from 'cmdk';
 import {
@@ -281,14 +280,16 @@ const CommandMenuCalendar = ({
     </Command.Dialog>
   );
 
+  /*
   const calendarRoot = useMemo(() => {
-    // const calendarElement = document.getElementById('calendar-root');
+    const calendarElement = document.getElementById('calendar-root');
     const calendarRootElement = document.createElement('div');
-    // calendarElement!.appendChild(calendarRootElement);
+    calendarElement!.appendChild(calendarRootElement);
     return createRoot(calendarRootElement!);
   }, []);
   calendarRoot.render(CommandMenuInner);
-  return <div />;
+  */
+  return <div /> || { CommandMenuInner };
 };
 
 export default CommandMenuCalendar;
