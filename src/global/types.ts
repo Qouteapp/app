@@ -677,7 +677,7 @@ export enum UluOnboardingStep {
   inbox,
   foldersStyle,
   firstWorkspace,
-  foldersRules,
+  // foldersRules,
   superSearch,
   finish,
   __end,

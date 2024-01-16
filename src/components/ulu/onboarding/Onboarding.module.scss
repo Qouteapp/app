@@ -1,9 +1,10 @@
 .wrapper {
 	display: flex;
-	justify-content: center;
+	justify-content: space-between;
 	align-items: center;
 	flex-direction: column;
 	height: 100%;
+	padding: 5rem 0;
 }
 
 .screenWrapper {
