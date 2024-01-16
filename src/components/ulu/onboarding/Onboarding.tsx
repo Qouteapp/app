@@ -13,14 +13,15 @@ import useCurrentOrPrev from '../../../hooks/useCurrentOrPrev';
 import useElectronDrag from '../../../hooks/useElectronDrag';
 import useHistoryBack from '../../../hooks/useHistoryBack';
 
-import Button from '../../ui/Button';
 import Transition from '../../ui/Transition';
+import CreateWorkspace from './steps/CreateWorkspace';
 import Finish from './steps/Finish';
-import FirstWorkspace from './steps/FirstWorkspace';
 import FoldersRules from './steps/FoldersRules';
 import FoldersStyle from './steps/FoldersStyle';
 import Inbox from './steps/Inbox';
 import SuperSearch from './steps/SuperSearch';
+
+import styles from './Onboarding.module.scss';
 
 type StateProps = {
   onboardingStep: UluOnboardingStep;
@@ -31,16 +32,11 @@ const Onboarding: FC<StateProps> = ({
 }) => {
   const {
     goToOnboardingPreviousStep,
-    goToOnboardingNextStep,
   } = getActions();
 
   const handleGoBack = useCallback(() => {
     goToOnboardingPreviousStep();
   }, [goToOnboardingPreviousStep]);
-
-  const handleGoForth = useCallback(() => {
-    goToOnboardingNextStep();
-  }, [goToOnboardingNextStep]);
 
   useHistoryBack({
     isActive: true, // TODO,
@@ -64,7 +60,7 @@ const Onboarding: FC<StateProps> = ({
       case UluOnboardingStep.foldersStyle:
         return <FoldersStyle />;
       case UluOnboardingStep.firstWorkspace:
-        return <FirstWorkspace />;
+        return <CreateWorkspace />;
       case UluOnboardingStep.foldersRules:
         return <FoldersRules />;
       case UluOnboardingStep.superSearch:
@@ -79,11 +75,13 @@ const Onboarding: FC<StateProps> = ({
   if (!screen) return undefined;
 
   return (
-    <Transition activeKey={onboardingStep} name="fade" className="Auth" ref={containerRef}>
-      <Button onClick={handleGoBack}>TODO GO BACK</Button>
-      <Button onClick={handleGoForth}>TODO GO FORTH</Button>
-      {screen}
-      <StepsSlider activeStep={onboardingStep - 1} stepsCount={getOnboardingStepsCount()} />
+    <Transition activeKey={onboardingStep} name="fade" className="Onboarding" ref={containerRef}>
+      <div className={styles.wrapper}>
+        <div className={styles.screenWrapper}>
+          {screen}
+        </div>
+        <StepsSlider className={styles.slider} activeStep={onboardingStep - 1} stepsCount={getOnboardingStepsCount()} />
+      </div>
     </Transition>
   );
 };

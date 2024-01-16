@@ -6,13 +6,14 @@ import buildClassName from '../../../../util/buildClassName';
 import styles from './StepsSlider.module.scss';
 
 type OwnProps = {
+  className?: string;
   activeStep: number;
   stepsCount: number;
 };
 
-const StepsSlider: FC<OwnProps> = ({ activeStep, stepsCount }) => {
+const StepsSlider: FC<OwnProps> = ({ className, activeStep, stepsCount }) => {
   return (
-    <div className={styles.wrapper}>
+    <div className={buildClassName(styles.wrapper, className)}>
       <div className={styles.container}>
         {Array.from({ length: stepsCount }, (_, i) => (
           <div

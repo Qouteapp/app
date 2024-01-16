@@ -1,0 +1,47 @@
+.wrapper {
+	width: 30rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.title {
+	text-align: center;
+	color: #FFF;
+	// font-family: Inter Tight;
+	font-size: 2rem;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 2.5rem; /* 125% */
+}
+
+.subtitle {
+	margin-top: 1rem;
+	color: rgba(255, 255, 255, 0.40);
+	text-align: center;
+	// font-family: Inter Tight;
+	font-size: 1.125rem;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 1.75rem; /* 155.556% */
+}
+
+.children {
+	margin-top: 2.5rem;
+}
+
+.actionButton {
+	margin-top: 5rem;
+
+	border-radius: 0.75rem;
+	border: 1px solid rgba(255, 255, 255, 0.04);
+	background: rgba(255, 255, 255, 0.04);
+
+	// color: rgba(210, 93, 101, 0.80);
+	color: var(--color-primary);
+	// font-family: Inter Tight;
+	font-size: 1rem;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 1.5rem; /* 150% */
+}
