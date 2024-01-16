@@ -2,9 +2,12 @@ import type { FC } from '../../../../lib/teact/teact';
 import React, { useCallback } from '../../../../lib/teact/teact';
 import { getActions } from '../../../../global';
 
+import ContentWrapper from '../util/ContentWrapper';
 import Layout from '../util/Layout';
 
 import useLang from '../../../../hooks/useLang';
+
+import styles from './CreateWorkspace.module.scss';
 
 const FirstWorkspace: FC = () => {
   const lang = useLang();
@@ -22,7 +25,15 @@ const FirstWorkspace: FC = () => {
       actionText={lang('OnboardingActionLater')}
       actionHandler={next}
     >
-      <div>Onboarding First Workspace</div>
+      <ContentWrapper>
+        <div className={styles.createWorkspace}>
+          <i
+            className="icon icon-add"
+            data-char="add"
+          />
+          <div>{lang('OnboardingCreateWorkspaceAction')}</div>
+        </div>
+      </ContentWrapper>
     </Layout>
   );
 };

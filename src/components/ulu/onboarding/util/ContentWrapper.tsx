@@ -5,7 +5,7 @@ import styles from './ContentWrapper.module.scss';
 
 type OwnProps = {
   children: TeactNode;
-  subtitle: string;
+  subtitle?: string;
 };
 
 const ContentWrapper: FC<OwnProps> = ({ children, subtitle }) => {
@@ -15,9 +15,11 @@ const ContentWrapper: FC<OwnProps> = ({ children, subtitle }) => {
 
   return (
     <div className={styles.wrapper}>
-      {wrappedChildren}
       <div>
-        {subtitle && (<div className={styles.subtitle}>{subtitle}</div>)}
+        {wrappedChildren}
+        <div>
+          {subtitle && (<div className={styles.subtitle}>{subtitle}</div>)}
+        </div>
       </div>
     </div>
   );
