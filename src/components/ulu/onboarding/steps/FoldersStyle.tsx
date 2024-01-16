@@ -12,6 +12,8 @@ import useLang from '../../../../hooks/useLang';
 import SvgFoldersStyleSlack from './SvgFoldersStyleSlack';
 import SvgFoldersStyleTelegram from './SvgFoldersStyleTelegram';
 
+import styles from './FoldersStyle.module.scss';
+
 enum FoldersStyleOptions {
   Slack,
   Telegram,
@@ -44,20 +46,20 @@ const FoldersStyle: FC = () => {
       <ContentWrapper subtitle={description}>
         <ContentBlock
           active={active === 0}
-          title={lang('OnboardingInboxOptionUluTitle')}
-          subtitle={lang('OnboardingInboxOptionUluSubtitle')}
+          title={lang('OnboardingFoldersStyleOptionSlackTitle')}
           onClick={selectSlackFoldersStyle}
         >
-          <div>
+          <div className={styles.iconWrapper}>
             <SvgFoldersStyleSlack color={active === 0 ? COLOR_FOCUS : COLOR_BLUR} />
           </div>
         </ContentBlock>
         <ContentBlock
           active={active === 1}
-          title={lang('OnboardingInboxOptionTelegramTitle')}
+          title={lang('OnboardingFoldersStyleOptionTelegramTitle')}
+          subtitle={lang('OnboardingFoldersStyleOptionTelegramSubtitle')}
           onClick={selectTelegramFoldersStyle}
         >
-          <div>
+          <div className={styles.iconWrapper}>
             <SvgFoldersStyleTelegram color={active === 1 ? COLOR_FOCUS : COLOR_BLUR} />
           </div>
         </ContentBlock>
