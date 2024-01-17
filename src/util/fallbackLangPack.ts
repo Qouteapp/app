@@ -545,6 +545,7 @@ export default {
   OnboardingFolderRulesSubtitle: 'We can help group contacts into folders according to their roles or relationship to companies',
   OnboardingSupersearchTitle: 'Supersearch',
   OnboardingSupersearchSubtitle: 'Open the Command Line and choose any option. For example, you can find your friend or search through folders.',
+  OnboardingSupersearchPush: 'Push',
   OnboardingFinishTitle: 'All set',
   OnboardingActionNext: 'Next',
   OnboardingActionSkip: 'Skip',

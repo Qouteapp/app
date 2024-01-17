@@ -4,3 +4,4 @@ import './api/initial';
 import './api/settings';
 import './apiUpdaters/initial';
 import './ui/ulu/onboarding';
+import './ui/ulu/workspaces';

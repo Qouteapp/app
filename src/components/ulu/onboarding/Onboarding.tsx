@@ -5,6 +5,7 @@ import { getActions, withGlobal } from '../../../global';
 
 import { UluOnboardingStep } from '../../../global/types';
 
+import { selectIsWorkspaceSettingsOpen, selectWorkspaceSettingsId } from '../../../global/selectors';
 import { selectOnboardingStep } from '../../../global/selectors/ulu/onboarding';
 import { getOnboardingStepsCount } from '../../../global/ulu/onboarding';
 import StepsSlider from './util/StepsSlider';
@@ -13,10 +14,12 @@ import useCurrentOrPrev from '../../../hooks/useCurrentOrPrev';
 import useElectronDrag from '../../../hooks/useElectronDrag';
 import useHistoryBack from '../../../hooks/useHistoryBack';
 
+import CommandMenu from '../../main/CommandMenu';
+import UluWorkspaceSettingsModal from '../../main/UluWorkspaceSettingsModal.react';
 import Transition from '../../ui/Transition';
 import CreateWorkspace from './steps/CreateWorkspace';
 import Finish from './steps/Finish';
-import FoldersRules from './steps/FoldersRules';
+// import FoldersRules from './steps/FoldersRules';
 import FoldersStyle from './steps/FoldersStyle';
 import Inbox from './steps/Inbox';
 import SuperSearch from './steps/SuperSearch';
@@ -25,13 +28,15 @@ import styles from './Onboarding.module.scss';
 
 type StateProps = {
   onboardingStep: UluOnboardingStep;
+  workspaceSettingsId: string | undefined;
+  isWorkspaceSettingsOpen: boolean;
 };
 
 const Onboarding: FC<StateProps> = ({
-  onboardingStep,
+  onboardingStep, workspaceSettingsId, isWorkspaceSettingsOpen,
 }) => {
   const {
-    goToOnboardingPreviousStep,
+    goToOnboardingPreviousStep, closeWorkspaceSettings,
   } = getActions();
 
   const handleGoBack = useCallback(() => {
@@ -61,8 +66,8 @@ const Onboarding: FC<StateProps> = ({
         return <FoldersStyle />;
       case UluOnboardingStep.firstWorkspace:
         return <CreateWorkspace />;
-      case UluOnboardingStep.foldersRules:
-        return <FoldersRules />;
+      // case UluOnboardingStep.foldersRules:
+      //   return <FoldersRules />;
       case UluOnboardingStep.superSearch:
         return <SuperSearch />;
       case UluOnboardingStep.finish:
@@ -80,8 +85,18 @@ const Onboarding: FC<StateProps> = ({
         <div className={styles.screenWrapper}>
           {screen}
         </div>
-        <StepsSlider className={styles.slider} activeStep={onboardingStep - 1} stepsCount={getOnboardingStepsCount()} />
+        <StepsSlider
+          className={styles.slider}
+          activeStep={onboardingStep - 1}
+          stepsCount={getOnboardingStepsCount()}
+        />
       </div>
+      <CommandMenu />
+      <UluWorkspaceSettingsModal
+        workspaceId={workspaceSettingsId}
+        isOpen={isWorkspaceSettingsOpen}
+        onClose={closeWorkspaceSettings}
+      />
     </Transition>
   );
 };
@@ -90,6 +105,8 @@ export default memo(withGlobal(
   (global): StateProps => {
     return {
       onboardingStep: selectOnboardingStep(global),
+      workspaceSettingsId: selectWorkspaceSettingsId(global),
+      isWorkspaceSettingsOpen: selectIsWorkspaceSettingsOpen(global),
     };
   },
 )(Onboarding));

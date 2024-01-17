@@ -161,7 +161,7 @@ const App: FC<StateProps> = ({
     activeKey = AppScreens.main;
   }
 
-  if (false && onboardingStep !== undefined) { // TODO remove false
+  if (onboardingStep !== undefined) {
     switch (onboardingStep) {
       case UluOnboardingStep.alreadyOnboarded:
         page = 'main';
@@ -179,10 +179,10 @@ const App: FC<StateProps> = ({
         page = 'onboardingFirstWorkspace';
         activeKey = AppScreens.onboarding;
         break;
-      case UluOnboardingStep.foldersRules:
-        page = 'onboardingFoldersRules';
-        activeKey = AppScreens.onboarding;
-        break;
+      // case UluOnboardingStep.foldersRules:
+      //   page = 'onboardingFoldersRules';
+      //   activeKey = AppScreens.onboarding;
+      //   break;
       case UluOnboardingStep.superSearch:
         page = 'onboardingSuperSearch';
         activeKey = AppScreens.onboarding;
