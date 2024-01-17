@@ -120,7 +120,7 @@ export default function useTopicContextActions({
     } : undefined;
 
     return compact([
-      actionNotifyMe,
+      ...[] || actionNotifyMe, // disable snooze
       actionOpenInNewTab,
       actionPin,
       actionUnreadMark,
