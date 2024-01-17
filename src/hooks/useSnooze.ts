@@ -71,6 +71,7 @@ export default function useSnooze() {
     requestCalendar(scheduledMessageHandler);
   });
 
+  // const root = useMemo(() => document.createElement('div'), []);
   const root = document.createElement('div');
   TeactDOM.render(calendar, root);
 
