@@ -7,6 +7,7 @@ import { getActions, getGlobal } from '../../../global';
 
 import type { ApiChat, ApiChatFolder, ApiUser } from '../../../api/types';
 
+import { JUNE_TRACK_EVENTS } from '../../../config';
 import {
   getChatLink, getChatTitle,
   getChatTypeString,
@@ -105,7 +106,7 @@ const CommanMenuChatSearch: React.FC<{
     setTimeout(() => addRecentlyFoundChatId({ id }), SEARCH_CLOSE_TIMEOUT_MS);
     close();
     if (typeof track === 'function') {
-      track('Use global search in Сommand Menu');
+      track(JUNE_TRACK_EVENTS.USE_GLOBAL_SEARCH_IN_COMMAND_MENU);
     }
   }, [close, track]);
   const handeSelect = useCallback((id: string) => () => handleClick(id), [handleClick]);

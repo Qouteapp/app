@@ -15,10 +15,9 @@ import {
   BETA_CHANGELOG_URL,
   DEFAULT_WORKSPACE,
   FEEDBACK_URL,
-  IS_BETA,
   IS_TEST,
+  JUNE_TRACK_EVENTS,
   PRODUCTION_HOSTNAME,
-  WEB_VERSION_BASE,
 } from '../../../config';
 import {
   INITIAL_PERFORMANCE_STATE_MAX,
@@ -26,7 +25,6 @@ import {
   INITIAL_PERFORMANCE_STATE_MIN,
 } from '../../../global/initialState';
 import { selectTabState, selectTheme } from '../../../global/selectors';
-import { getPromptInstall } from '../../../util/installPrompt';
 import { switchPermanentWebVersion } from '../../../util/permanentWebVersion';
 import { IS_ELECTRON, IS_MAC_OS } from '../../../util/windowEnvironment';
 
@@ -137,7 +135,7 @@ const LeftSideMenuItems = ({
       return newHistory;
     });
     showNotification({ message: 'Workspace is changing...' });
-    track?.('Switch workspace', { source: 'Left Side Menu' });
+    track?.(JUNE_TRACK_EVENTS.SWITCH_WORKSPACE, { source: 'Left Side Menu' });
   }, [track, setCurrentWorkspaceId]); // Убедитесь в правильности зависимостей
 
   const prevWorkspaceShortcut = IS_ELECTRON ? 'Ctrl + Tab' : 'Ctrl + `';

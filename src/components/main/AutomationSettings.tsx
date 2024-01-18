@@ -7,6 +7,7 @@ import {
 } from '../../lib/teact/teact';
 import { getActions, getGlobal } from '../../global';
 
+import { JUNE_TRACK_EVENTS } from '../../config';
 import captureEscKeyListener from '../../util/captureEscKeyListener';
 
 import { useJune } from '../../hooks/useJune';
@@ -126,7 +127,7 @@ const AutomationSettings: React.FC<AutomationSettingsProps> = ({ isOpen, onClose
       setKeyword('');
       setSelectedFolderId(undefined);
       setIsDuplicateError(false);
-      track?.('Create folder automation rule');
+      track?.(JUNE_TRACK_EVENTS.CREATE_FOLDER_AUTOMATION_RULE);
     } else {
       //
     }

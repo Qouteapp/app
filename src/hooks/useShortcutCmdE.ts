@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from '../lib/teact/teact';
 
+import { JUNE_TRACK_EVENTS } from '../config';
 import { IS_LINUX, IS_MAC_OS } from '../util/windowEnvironment';
 import useDone from './useDone';
 import { useJune } from './useJune';
@@ -14,7 +15,7 @@ function useShortcutCmdE() {
       // Cmd+E - Done
       // Cmd+Shift+E - Undone (Doesn't work on Linux)
       doneChat({ value: !IS_LINUX ? !e.shiftKey : undefined });
-      track?.('Mark as Done', { source: 'Shortcut' });
+      track?.(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Shortcut' });
     }
   }, [doneChat, track]);
 

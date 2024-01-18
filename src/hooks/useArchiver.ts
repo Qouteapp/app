@@ -8,7 +8,7 @@ import { getActions, getGlobal } from '../global';
 
 import type { ApiChat } from '../api/types';
 
-import { SERVICE_NOTIFICATIONS_USER_ID } from '../config';
+import { JUNE_TRACK_EVENTS, SERVICE_NOTIFICATIONS_USER_ID } from '../config';
 import { selectCurrentChat, selectTabState } from '../global/selectors';
 import useInterval from './useInterval';
 import { useJune } from './useJune';
@@ -136,7 +136,7 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
           message: isArchived ? 'Chat unarchived' : 'Chat archived',
         });
       }
-      track?.(isArchived ? 'toggleChatUnarchived' : 'toggleChatArchived');
+      track?.(isArchived ? JUNE_TRACK_EVENTS.UNARCHIVE_CHAT : JUNE_TRACK_EVENTS.ARCHIVE_CHAT);
       return true;
     }
     return false;

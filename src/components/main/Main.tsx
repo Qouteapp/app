@@ -21,7 +21,7 @@ import type { LangCode } from '../../types';
 import { ElectronEvent } from '../../types/electron';
 
 import {
-  BASE_EMOJI_KEYWORD_LANG, DEBUG, INACTIVE_MARKER,
+  BASE_EMOJI_KEYWORD_LANG, DEBUG, INACTIVE_MARKER, JUNE_TRACK_EVENTS,
 } from '../../config';
 import { requestNextMutation } from '../../lib/fasterdom/fasterdom';
 import { getMainUsername, getUserFullName } from '../../global/helpers';
@@ -318,7 +318,7 @@ const Main: FC<OwnProps & StateProps> = ({
   useEffect(() => {
     if (!isAppOpen && track) {
       setIsAppOpen(true);
-      track('App: open',
+      track(JUNE_TRACK_EVENTS.APP_OPEN,
         {
           platform: getPlatform(),
         });

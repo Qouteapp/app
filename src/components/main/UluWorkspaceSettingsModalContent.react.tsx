@@ -6,7 +6,7 @@ import React, {
 import { UploadManager } from '@bytescale/sdk';
 import { getActions, getGlobal } from '../../global';
 
-import { DEFAULT_WORKSPACE } from '../../config';
+import { DEFAULT_WORKSPACE, JUNE_TRACK_EVENTS } from '../../config';
 import captureEscKeyListener from '../../util/captureEscKeyListener';
 
 import { useJune } from '../../hooks/useJune.react';
@@ -124,7 +124,7 @@ const UluWorkspaceSettingsModalContent: React.FC<OwnProps> = ({ isOpen, onClose,
         setCurrentWorkspaceId(newWorkspaceData.id);
         close();
         showNotification({ message: 'Workspace created successfully.' }); // Уведомление о создании
-        track?.('Create new workspace');
+        track?.(JUNE_TRACK_EVENTS.CREATE_WORKSPACE);
       }
     } catch (error) {
       //

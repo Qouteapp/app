@@ -4,7 +4,7 @@ import { getActions } from '../global';
 import type { ApiChat, ApiUser } from '../api/types';
 import type { MenuItemContextAction } from '../components/ui/ListItem';
 
-import { SERVICE_NOTIFICATIONS_USER_ID } from '../config';
+import { JUNE_TRACK_EVENTS, SERVICE_NOTIFICATIONS_USER_ID } from '../config';
 import {
   getCanDeleteChat, isChatArchived, isChatChannel, isChatGroup,
   isUserId,
@@ -69,7 +69,7 @@ const useChatContextActions = ({
       icon: 'schedule',
       handler: () => {
         snooze({ chatId: chat.id });
-        track?.('Snooze chat', { source: 'Chat Context Menu' });
+        track?.(JUNE_TRACK_EVENTS.SNOOZE_CHAT, { source: 'Chat Context Menu' });
       },
     };
 
@@ -118,7 +118,7 @@ const useChatContextActions = ({
         icon: 'readchats',
         handler: () => {
           toggleChatUnread({ id: chat.id });
-          track?.('Mark as read', { source: 'Chat Context Menu' });
+          track?.(JUNE_TRACK_EVENTS.MARK_CHAT_READ, { source: 'Chat Context Menu' });
         },
       }
       : undefined;
@@ -129,7 +129,7 @@ const useChatContextActions = ({
         icon: 'unread',
         handler: () => {
           toggleChatUnread({ id: chat.id });
-          track?.('Mark as unread', { source: 'Chat Context Menu' });
+          track?.(JUNE_TRACK_EVENTS.MARK_CHAT_UNREAD, { source: 'Chat Context Menu' });
         },
       }
       : undefined;
@@ -140,7 +140,7 @@ const useChatContextActions = ({
         icon: 'select',
         handler: () => {
           doneChat({ id: chat.id, value: false });
-          track?.('Mark as not Done', { source: 'Chat Context Menu' });
+          track?.(JUNE_TRACK_EVENTS.MARK_CHAT_NOT_DONE, { source: 'Chat Context Menu' });
         },
       }
       : {
@@ -148,7 +148,7 @@ const useChatContextActions = ({
         icon: 'select',
         handler: () => {
           doneChat({ id: chat.id, value: true });
-          track?.('Mark as Done', { source: 'Chat Context Menu' });
+          track?.(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Chat Context Menu' });
         },
       };
 

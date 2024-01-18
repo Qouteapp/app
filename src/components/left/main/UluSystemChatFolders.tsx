@@ -7,7 +7,7 @@ import type { ApiChat } from '../../../api/types';
 import type { ISettings } from '../../../types';
 import { LeftColumnContent } from '../../../types';
 
-import { ALL_FOLDER_ID, ARCHIVED_FOLDER_ID } from '../../../config';
+import { ALL_FOLDER_ID, ARCHIVED_FOLDER_ID, JUNE_TRACK_EVENTS } from '../../../config';
 import { selectIsChatWithSelf, selectTabState } from '../../../global/selectors';
 import { uluGetTranslatedString } from '../../../util/fallbackLangPackInitial';
 
@@ -54,7 +54,7 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
 
   const handleOpenInbox = useCallback(() => {
     onLeftColumnContentChange(LeftColumnContent.UluInbox);
-    track?.('Open Inbox');
+    track?.(JUNE_TRACK_EVENTS.OPEN_INBOX);
   }, [onLeftColumnContentChange, track]);
 
   const { useCommand } = useCommands();

@@ -6,6 +6,7 @@ import { getActions, getGlobal } from '../../global';
 
 import type { ApiChat, ApiUser } from '../../api/types';
 
+import { JUNE_TRACK_EVENTS } from '../../config';
 import {
   getChatLink,
   getChatTitle, getChatTypeString,
@@ -39,7 +40,7 @@ const FolderPage: React.FC<FolderPageProps> = ({
   const handleClick = useCallback((id: string) => {
     openChat({ id, shouldReplaceHistory: true });
     close();
-    track?.('Use folder search in Сommand Menu');
+    track?.(JUNE_TRACK_EVENTS.USE_FOLDER_SEARCH_IN_COMMAND_MENU);
   }, [close, track]);
 
   const handeSelect = useCallback((id: string) => () => handleClick(id), [handleClick]);

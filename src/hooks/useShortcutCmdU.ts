@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from '../lib/teact/teact';
 import { getActions, getGlobal } from '../global';
 
+import { JUNE_TRACK_EVENTS } from '../config';
 import { selectCurrentChat } from '../global/selectors';
 import { IS_MAC_OS } from '../util/windowEnvironment';
 import { useJune } from './useJune';
@@ -25,7 +26,12 @@ function useShortcutCmdU() {
           message: lang((chat.unreadCount || chat.hasUnreadMark) ? 'MarkedAsRead' : 'MarkedAsUnread'),
         });
         toggleChatUnread({ id: chat.id });
-        track?.((chat.unreadCount || chat.hasUnreadMark) ? 'Mark as Read' : 'Mark as Unread', { source: 'Shortcut' });
+        track?.(
+          (chat.unreadCount || chat.hasUnreadMark)
+            ? JUNE_TRACK_EVENTS.MARK_CHAT_READ
+            : JUNE_TRACK_EVENTS.MARK_CHAT_UNREAD,
+          { source: 'Shortcut' },
+        );
       }
     }
   }, [lang, track]);

@@ -10,6 +10,7 @@ import { getActions } from '../../../../global';
 
 import type { ApiChat, ApiUser } from '../../../../api/types';
 
+import { JUNE_TRACK_EVENTS } from '../../../../config';
 import {
   getChatTitle, getChatTypeString, getMainUsername, getUserFullName, isDeletedUser,
 } from '../../../../global/helpers';
@@ -104,7 +105,7 @@ const SuggestedContacts: FC<SuggestedContactsProps> = ({
     openChat({ id, shouldReplaceHistory: true });
     setTimeout(() => addRecentlyFoundChatId({ id }), SEARCH_CLOSE_TIMEOUT_MS);
     close();
-    track?.('Use suggestions in Сommand Menu', { chatId: id });
+    track?.(JUNE_TRACK_EVENTS.USE_SUGGESTIONS_IN_COMMAND_MENU, { chatId: id });
   }, [close, track]);
 
   return (
