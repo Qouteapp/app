@@ -7,7 +7,7 @@ import captureEscKeyListener from '../../../util/captureEscKeyListener';
 
 import WorkspaceCreator from './WorkspaceCreator.react';
 
-import './UluWorkspaceSettingsModalContent.scss';
+import styles from './UluWorkspaceSettingsModalContent.module.scss';
 
 export type OwnProps = {
   isOpen: boolean;
@@ -48,15 +48,16 @@ const UluWorkspaceSettingsModalContent: React.FC<OwnProps> = ({ isOpen, onClose,
 
   return (
     <div
-      className="background"
+      className={styles.wrapper}
     >
-      <span className="back-button-settins">
-        <div className="icon-wrapper">
-          <i className="icon icon-arrow-left" onClick={close} />
+      <span className={styles.goBack}>
+        <div className={styles.iconWrapper}>
+          <i className={`${styles.icon} icon icon-arrow-left`} onClick={close} />
         </div>
       </span>
       { isOpen && (
         <WorkspaceCreator
+          className={styles.workspaceCreator}
           workspaceId={workspaceId}
           onCreate={onWorkspaceCreate}
           onDelete={onWorkspaceDelete}
