@@ -120,7 +120,7 @@ import Notifications from './Notifications.async';
 import PremiumLimitReachedModal from './premium/common/PremiumLimitReachedModal.async';
 import PremiumMainModal from './premium/PremiumMainModal.async';
 import SafeLinkModal from './SafeLinkModal.async';
-import UluWorkspaceSettingsModal from './UluWorkspaceSettingsModal.react';
+import UluWorkspaceSettingsModal from './UluWorkspaceSettingsModal/UluWorkspaceSettingsModal.react';
 
 import './Main.scss';
 

@@ -22,7 +22,9 @@ export { default as StatusPickerMenu } from '../components/left/main/StatusPicke
 export { default as BoostModal } from '../components/modals/boost/BoostModal';
 export { default as GiftCodeModal } from '../components/modals/giftcode/GiftCodeModal';
 export { default as ChatlistModal } from '../components/modals/chatlist/ChatlistModal';
-export { default as UluWorkspaceSettingsModal } from '../components/main/UluWorkspaceSettingsModal.react';
+export {
+  default as UluWorkspaceSettingsModal,
+} from '../components/main/UluWorkspaceSettingsModal/UluWorkspaceSettingsModal.react';
 
 export { default as AboutAdsModal } from '../components/common/AboutAdsModal';
 export { default as CalendarModal } from '../components/common/CalendarModal';

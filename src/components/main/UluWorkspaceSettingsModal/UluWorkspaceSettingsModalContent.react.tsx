@@ -4,13 +4,13 @@ import React, {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { UploadManager } from '@bytescale/sdk';
-import { getActions, getGlobal } from '../../global';
+import { getActions, getGlobal } from '../../../global';
 
-import { DEFAULT_WORKSPACE, JUNE_TRACK_EVENTS } from '../../config';
-import captureEscKeyListener from '../../util/captureEscKeyListener';
+import { DEFAULT_WORKSPACE, JUNE_TRACK_EVENTS } from '../../../config';
+import captureEscKeyListener from '../../../util/captureEscKeyListener';
 
-import { useJune } from '../../hooks/useJune.react';
-import { useWorkspaces } from '../../hooks/useWorkspaces.react';
+import { useJune } from '../../../hooks/useJune.react';
+import { useWorkspaces } from '../../../hooks/useWorkspaces.react';
 
 // eslint-disable-next-line import/no-named-as-default
 import FolderSelector from './WorkspaceSettingsFoldersList.react';

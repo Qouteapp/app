@@ -1,11 +1,11 @@
-import type { FC } from '../../lib/teact/teact';
-import React from '../../lib/teact/teact';
+import type { FC } from '../../../lib/teact/teact';
+import React from '../../../lib/teact/teact';
 
 import type { OwnProps } from './UluWorkspaceSettingsModalContent.react';
 
-import { Bundles } from '../../util/moduleLoader';
+import { Bundles } from '../../../util/moduleLoader';
 
-import useModuleLoader from '../../hooks/useModuleLoader';
+import useModuleLoader from '../../../hooks/useModuleLoader';
 
 const UluWorkspaceSettingsModalAsync: FC<OwnProps> = (props) => {
   const UluWorkspaceSettingsModal = useModuleLoader(Bundles.Extra, 'UluWorkspaceSettingsModal', false);
