@@ -1,19 +1,19 @@
 /* eslint-disable react/jsx-no-bind */
 import type { ChangeEvent } from 'react';
-import React, {
-  useCallback, useEffect, useRef, useState,
-} from 'react';
 import { UploadManager } from '@bytescale/sdk';
 import type { FC } from '../../../lib/teact/teact';
+import React, {
+  useCallback, useEffect, useRef, useState,
+} from '../../../lib/teact/teact';
 import { getGlobal } from '../../../global';
 
 import { DEFAULT_WORKSPACE, JUNE_TRACK_EVENTS } from '../../../config';
 import buildClassName from '../../../util/buildClassName';
 
-import { useJune } from '../../../hooks/useJune.react';
-import { useWorkspaces } from '../../../hooks/useWorkspaces.react';
+import { useJune } from '../../../hooks/useJune';
+import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
-import FolderSelector from './WorkspaceSettingsFoldersList.react';
+import FolderSelector from './WorkspaceSettingsFoldersList';
 
 import styles from './WorkspaceCreator.module.scss';
 
