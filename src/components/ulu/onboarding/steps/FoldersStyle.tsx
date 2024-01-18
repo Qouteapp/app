@@ -8,6 +8,7 @@ import Layout from '../util/Layout';
 import { COLOR_BLUR, COLOR_FOCUS } from '../constants';
 
 import useLang from '../../../../hooks/useLang';
+import { useStorage } from '../../../../hooks/useStorage';
 
 import SvgFoldersStyleSlack from './SvgFoldersStyleSlack';
 import SvgFoldersStyleTelegram from './SvgFoldersStyleTelegram';
@@ -24,13 +25,16 @@ const FoldersStyle: FC = () => {
 
   const { goToOnboardingNextStep } = getActions();
 
+  const { setIsFoldersTreeEnabled } = useStorage();
+
   const [active, setActive] = useState<FoldersStyleOptions>(FoldersStyleOptions.Slack);
   const selectSlackFoldersStyle = useCallback(() => setActive(FoldersStyleOptions.Slack), []);
   const selectTelegramFoldersStyle = useCallback(() => setActive(FoldersStyleOptions.Telegram), []);
 
   const next = useCallback(() => {
+    setIsFoldersTreeEnabled(active === FoldersStyleOptions.Slack);
     goToOnboardingNextStep();
-  }, [goToOnboardingNextStep]);
+  }, [goToOnboardingNextStep, active, setIsFoldersTreeEnabled]);
 
   const description = active === FoldersStyleOptions.Slack
     ? lang('OnboardingFoldersStyleOptionSlackDescription')
