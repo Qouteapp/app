@@ -8,6 +8,7 @@ import { useEffect } from '../../../lib/teact/teact';
 import type { ApiUser } from '../../../api/types';
 import type { Workspace } from '../../../types';
 
+import { cmdKey } from '../../../config';
 import { IS_MAC_OS } from '../../../util/windowEnvironment';
 
 import useCommands from '../../../hooks/useCommands';
@@ -135,7 +136,7 @@ const HomePage: React.FC<OwnProps> = ({
               <i className="icon icon-select" />
               <span>Mark as Done</span>
               <span className="shortcuts">
-                <span className="kbd">⌘</span>
+                <span className="kbd">{cmdKey}</span>
                 <span className="kbd">E</span>
               </span>
             </Command.Item>
@@ -146,7 +147,7 @@ const HomePage: React.FC<OwnProps> = ({
               <i className="icon icon-schedule" />
               <span>Set a reminder for this chat</span>
               <span className="shortcuts">
-                <span className="kbd">⌘</span>
+                <span className="kbd">{cmdKey}</span>
                 <span className="kbd">H</span>
               </span>
             </Command.Item>
@@ -159,7 +160,7 @@ const HomePage: React.FC<OwnProps> = ({
             />
             <span>{lang(isChatUnread ? 'MarkAsRead' : 'MarkAsUnread')}</span>
             <span className="shortcuts">
-              <span className="kbd">⌘</span>
+              <span className="kbd">{cmdKey}</span>
               <span className="kbd">U</span>
             </span>
           </Command.Item>
@@ -217,7 +218,7 @@ const HomePage: React.FC<OwnProps> = ({
           <i className="icon icon-readchats" />
           <span>Mark All Read Chats as Done</span>
           <span className="shortcuts">
-            <span className="kbd">⌘</span>
+            <span className="kbd">{cmdKey}</span>
             <span className="kbd">⇧</span>
             <span className="kbd">A</span>
           </span>
