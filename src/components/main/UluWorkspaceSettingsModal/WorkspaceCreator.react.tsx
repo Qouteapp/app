@@ -13,12 +13,13 @@ import buildClassName from '../../../util/buildClassName';
 import { useJune } from '../../../hooks/useJune.react';
 import { useWorkspaces } from '../../../hooks/useWorkspaces.react';
 
-import FolderSelector from './WorkspaceSettingsFoldersList.react';
+import FoldersList from './WorkspaceSettingsFoldersList.react';
 
 import styles from './WorkspaceCreator.module.scss';
 
 type OwnProps = {
   className?: string;
+  classNameFolders?: string;
   workspaceId?: string;
   onUpdate?: () => void;
   onCreate?: () => void;
@@ -26,7 +27,7 @@ type OwnProps = {
 };
 
 const WorkspaceCreator: FC<OwnProps> = ({
-  workspaceId, onUpdate, onCreate, onDelete, className,
+  workspaceId, onUpdate, onCreate, onDelete, className, classNameFolders,
 }) => {
   const global = getGlobal();
   const chatFoldersById = global.chatFolders.byId;
@@ -170,7 +171,7 @@ const WorkspaceCreator: FC<OwnProps> = ({
           </div>
         ) : (
           <div className={styles.uploadButton} onClick={triggerFileSelect}>
-            <div className="icon-wrapper">
+            <div className={styles.iconWrapper}>
               <i className="icon icon-add" />
             </div>
           </div>
@@ -194,7 +195,8 @@ const WorkspaceCreator: FC<OwnProps> = ({
       <div className={styles.header}>
         <div>Folders</div>
       </div>
-      <FolderSelector
+      <FoldersList
+        className={classNameFolders}
         folders={folders}
         selectedFolderIds={selectedFolderIds}
         onSelectedFoldersChange={handleSelectedFoldersChange}

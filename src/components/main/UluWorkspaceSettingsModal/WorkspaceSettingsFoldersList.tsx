@@ -1,19 +1,24 @@
 import React from '../../../lib/teact/teact';
 
-import './FolderSelector.scss';
+import buildClassName from '../../../util/buildClassName';
+
+import styles from './WorkspaceSettingsFoldersList.module.scss';
 
 interface Folder {
   id: number;
   title: string;
 }
 
-interface FolderSelectorProps {
+interface FoldersListProps {
+  className?: string;
   folders: Folder[];
   onSelectedFoldersChange: (selectedIds: number[]) => void; // Добавьте эту строку
   selectedFolderIds: number[];
 }
 
-const FolderSelector: React.FC<FolderSelectorProps> = ({ folders, onSelectedFoldersChange, selectedFolderIds }) => {
+const FoldersList: React.FC<FoldersListProps> = ({
+  className, folders, onSelectedFoldersChange, selectedFolderIds,
+}) => {
   const toggleFolder = (id: number) => {
     const newSelected = new Set(selectedFolderIds);
     if (newSelected.has(id)) {
@@ -26,21 +31,26 @@ const FolderSelector: React.FC<FolderSelectorProps> = ({ folders, onSelectedFold
     return newSelected;
   };
 
+  const classNameWrapper = buildClassName(styles.wrapper, className);
+  const classNameFolderIcon = buildClassName('icon icon-folder', styles.folderIcon);
+
   return (
-    <div className="folderSelector">
-      {folders.map((folder) => (
-        <div key={folder.id} className="folderItem" onClick={() => toggleFolder(folder.id)}>
-          <div className="icon-wrapper">
-            <i className="icon icon-folder folderIcon" />
+    <div className={classNameWrapper}>
+      <div className={styles.container}>
+        {folders.map((folder) => (
+          <div key={folder.id} className={styles.folderItem} onClick={() => toggleFolder(folder.id)}>
+            <div className={styles.iconWrapper}>
+              <i className={classNameFolderIcon} />
+            </div>
+            <span className={styles.folderTitle}>{folder.title}</span>
+            <div className={buildClassName(styles.checkmark, selectedFolderIds.includes(folder.id) && styles.selected)}>
+              <i className="icon icon-check" />
+            </div>
           </div>
-          <span className="folderTitle">{folder.title}</span>
-          <div className={selectedFolderIds.includes(folder.id) ? 'selectedCheckmark' : 'unselectedCheckmark'}>
-            <i className="icon icon-check" />
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };
 
-export default FolderSelector;
+export default FoldersList;
