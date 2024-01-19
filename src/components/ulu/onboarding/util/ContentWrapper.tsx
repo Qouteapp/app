@@ -9,15 +9,11 @@ type OwnProps = {
 };
 
 const ContentWrapper: FC<OwnProps> = ({ children, subtitle }) => {
-  const wrappedChildren = Array.isArray(children)
-    ? <div className={styles.options}>{children}</div>
-    : children;
-
   return (
     <div className={styles.wrapper}>
-      <div>
-        {wrappedChildren}
-        <div>
+      <div className={styles.content}>
+        <div className={styles.children}>{children}</div>
+        <div className={styles.info}>
           {subtitle && (<div className={styles.subtitle}>{subtitle}</div>)}
         </div>
       </div>

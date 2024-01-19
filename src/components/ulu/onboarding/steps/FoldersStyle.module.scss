@@ -5,3 +5,21 @@
 	height: 4.5rem;
 	width: 8.375rem;
 }
+
+.slack {
+	@media (max-width: 600px) {
+		&, & > svg {
+			height: 3rem;
+			width: 5.625rem;
+		}
+	}
+}
+
+.telegram {
+	@media (max-width: 600px) {
+		&, & > svg {
+			height: 3rem;
+			width: 5.625rem;
+		}
+	}
+}

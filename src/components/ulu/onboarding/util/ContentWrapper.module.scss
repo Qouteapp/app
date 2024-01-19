@@ -8,15 +8,29 @@
 	align-items: center;
 	min-height: 20rem;
 	min-width: 30rem;
+
+	@media (max-width: 600px) {
+		min-height: unset;
+		min-width: unset;
+	}
 }
 
-.options {
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: 2.5rem;
+
+	@media (max-width: 600px) {
+		gap: 1.5rem;
+	}
+}
+
+.children {
 	display: flex;
 	gap: 1rem;
 }
 
 .subtitle {
-	margin-top: 2.5rem;
 	color: rgba(255, 255, 255, 0.24);
 	text-align: center;
 	// font-family: Inter Tight;
@@ -24,4 +38,10 @@
 	font-style: normal;
 	font-weight: 500;
 	line-height: 1.5rem; /* 150% */
+
+	@media (max-width: 600px) {
+		font-size: 0.5rem;
+		line-height: 0.8125rem;
+		height: 1rem;
+	}
 }

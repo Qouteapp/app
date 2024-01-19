@@ -5,7 +5,12 @@
 	flex-direction: column;
 	height: 100%;
 	padding: 3rem 0;
-	gap: 1rem;
+	gap: 2rem;
+
+	@media (max-width: 600px) {
+		padding: 1rem 0;
+		gap: 1.5rem;
+	}
 }
 
 .screenWrapper {

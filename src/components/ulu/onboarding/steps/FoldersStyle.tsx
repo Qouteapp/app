@@ -2,6 +2,7 @@ import type { FC } from '../../../../lib/teact/teact';
 import React, { useCallback, useState } from '../../../../lib/teact/teact';
 import { getActions } from '../../../../global';
 
+import buildClassName from '../../../../util/buildClassName';
 import ContentBlock from '../util/ContentBlock';
 import ContentWrapper from '../util/ContentWrapper';
 import Layout from '../util/Layout';
@@ -53,7 +54,7 @@ const FoldersStyle: FC = () => {
           title={lang('OnboardingFoldersStyleOptionSlackTitle')}
           onClick={selectSlackFoldersStyle}
         >
-          <div className={styles.iconWrapper}>
+          <div className={buildClassName(styles.iconWrapper, styles.slack)}>
             <SvgFoldersStyleSlack color={active === 0 ? COLOR_FOCUS : COLOR_BLUR} />
           </div>
         </ContentBlock>
@@ -63,7 +64,7 @@ const FoldersStyle: FC = () => {
           subtitle={lang('OnboardingFoldersStyleOptionTelegramSubtitle')}
           onClick={selectTelegramFoldersStyle}
         >
-          <div className={styles.iconWrapper}>
+          <div className={buildClassName(styles.iconWrapper, styles.slack)}>
             <SvgFoldersStyleTelegram color={active === 1 ? COLOR_FOCUS : COLOR_BLUR} />
           </div>
         </ContentBlock>

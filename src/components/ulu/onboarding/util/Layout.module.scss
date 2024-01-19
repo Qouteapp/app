@@ -5,6 +5,11 @@
 	align-items: center;
 	flex-grow: 1;
 	gap: 5rem;
+
+	@media (max-width: 600px) {
+		width: 18.75rem;
+		gap: 2rem;
+	}
 }
 
 .content {
@@ -12,11 +17,16 @@
 	flex-direction: column;
 	flex-grow: 1;
 	gap: 2.5rem;
+
+	@media (max-width: 600px) {
+		gap: 1.5rem;
+	}
 }
 
 .titles {
 	display: flex;
 	flex-direction: column;
+	align-items: center;
 	gap: 1rem;
 }
 
@@ -28,6 +38,11 @@
 	font-style: normal;
 	font-weight: 600;
 	line-height: 2.5rem; /* 125% */
+
+	@media (max-width: 600px) {
+		font-size: 1rem;
+		line-height: 1.5rem;
+	}
 }
 
 .subtitle {
@@ -38,6 +53,11 @@
 	font-style: normal;
 	font-weight: 500;
 	line-height: 1.75rem; /* 155.556% */
+
+	@media (max-width: 600px) {
+		font-size: 0.625rem;
+		line-height: 0.875rem;
+	}
 }
 
 .actionButton {
@@ -52,4 +72,9 @@
 	font-style: normal;
 	font-weight: 500;
 	line-height: 1.5rem; /* 150% */
+
+	@media (max-width: 600px) {
+		font-size: 0.5rem;
+		line-height: 0.8125rem;
+	}
 }

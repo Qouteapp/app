@@ -16,6 +16,11 @@
 		border: 2px solid #D25D65;
 		background: #171719;
 	}
+
+	@media (max-width: 600px) {
+		height: 8rem;
+		width: 8rem;
+	}
 }
 
 .children {
@@ -27,22 +32,33 @@
 .info {
 	display: flex;
 	gap: 0.75rem;
+
+	@media (max-width: 600px) {
+		gap: 0.5rem;
+	}
+}
+
+.title, .subtitle {
+	font-size: 1rem;
+	line-height: 1.5rem; /* 150% */
+
+	@media (max-width: 600px) {
+		font-size: 0.75rem;
+		line-height: 1.125rem;
+	}
 }
 
 .title {
 	color: #FFF;
 	// font-family: Inter Tight;
-	font-size: 1rem;
+	
 	font-style: normal;
 	font-weight: 600;
-	line-height: 1.5rem; /* 150% */
 }
 
 .subtitle {
 	color: rgba(255, 255, 255, 0.24);
 	// font-family: Inter Tight;
-	font-size: 1rem;
 	font-style: normal;
 	font-weight: 500;
-	line-height: 1.5rem; /* 150% */
 }
