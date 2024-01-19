@@ -3,9 +3,12 @@
 import React, { useCallback } from 'react';
 // eslint-disable-next-line react/no-deprecated
 import { Command } from 'cmdk';
+import { useEffect } from '../../../lib/teact/teact';
 
 import type { ApiUser } from '../../../api/types';
 import type { Workspace } from '../../../types';
+
+import { IS_MAC_OS } from '../../../util/windowEnvironment';
 
 import useCommands from '../../../hooks/useCommands';
 import useLang from '../../../hooks/useLang';
@@ -103,6 +106,22 @@ const HomePage: React.FC<OwnProps> = ({
     }, 100); // for focus
   }, [close, runCommand]);
 
+  useEffect(() => {
+    // Функция для обработки нажатия клавиш
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (IS_MAC_OS ? (event.metaKey && event.shiftKey && event.key === 'a')
+        : (event.ctrlKey && event.shiftKey && event.key === 'a')) {
+        commandDoneAll();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeydown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeydown);
+    };
+  }, [commandDoneAll]);
+
   return (
     <>
       <AIGroup
@@ -198,6 +217,11 @@ const HomePage: React.FC<OwnProps> = ({
         <Command.Item onSelect={commandDoneAll}>
           <i className="icon icon-readchats" />
           <span>Mark All Read Chats as Done</span>
+          <span className="shortcuts">
+            <span className="kbd">⌘</span>
+            <span className="kbd">⇧</span>
+            <span className="kbd">A</span>
+          </span>
         </Command.Item>
         <Command.Item onSelect={commandArchiveAll}>
           <i className="icon icon-archive-from-main" />
