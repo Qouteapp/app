@@ -193,7 +193,7 @@ const WorkspaceCreator: FC<OwnProps> = ({
         <div>The recommended logo size is 256x256px.</div>
       </div>
       <div className={styles.header}>
-        <div>Folders</div>
+        <div>Workspace Folders</div>
       </div>
       <FoldersList
         className={classNameFolders}

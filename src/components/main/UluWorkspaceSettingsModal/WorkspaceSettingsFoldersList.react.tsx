@@ -36,7 +36,7 @@ const FoldersList: React.FC<FoldersListProps> = ({
 
   return (
     <div className={classNameWrapper}>
-      <div className={styles.container}>
+      <div className={buildClassName(styles.container, 'custom-scroll')}>
         {folders.map((folder) => (
           <div key={folder.id} className={styles.folderItem} onClick={() => toggleFolder(folder.id)}>
             <div className={styles.iconWrapper}>

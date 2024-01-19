@@ -1,3 +1,5 @@
+$itemHeight: 2.5rem;
+
 .wrapper {
   max-width: 480px;
   background: var(--color-interactive-element-hover);
@@ -7,7 +9,7 @@
 }
 
 .container {
-  max-height: 100%;
+  max-height: calc(#{$itemHeight} * 8);
   overflow-y: overlay;
 }
 
@@ -17,6 +19,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
+  max-height: $itemHeight;
   cursor: pointer;
 
   &:hover {
