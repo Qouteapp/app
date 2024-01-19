@@ -11,13 +11,14 @@ interface Folder {
 
 interface FoldersListProps {
   className?: string;
+  classNameFolder?: string;
   folders: Folder[];
-  onSelectedFoldersChange: (selectedIds: number[]) => void; // Добавьте эту строку
+  onSelectedFoldersChange: (selectedIds: number[]) => void;
   selectedFolderIds: number[];
 }
 
 const FoldersList: React.FC<FoldersListProps> = ({
-  className, folders, onSelectedFoldersChange, selectedFolderIds,
+  className, classNameFolder, folders, onSelectedFoldersChange, selectedFolderIds,
 }) => {
   const toggleFolder = (id: number) => {
     const newSelected = new Set(selectedFolderIds);
@@ -31,24 +32,26 @@ const FoldersList: React.FC<FoldersListProps> = ({
     return newSelected;
   };
 
-  const classNameWrapper = buildClassName(styles.wrapper, className);
+  const classNameWrapper = buildClassName(styles.wrapper, className, 'custom-scroll');
   const classNameFolderIcon = buildClassName('icon icon-folder', styles.folderIcon);
 
   return (
     <div className={classNameWrapper}>
-      <div className={buildClassName(styles.container, 'custom-scroll')}>
-        {folders.map((folder) => (
-          <div key={folder.id} className={styles.folderItem} onClick={() => toggleFolder(folder.id)}>
-            <div className={styles.iconWrapper}>
-              <i className={classNameFolderIcon} />
-            </div>
-            <span className={styles.folderTitle}>{folder.title}</span>
-            <div className={buildClassName(styles.checkmark, selectedFolderIds.includes(folder.id) && styles.selected)}>
-              <i className="icon icon-check" />
-            </div>
+      {folders.map((folder) => (
+        <div
+          key={folder.id}
+          className={buildClassName(styles.folderItem, classNameFolder)}
+          onClick={() => toggleFolder(folder.id)}
+        >
+          <div className={styles.iconWrapper}>
+            <i className={classNameFolderIcon} />
           </div>
-        ))}
-      </div>
+          <span className={styles.folderTitle}>{folder.title}</span>
+          <div className={buildClassName(styles.checkmark, selectedFolderIds.includes(folder.id) && styles.selected)}>
+            <i className="icon icon-check" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

@@ -23,10 +23,14 @@ const Layout: FC<OwnProps> = ({
 }) => {
   return (
     <div className={styles.wrapper}>
-      <div className={buildClassName(styles.title, classNameTitle)}>{ title }</div>
-      <div className={buildClassName(styles.subtitle, classNameSubtitle)}>{ subtitle }</div>
-      <div className={buildClassName(styles.children, classNameChildren)}>
-        { children }
+      <div className={styles.content}>
+        <div className={styles.titles}>
+          <div className={buildClassName(styles.title, classNameTitle)}>{ title }</div>
+          <div className={buildClassName(styles.subtitle, classNameSubtitle)}>{ subtitle }</div>
+        </div>
+        <div className={buildClassName(styles.children, classNameChildren)}>
+          { children }
+        </div>
       </div>
       <Button className={styles.actionButton} color="none" ripple onClick={actionHandler}>{actionText}</Button>
     </div>

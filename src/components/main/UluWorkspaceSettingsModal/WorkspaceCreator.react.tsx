@@ -20,6 +20,7 @@ import styles from './WorkspaceCreator.module.scss';
 type OwnProps = {
   className?: string;
   classNameFolders?: string;
+  classNameFolder?: string;
   workspaceId?: string;
   onUpdate?: () => void;
   onCreate?: () => void;
@@ -27,7 +28,7 @@ type OwnProps = {
 };
 
 const WorkspaceCreator: FC<OwnProps> = ({
-  workspaceId, onUpdate, onCreate, onDelete, className, classNameFolders,
+  workspaceId, onUpdate, onCreate, onDelete, className, classNameFolders, classNameFolder,
 }) => {
   const global = getGlobal();
   const chatFoldersById = global.chatFolders.byId;
@@ -197,6 +198,7 @@ const WorkspaceCreator: FC<OwnProps> = ({
       </div>
       <FoldersList
         className={classNameFolders}
+        classNameFolder={classNameFolder}
         folders={folders}
         selectedFolderIds={selectedFolderIds}
         onSelectedFoldersChange={handleSelectedFoldersChange}

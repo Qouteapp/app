@@ -5,8 +5,13 @@
 	flex-direction: column;
 	height: 100%;
 	padding: 3rem 0;
+	gap: 1rem;
 }
 
 .screenWrapper {
-	min-height: 37.5rem;
+	overflow-y: overlay;
+	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
 }

@@ -2,11 +2,11 @@ import type { FC } from '../../../../lib/teact/teact';
 import React, { useCallback } from '../../../../lib/teact/teact';
 import { getActions } from '../../../../global';
 
-import ContentWrapper from '../util/ContentWrapper';
 import Layout from '../util/Layout';
 
-import useCommands from '../../../../hooks/useCommands';
 import useLang from '../../../../hooks/useLang';
+
+import WorkspaceCreator from '../../../main/UluWorkspaceSettingsModal/WorkspaceCreator';
 
 import styles from './CreateWorkspace.module.scss';
 
@@ -14,12 +14,6 @@ const FirstWorkspace: FC = () => {
   const lang = useLang();
 
   const { goToOnboardingNextStep } = getActions();
-
-  const { runCommand } = useCommands();
-
-  const handleOpenWorkspaceSettings = (workspaceId?: string) => {
-    runCommand('OPEN_WORKSPACE_SETTINGS', workspaceId);
-  };
 
   const next = useCallback(() => {
     goToOnboardingNextStep();
@@ -32,15 +26,10 @@ const FirstWorkspace: FC = () => {
       actionText={lang('OnboardingActionLater')}
       actionHandler={next}
     >
-      <ContentWrapper>
-        <div className={styles.createWorkspace} onClick={() => handleOpenWorkspaceSettings()}>
-          <i
-            className="icon icon-add"
-            data-char="add"
-          />
-          <div>{lang('OnboardingCreateWorkspaceAction')}</div>
-        </div>
-      </ContentWrapper>
+      <WorkspaceCreator
+        classNameFolders={styles.folders}
+        classNameFolder={styles.folder}
+      />
     </Layout>
   );
 };

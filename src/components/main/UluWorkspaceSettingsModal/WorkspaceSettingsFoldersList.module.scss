@@ -5,10 +5,6 @@ $itemHeight: 2.5rem;
   background: var(--color-interactive-element-hover);
   border-radius: 6px;
   margin-top: 1rem;
-  max-height: 100%;
-}
-
-.container {
   max-height: calc(#{$itemHeight} * 8);
   overflow-y: overlay;
 }
