@@ -107,7 +107,6 @@ const HomePage: React.FC<OwnProps> = ({
   }, [close, runCommand]);
 
   useEffect(() => {
-    // Функция для обработки нажатия клавиш
     const handleKeydown = (event: KeyboardEvent) => {
       if (IS_MAC_OS ? (event.metaKey && event.shiftKey && event.key === 'a')
         : (event.ctrlKey && event.shiftKey && event.key === 'a')) {
