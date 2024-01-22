@@ -29,6 +29,7 @@ const FirstWorkspace: FC = () => {
       <WorkspaceCreator
         classNameFolders={styles.folders}
         classNameFolder={styles.folder}
+        onCreate={next}
       />
     </Layout>
   );

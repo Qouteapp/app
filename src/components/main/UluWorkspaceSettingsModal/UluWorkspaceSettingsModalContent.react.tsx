@@ -5,6 +5,7 @@ import { getActions } from '../../../global';
 
 import captureEscKeyListener from '../../../util/captureEscKeyListener';
 
+import GoBack from '../../common/GoBack.react';
 import WorkspaceCreator from './WorkspaceCreator.react';
 
 import styles from './UluWorkspaceSettingsModalContent.module.scss';
@@ -50,11 +51,7 @@ const UluWorkspaceSettingsModalContent: React.FC<OwnProps> = ({ isOpen, onClose,
     <div
       className={styles.wrapper}
     >
-      <span className={styles.goBack}>
-        <div className={styles.iconWrapper}>
-          <i className={`${styles.icon} icon icon-arrow-left`} onClick={close} />
-        </div>
-      </span>
+      <GoBack className={styles.goBack} onClick={close} />
       { isOpen && (
         <WorkspaceCreator
           className={styles.workspaceCreator}

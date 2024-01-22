@@ -1,0 +1,13 @@
+.wrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	padding: 0 1.25rem;
+}
+
+.username {
+	min-width: unset;
+	width: unset;
+	max-width: unset;
+}

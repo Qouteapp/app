@@ -18,6 +18,7 @@ import styles from './UluHeaderProfile.module.scss';
 
 type OwnProps = {
   className?: string;
+  classNameUserName?: string;
   isPersonalWorkspace?: boolean;
   onClick?: (e: ReactMouseEvent<HTMLDivElement, MouseEvent>) => void;
 };
@@ -43,7 +44,7 @@ const getUserFullName = (user?: ApiUser) => {
 };
 
 const UluHeaderProfile: FC<OwnProps & StateProps> = ({
-  user, userFallbackPhoto, userPersonalPhoto, userProfilePhoto, onClick, className,
+  user, userFallbackPhoto, userPersonalPhoto, userProfilePhoto, onClick, className, classNameUserName,
   isPersonalWorkspace: isPersonalWorkspaceProps,
 }) => {
   const { currentWorkspace } = useWorkspaces();
@@ -86,7 +87,7 @@ const UluHeaderProfile: FC<OwnProps & StateProps> = ({
       <div className={styles.photoWrapper}>
         {renderPhoto()}
       </div>
-      <div className={styles.userName}>
+      <div className={buildClassName(styles.userName, classNameUserName)}>
         {isPersonalWorkspace ? getUserFullName(user) : currentWorkspace?.name}
       </div>
     </div>

@@ -47,6 +47,10 @@ import './CommandMenu.scss';
 const cmdkElement = document.getElementById('cmdk-root');
 const cmdkRoot = createRoot(cmdkElement!);
 
+type OwnProps = {
+  isDemoMode?: boolean;
+};
+
 type StateProps = {
   topUserIds?: string[];
   currentUser: ApiUser | undefined;
@@ -80,7 +84,7 @@ const customFilter = (value: string, search: string) => {
   return 0; // нет соответствия
 };
 
-const CommandMenu: FC<StateProps> = ({
+const CommandMenu: FC<OwnProps & StateProps> = ({
   topUserIds,
   currentUser,
   currentChat,

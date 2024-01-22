@@ -8,6 +8,8 @@ import { UluOnboardingStep } from '../../../global/types';
 import { selectIsWorkspaceSettingsOpen, selectWorkspaceSettingsId } from '../../../global/selectors';
 import { selectOnboardingStep } from '../../../global/selectors/ulu/onboarding';
 import { getOnboardingStepsCount } from '../../../global/ulu/onboarding';
+import buildClassName from '../../../util/buildClassName';
+import Header from './util/Header';
 import StepsSlider from './util/StepsSlider';
 
 import useCurrentOrPrev from '../../../hooks/useCurrentOrPrev';
@@ -15,7 +17,6 @@ import useElectronDrag from '../../../hooks/useElectronDrag';
 import useHistoryBack from '../../../hooks/useHistoryBack';
 
 import CommandMenu from '../../main/CommandMenu';
-import UluWorkspaceSettingsModal from '../../main/UluWorkspaceSettingsModal.react';
 import Transition from '../../ui/Transition';
 import CreateWorkspace from './steps/CreateWorkspace';
 import Finish from './steps/Finish';
@@ -33,10 +34,10 @@ type StateProps = {
 };
 
 const Onboarding: FC<StateProps> = ({
-  onboardingStep, workspaceSettingsId, isWorkspaceSettingsOpen,
+  onboardingStep,
 }) => {
   const {
-    goToOnboardingPreviousStep, closeWorkspaceSettings,
+    goToOnboardingPreviousStep,
   } = getActions();
 
   const handleGoBack = useCallback(() => {
@@ -77,26 +78,26 @@ const Onboarding: FC<StateProps> = ({
     }
   })();
 
+  const classNameWrapper = buildClassName(styles.wrapper, styles.grid);
+  const classNameScreen = buildClassName(styles.screenWrapper, styles.gridScreen, 'custom-scroll');
+  const classNameSlider = buildClassName(styles.slider, styles.gridSlider);
+
   if (!screen) return undefined;
 
   return (
     <Transition activeKey={onboardingStep} name="fade" className="Onboarding" ref={containerRef}>
-      <div className={styles.wrapper}>
-        <div className={styles.screenWrapper}>
+      <div className={classNameWrapper}>
+        <Header onboardingStep={onboardingStep} className={styles.header} />
+        <div className={classNameScreen}>
           {screen}
         </div>
         <StepsSlider
-          className={styles.slider}
+          className={classNameSlider}
           activeStep={onboardingStep - 1}
           stepsCount={getOnboardingStepsCount()}
         />
       </div>
-      <CommandMenu />
-      <UluWorkspaceSettingsModal
-        workspaceId={workspaceSettingsId}
-        isOpen={isWorkspaceSettingsOpen}
-        onClose={closeWorkspaceSettings}
-      />
+      <CommandMenu isDemoMode />
     </Transition>
   );
 };
