@@ -9,7 +9,6 @@
   padding: 0.375rem 0.75rem 0.375rem 0.375rem;
   cursor: pointer;
   border-radius: var(--border-radius-default-tiny);
-  margin-left: 0.5rem;
 
   &:hover {
     background-color: var(--color-interactive-element-hover);
@@ -17,6 +16,10 @@
     .userName {
       color: var(--color-text);
     }
+  }
+
+  @media (min-width: 600px) {
+    margin-left: 0.5rem;
   }
 }
 
