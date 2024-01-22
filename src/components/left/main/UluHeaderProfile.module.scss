@@ -3,23 +3,25 @@
 }
 
 .wrapper {
+  --custom-cursor: default;
+
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.375rem 0.75rem 0.375rem 0.375rem;
-  cursor: pointer;
   border-radius: var(--border-radius-default-tiny);
+  cursor: var(--custom-cursor, pointer);
+  
+  &.actionable {
+    --custom-cursor: pointer;
 
-  &:hover {
-    background-color: var(--color-interactive-element-hover);
-
-    .userName {
-      color: var(--color-text);
+    &:hover {
+      background-color: var(--color-interactive-element-hover);
+  
+      .userName {
+        color: var(--color-text);
+      }
     }
-  }
-
-  @media (min-width: 600px) {
-    margin-left: 0.5rem;
   }
 }
 

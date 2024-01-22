@@ -146,3 +146,9 @@
   align-items: center;
   width: 100%;
 }
+
+.header {
+  @media (min-width: 600px) {
+    margin-left: 0.5rem;
+  }
+}

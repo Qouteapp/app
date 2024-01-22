@@ -49,6 +49,8 @@ const UluHeaderProfile: FC<OwnProps & StateProps> = ({
   const { currentWorkspace } = useWorkspaces();
   const isPersonalWorkspace = isPersonalWorkspaceProps || currentWorkspace?.id === DEFAULT_WORKSPACE.id;
 
+  const isActionable = typeof onClick === 'function';
+
   function renderPhoto() {
     if (isPersonalWorkspace) {
       const profilePhoto = userPersonalPhoto || userProfilePhoto || userFallbackPhoto;
@@ -80,7 +82,7 @@ const UluHeaderProfile: FC<OwnProps & StateProps> = ({
   }
 
   return (
-    <div className={buildClassName(styles.wrapper, className)} onClick={onClick}>
+    <div className={buildClassName(styles.wrapper, isActionable && styles.actionable, className)} onClick={onClick}>
       <div className={styles.photoWrapper}>
         {renderPhoto()}
       </div>

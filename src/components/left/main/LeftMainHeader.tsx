@@ -219,20 +219,12 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   const MainButton: FC<{ onTrigger: () => void }> = useMemo(() => {
     return ({ onTrigger }) => (
       <UluHeaderProfile
+        className={styles.header}
         // eslint-disable-next-line react/jsx-no-bind
         onClick={hasMenu ? onTrigger : () => onReset()}
       />
     );
   }, [hasMenu, onReset]);
-
-  /* const MainButton: FC = useMemo(() => {
-    return () => (
-      <UluHeaderProfile
-        // eslint-disable-next-line react/jsx-no-bind
-        onClick={hasMenu ? openWorkspaceDropdown : () => onReset()}
-      />
-    );
-  }, [hasMenu, openWorkspaceDropdown, onReset]); */
 
   const toggleConnectionStatus = useLastCallback(() => {
     setSettingOption({ isConnectionStatusMinimized: !isConnectionStatusMinimized });
