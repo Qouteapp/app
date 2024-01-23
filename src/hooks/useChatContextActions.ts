@@ -193,7 +193,7 @@ const useChatContextActions = ({
     const isInFolder = folderId !== undefined;
 
     return compact([
-      ...[] || actionNotifyMe, // disable snooze
+      actionNotifyMe,
       !isSelf && !isServiceNotifications && !isInFolder && actionDone,
       actionMaskAsRead,
       actionMarkAsUnread,

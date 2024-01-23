@@ -1,4 +1,5 @@
-// import { useMemo } from '../lib/teact/teact';
+import { useLayoutEffect, useMemo, useRef } from '../lib/teact/teact';
+// import { useRef } from '../lib/teact/teact';
 import TeactDOM from '../lib/teact/teact-dom';
 import { getActions, getGlobal } from '../global';
 
@@ -71,9 +72,17 @@ export default function useSnooze() {
     requestCalendar(scheduledMessageHandler);
   });
 
-  // const root = useMemo(() => document.createElement('div'), []);
-  const root = document.createElement('div');
-  TeactDOM.render(calendar, root);
+  const root = useMemo(() => document.createElement('div'), []);
+  // const root = document.createElement('div');
+  const rootRef = useRef<HTMLDivElement>();
+  if (!rootRef.current) {
+    rootRef.current = document.createElement('div');
+  }
+
+  useLayoutEffect(() => {
+    // TeactDOM.render(calendar, rootRef.current!);
+    TeactDOM.render(calendar, root);
+  }, [calendar, root]);
 
   return { snooze };
 }

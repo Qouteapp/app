@@ -141,17 +141,14 @@ const HomePage: React.FC<OwnProps> = ({
               </span>
             </Command.Item>
           )}
-          {/* // disable snooze */}
-          {false && (
-            <Command.Item onSelect={handleSnoozeChat}>
-              <i className="icon icon-schedule" />
-              <span>Set a reminder for this chat</span>
-              <span className="shortcuts">
-                <span className="kbd">{cmdKey}</span>
-                <span className="kbd">H</span>
-              </span>
-            </Command.Item>
-          )}
+          <Command.Item onSelect={handleSnoozeChat}>
+            <i className="icon icon-schedule" />
+            <span>Set a reminder for this chat</span>
+            <span className="shortcuts">
+              <span className="kbd">{cmdKey}</span>
+              <span className="kbd">H</span>
+            </span>
+          </Command.Item>
           <Command.Item onSelect={handleToggleChatUnread}>
             <i
               className={`icon ${
