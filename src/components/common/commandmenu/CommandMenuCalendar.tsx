@@ -1,12 +1,11 @@
 /* eslint-disable react/jsx-no-bind */
 /* eslint-disable no-async-without-await/no-async-without-await */
 import React from 'react';
-// import { createRoot } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { Chrono } from 'chrono-node';
 import { Command } from 'cmdk';
 import {
-  useCallback, useEffect, useMemo,
-  useState,
+  useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState,
 } from '../../../lib/teact/teact';
 
 import captureKeyboardListeners from '../../../util/captureKeyboardListeners';
@@ -281,16 +280,30 @@ const CommandMenuCalendar = ({
     </Command.Dialog>
   );
 
-  /*
-  const calendarRoot = useMemo(() => {
-    // const calendarElement = document.getElementById('calendar-root');
-    const calendarRootElement = document.createElement('div');
-    // calendarElement!.appendChild(calendarRootElement);
-    return createRoot(calendarRootElement!);
+  const elementRef = useRef<HTMLDivElement>(document.createElement('div'));
+  const root = useMemo(() => {
+    return createRoot(elementRef.current);
   }, []);
-  calendarRoot.render(CommandMenuInner);
-  */
-  return <div /> || { CommandMenuInner };
+
+  useLayoutEffect(() => {
+    const container = document.getElementById('calendar-root')!;
+    if (!container) {
+      return undefined;
+    }
+
+    const element = elementRef.current!;
+
+    container.appendChild(element);
+
+    return () => {
+      // root.render(<div />);
+      container.removeChild(element);
+    };
+  }, [root]);
+
+  root.render(CommandMenuInner);
+
+  return <div />;
 };
 
 export default CommandMenuCalendar;
