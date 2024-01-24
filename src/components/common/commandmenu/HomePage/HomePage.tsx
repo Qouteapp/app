@@ -3,9 +3,13 @@
 import React, { useCallback } from 'react';
 // eslint-disable-next-line react/no-deprecated
 import { Command } from 'cmdk';
+import { useEffect } from '../../../../lib/teact/teact';
 
 import type { ApiUser } from '../../../../api/types';
 import type { Workspace } from '../../../../types';
+
+import { cmdKey } from '../../../../config';
+import { IS_MAC_OS } from '../../../../util/windowEnvironment';
 
 import useCommands from '../../../../hooks/useCommands';
 import useLang from '../../../../hooks/useLang';
@@ -17,7 +21,7 @@ import HelpGroup from './HelpGroup';
 import NavigationGroup from './NavigationGroup';
 import SuggestedContacts from './SuggestedContactsGroup';
 
-import '../CommandMenu.scss';
+import '../../main/CommandMenu.scss';
 
 type OwnProps = {
   isArchiveWhenDoneEnabled: boolean;
@@ -103,6 +107,21 @@ const HomePage: React.FC<OwnProps> = ({
     }, 100); // for focus
   }, [close, runCommand]);
 
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (IS_MAC_OS ? (event.metaKey && event.shiftKey && event.key === 'a')
+        : (event.ctrlKey && event.shiftKey && event.key === 'a')) {
+        commandDoneAll();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeydown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeydown);
+    };
+  }, [commandDoneAll]);
+
   return (
     <>
       <AIGroup
@@ -117,19 +136,22 @@ const HomePage: React.FC<OwnProps> = ({
               <i className="icon icon-select" />
               <span>Mark as Done</span>
               <span className="shortcuts">
-                <span className="kbd">⌘</span>
+                <span className="kbd">{cmdKey}</span>
                 <span className="kbd">E</span>
               </span>
             </Command.Item>
           )}
-          <Command.Item onSelect={handleSnoozeChat}>
-            <i className="icon icon-schedule" />
-            <span>Set a reminder for this chat</span>
-            <span className="shortcuts">
-              <span className="kbd">⌘</span>
-              <span className="kbd">H</span>
-            </span>
-          </Command.Item>
+          {/* // disable snooze */}
+          {false && (
+            <Command.Item onSelect={handleSnoozeChat}>
+              <i className="icon icon-schedule" />
+              <span>Set a reminder for this chat</span>
+              <span className="shortcuts">
+                <span className="kbd">{cmdKey}</span>
+                <span className="kbd">H</span>
+              </span>
+            </Command.Item>
+          )}
           <Command.Item onSelect={handleToggleChatUnread}>
             <i
               className={`icon ${
@@ -138,7 +160,7 @@ const HomePage: React.FC<OwnProps> = ({
             />
             <span>{lang(isChatUnread ? 'MarkAsRead' : 'MarkAsUnread')}</span>
             <span className="shortcuts">
-              <span className="kbd">⌘</span>
+              <span className="kbd">{cmdKey}</span>
               <span className="kbd">U</span>
             </span>
           </Command.Item>
@@ -195,6 +217,11 @@ const HomePage: React.FC<OwnProps> = ({
         <Command.Item onSelect={commandDoneAll}>
           <i className="icon icon-readchats" />
           <span>Mark All Read Chats as Done</span>
+          <span className="shortcuts">
+            <span className="kbd">{cmdKey}</span>
+            <span className="kbd">⇧</span>
+            <span className="kbd">A</span>
+          </span>
         </Command.Item>
         <Command.Item onSelect={commandArchiveAll}>
           <i className="icon icon-archive-from-main" />
