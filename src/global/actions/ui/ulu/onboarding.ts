@@ -31,36 +31,37 @@ function updateOnboardingState<T extends GlobalState>(
 
 addActionHandler('goToOnboardingNextStep', (global): ActionReturnType => {
   if (selectIsAlreadyOnboarded(global)) {
-    return;
+    return undefined;
   }
 
   const nextStep = selectOnboardingNextStep(global);
   setOnboardingStep(nextStep);
-  updateOnboardingState(global, { onboardingStep: nextStep });
+  return updateOnboardingState(global, { onboardingStep: nextStep });
 });
 
 addActionHandler('goToOnboardingPreviousStep', (global): ActionReturnType => {
   if (selectIsAlreadyOnboarded(global)) {
-    return;
+    return undefined;
   }
 
   const previousStep = selectOnboardingPreviousStep(global);
   setOnboardingStep(previousStep);
-  updateOnboardingState(global, { onboardingStep: previousStep });
+  return updateOnboardingState(global, { onboardingStep: previousStep });
 });
 
 addActionHandler('requestConfetti', (global, actions, payload): ActionReturnType => {
-  if (selectIsAlreadyOnboarded(global)) return;
+  if (selectIsAlreadyOnboarded(global)) return undefined;
 
-  if (!selectCanAnimateInterface(global)) return;
+  if (!selectCanAnimateInterface(global)) return undefined;
 
   const {
     tabId = getCurrentTabId(), ...rest
   } = payload;
 
-  updateTabState(global, {
+  const now = Date.now();
+  return updateTabState(global, {
     confetti: {
-      lastConfettiTime: Date.now(),
+      lastConfettiTime: now,
       ...rest,
     },
   }, tabId);
@@ -68,5 +69,5 @@ addActionHandler('requestConfetti', (global, actions, payload): ActionReturnType
 
 addActionHandler('completeOnboarding', (global): ActionReturnType => {
   setOnboardingStep(UluOnboardingStep.alreadyOnboarded);
-  updateOnboardingState(global, { onboardingStep: UluOnboardingStep.alreadyOnboarded });
+  return updateOnboardingState(global, { onboardingStep: UluOnboardingStep.alreadyOnboarded });
 });
