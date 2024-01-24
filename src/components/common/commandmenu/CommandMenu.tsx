@@ -5,42 +5,42 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 // eslint-disable-next-line react/no-deprecated
 import { Command } from 'cmdk';
-import type { FC } from '../../lib/teact/teact';
+import type { FC } from '../../../lib/teact/teact';
 import {
   memo, useCallback, useEffect, useRef,
   useState,
-} from '../../lib/teact/teact';
-import { getGlobal } from '../../lib/teact/teactn';
-import { getActions, withGlobal } from '../../global';
+} from '../../../lib/teact/teact';
+import { getGlobal } from '../../../lib/teact/teactn';
+import { getActions, withGlobal } from '../../../global';
 
-import type { ApiChat, ApiChatFolder, ApiUser } from '../../api/types';
-import type { GlobalState } from '../../global/types';
+import type { ApiChat, ApiChatFolder, ApiUser } from '../../../api/types';
+import type { GlobalState } from '../../../global/types';
 
-import { cmdKey, DEFAULT_WORKSPACE, JUNE_TRACK_EVENTS } from '../../config';
+import { cmdKey, DEFAULT_WORKSPACE, JUNE_TRACK_EVENTS } from '../../../config';
 import {
   getChatTitle, getUserFullName,
-} from '../../global/helpers';
-import { selectCurrentChat, selectTabState, selectUser } from '../../global/selectors';
-import { selectIsWorkspaceSettingsOpen } from '../../global/selectors/ulu/workspaces';
-import captureKeyboardListeners from '../../util/captureKeyboardListeners';
-import { convertLayout } from '../../util/convertLayout';
-import { transliterate } from '../../util/transliterate';
+} from '../../../global/helpers';
+import { selectCurrentChat, selectTabState, selectUser } from '../../../global/selectors';
+import { selectIsWorkspaceSettingsOpen } from '../../../global/selectors/ulu/workspaces';
+import captureKeyboardListeners from '../../../util/captureKeyboardListeners';
+import { convertLayout } from '../../../util/convertLayout';
+import { transliterate } from '../../../util/transliterate';
 
-import useArchiver from '../../hooks/useArchiver';
-import useCommands from '../../hooks/useCommands';
-import useDone from '../../hooks/useDone';
-import { useFocusMode } from '../../hooks/useFocusMode';
-import { useJune } from '../../hooks/useJune';
-import useLang from '../../hooks/useLang';
-import { useStorage } from '../../hooks/useStorage';
-import { useWorkspaces } from '../../hooks/useWorkspaces';
+import useArchiver from '../../../hooks/useArchiver';
+import useCommands from '../../../hooks/useCommands';
+import useDone from '../../../hooks/useDone';
+import { useFocusMode } from '../../../hooks/useFocusMode';
+import { useJune } from '../../../hooks/useJune';
+import useLang from '../../../hooks/useLang';
+import { useStorage } from '../../../hooks/useStorage';
+import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
-import HomePage from '../common/commandmenu/HomePage';
-import ChangeThemePage from '../common/commandmenu/HomePage/ChangeThemePage';
-import FocusModePage from '../common/commandmenu/HomePage/FocusModePage';
-import FolderPage from '../common/FolderPage';
-import CommanMenuChatSearch from '../left/search/CommanMenuChatSearch';
-import AutomationSettings from './AutomationSettings';
+import CommanMenuChatSearch from '../../left/search/CommanMenuChatSearch';
+import AutomationSettings from '../../main/AutomationSettings';
+import FolderPage from '../FolderPage';
+import HomePage from './HomePage';
+import ChangeThemePage from './HomePage/ChangeThemePage';
+import FocusModePage from './HomePage/FocusModePage';
 
 import './CommandMenu.scss';
 
