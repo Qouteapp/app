@@ -21,7 +21,7 @@ import HelpGroup from './HelpGroup';
 import NavigationGroup from './NavigationGroup';
 import SuggestedContacts from './SuggestedContactsGroup';
 
-import '../../main/CommandMenu.scss';
+import '../CommandMenu.scss';
 
 type OwnProps = {
   isArchiveWhenDoneEnabled: boolean;
