@@ -187,6 +187,10 @@ const App: FC<StateProps> = ({
         page = 'onboardingSuperSearch';
         activeKey = AppScreens.onboarding;
         break;
+      case UluOnboardingStep.finish:
+        page = 'onboardingFinish';
+        activeKey = AppScreens.onboarding;
+        break;
       default:
         page = 'main';
         activeKey = AppScreens.main;

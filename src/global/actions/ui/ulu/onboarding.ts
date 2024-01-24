@@ -1,8 +1,14 @@
-import { type ActionReturnType, type GlobalState, UluOnboardingStep } from '../../../types';
+import { type ActionReturnType, type GlobalState } from '../../../types';
+import { UluOnboardingStep } from '../../../types';
 
+import { getCurrentTabId } from '../../../../util/establishMultitabRole';
+import { setOnboardingStep } from '../../../../util/sessions';
 import { addActionHandler, setGlobal } from '../../..';
-import { selectOnboardingStep } from '../../../selectors/ulu/onboarding';
-import { getOnboardingFirstStep, getOnboardingLastStep } from '../../../ulu/onboarding';
+import { updateTabState } from '../../../reducers/tabs';
+import { selectCanAnimateInterface } from '../../../selectors';
+import {
+  selectIsAlreadyOnboarded, selectOnboardingNextStep, selectOnboardingPreviousStep,
+} from '../../../selectors/ulu/onboarding';
 
 type UpdateOnboardingStatePayload = Partial<GlobalState['ulu']['onboardingState']>;
 
@@ -24,28 +30,43 @@ function updateOnboardingState<T extends GlobalState>(
 }
 
 addActionHandler('goToOnboardingNextStep', (global): ActionReturnType => {
-  const currentStep = selectOnboardingStep(global);
-
-  if (currentStep === UluOnboardingStep.alreadyOnboarded) {
+  if (selectIsAlreadyOnboarded(global)) {
     return;
   }
 
-  const nextStep = currentStep === getOnboardingLastStep()
-    ? UluOnboardingStep.alreadyOnboarded
-    : currentStep + 1;
-
+  const nextStep = selectOnboardingNextStep(global);
+  setOnboardingStep(nextStep);
   updateOnboardingState(global, { onboardingStep: nextStep });
 });
 
 addActionHandler('goToOnboardingPreviousStep', (global): ActionReturnType => {
-  const currentStep = selectOnboardingStep(global);
-  if (currentStep === UluOnboardingStep.alreadyOnboarded) {
+  if (selectIsAlreadyOnboarded(global)) {
     return;
   }
 
-  const previousStep = currentStep === getOnboardingFirstStep()
-    ? currentStep
-    : currentStep - 1;
-
+  const previousStep = selectOnboardingPreviousStep(global);
+  setOnboardingStep(previousStep);
   updateOnboardingState(global, { onboardingStep: previousStep });
+});
+
+addActionHandler('requestConfetti', (global, actions, payload): ActionReturnType => {
+  if (selectIsAlreadyOnboarded(global)) return;
+
+  if (!selectCanAnimateInterface(global)) return;
+
+  const {
+    tabId = getCurrentTabId(), ...rest
+  } = payload;
+
+  updateTabState(global, {
+    confetti: {
+      lastConfettiTime: Date.now(),
+      ...rest,
+    },
+  }, tabId);
+});
+
+addActionHandler('completeOnboarding', (global): ActionReturnType => {
+  setOnboardingStep(UluOnboardingStep.alreadyOnboarded);
+  updateOnboardingState(global, { onboardingStep: UluOnboardingStep.alreadyOnboarded });
 });

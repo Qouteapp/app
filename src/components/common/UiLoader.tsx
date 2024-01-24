@@ -41,7 +41,8 @@ export type UiLoaderPage =
   | 'onboardingFoldersStyle'
   | 'onboardingFirstWorkspace'
   | 'onboardingFoldersRules'
-  | 'onboardingSuperSearch';
+  | 'onboardingSuperSearch'
+  | 'onboardingFinish';
 
 type OwnProps = {
   page?: UiLoaderPage;
@@ -98,6 +99,7 @@ const preloadTasks = {
   onboardingFirstWorkspace: preloadFonts,
   onboardingFoldersRules: preloadFonts,
   onboardingSuperSearch: preloadFonts,
+  onboardingFinish: preloadFonts,
   lock: () => Promise.all([
     preloadFonts(),
     preloadImage(lockPreviewPath),

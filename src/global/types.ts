@@ -672,7 +672,7 @@ export type TabState = {
 };
 
 export enum UluOnboardingStep {
-  alreadyOnboarded,
+  alreadyOnboarded = -1,
   __start = 0,
   inbox,
   foldersStyle,
@@ -2913,6 +2913,7 @@ export interface ActionPayloads {
   // onboarding
   goToOnboardingNextStep: undefined;
   goToOnboardingPreviousStep: undefined;
+  completeOnboarding: undefined;
 }
 
 export type RequiredGlobalState = GlobalState & { _: never };

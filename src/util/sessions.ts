@@ -1,7 +1,7 @@
 import * as idb from 'idb-keyval';
 
 import type { ApiSessionData } from '../api/types';
-import { UluOnboardingStep } from '../global/types';
+import type { UluOnboardingStep } from '../global/types';
 
 import {
   DEBUG, GLOBAL_STATE_CACHE_KEY, LEGACY_SESSION_KEY, LOCAL_STORAGE_KEYS,
@@ -14,7 +14,11 @@ const DC_IDS = [1, 2, 3, 4, 5];
 const lsOnboardingStep = new LocalStorage<UluOnboardingStep>();
 
 export function getOnboardingStep() {
-  return lsOnboardingStep.getOrFallback(LOCAL_STORAGE_KEYS.ONBOARDING_STEP, UluOnboardingStep.inbox);
+  return lsOnboardingStep.getOrFallback(LOCAL_STORAGE_KEYS.ONBOARDING_STEP);
+}
+
+export function setOnboardingStep(step: UluOnboardingStep) {
+  lsOnboardingStep.set(LOCAL_STORAGE_KEYS.ONBOARDING_STEP, step);
 }
 
 export function hasStoredSession(withLegacy = false) {

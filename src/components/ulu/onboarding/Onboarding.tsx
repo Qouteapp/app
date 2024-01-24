@@ -17,6 +17,7 @@ import useElectronDrag from '../../../hooks/useElectronDrag';
 import useHistoryBack from '../../../hooks/useHistoryBack';
 
 import CommandMenu from '../../main/CommandMenu';
+import ConfettiContainer from '../../main/ConfettiContainer';
 import Transition from '../../ui/Transition';
 import CreateWorkspace from './steps/CreateWorkspace';
 import Finish from './steps/Finish';
@@ -33,9 +34,7 @@ type StateProps = {
   isWorkspaceSettingsOpen: boolean;
 };
 
-const Onboarding: FC<StateProps> = ({
-  onboardingStep,
-}) => {
+const Onboarding: FC<StateProps> = ({ onboardingStep }) => {
   const {
     goToOnboardingPreviousStep,
   } = getActions();
@@ -98,6 +97,7 @@ const Onboarding: FC<StateProps> = ({
         />
       </div>
       <CommandMenu isDemoMode />
+      <ConfettiContainer />
     </Transition>
   );
 };
