@@ -15,7 +15,7 @@ function useShortcutCmdE() {
       // Cmd+E - Done
       // Cmd+Shift+E - Undone (Doesn't work on Linux)
       doneChat({ value: !IS_LINUX ? !e.shiftKey : undefined });
-      track?.(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Shortcut' });
+      track(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Shortcut' });
     }
   }, [doneChat, track]);
 

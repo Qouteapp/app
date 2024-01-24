@@ -120,7 +120,7 @@ const WorkspaceCreator: FC<OwnProps> = ({
         setSavedWorkspaces([...savedWorkspaces, newWorkspaceData]);
         setCurrentWorkspaceId(newWorkspaceData.id);
         onCreate?.();
-        track?.(JUNE_TRACK_EVENTS.CREATE_WORKSPACE);
+        track(JUNE_TRACK_EVENTS.CREATE_WORKSPACE);
       }
     } catch (error) {
       //

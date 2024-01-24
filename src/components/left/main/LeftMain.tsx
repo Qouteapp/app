@@ -145,7 +145,7 @@ const LeftMain: FC<OwnProps> = ({
     } else {
       window.location.reload();
     }
-    track?.(JUNE_TRACK_EVENTS.UPDATE_APP_BUTTON_CLICK);
+    track(JUNE_TRACK_EVENTS.UPDATE_APP_BUTTON_CLICK);
   });
 
   const handleSelectNewChannel = useLastCallback(() => {

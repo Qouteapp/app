@@ -43,7 +43,7 @@ const Inbox: FC = () => {
 
   const markAllReadChatsDone = useCallback(() => {
     doneAllReadChats();
-    track?.(JUNE_TRACK_EVENTS.USE_MARK_ALL_READ_CHATS_DONE_COMMAND);
+    track(JUNE_TRACK_EVENTS.USE_MARK_ALL_READ_CHATS_DONE_COMMAND);
   }, [track, doneAllReadChats]);
 
   const next = useCallback(() => {

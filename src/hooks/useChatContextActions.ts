@@ -69,7 +69,7 @@ const useChatContextActions = ({
       icon: 'schedule',
       handler: () => {
         snooze({ chatId: chat.id });
-        track?.(JUNE_TRACK_EVENTS.SNOOZE_CHAT, { source: 'Chat Context Menu' });
+        track(JUNE_TRACK_EVENTS.SNOOZE_CHAT, { source: 'Chat Context Menu' });
       },
     };
 
@@ -118,7 +118,7 @@ const useChatContextActions = ({
         icon: 'readchats',
         handler: () => {
           toggleChatUnread({ id: chat.id });
-          track?.(JUNE_TRACK_EVENTS.MARK_CHAT_READ, { source: 'Chat Context Menu' });
+          track(JUNE_TRACK_EVENTS.MARK_CHAT_READ, { source: 'Chat Context Menu' });
         },
       }
       : undefined;
@@ -129,7 +129,7 @@ const useChatContextActions = ({
         icon: 'unread',
         handler: () => {
           toggleChatUnread({ id: chat.id });
-          track?.(JUNE_TRACK_EVENTS.MARK_CHAT_UNREAD, { source: 'Chat Context Menu' });
+          track(JUNE_TRACK_EVENTS.MARK_CHAT_UNREAD, { source: 'Chat Context Menu' });
         },
       }
       : undefined;
@@ -140,7 +140,7 @@ const useChatContextActions = ({
         icon: 'select',
         handler: () => {
           doneChat({ id: chat.id, value: false });
-          track?.(JUNE_TRACK_EVENTS.MARK_CHAT_NOT_DONE, { source: 'Chat Context Menu' });
+          track(JUNE_TRACK_EVENTS.MARK_CHAT_NOT_DONE, { source: 'Chat Context Menu' });
         },
       }
       : {
@@ -148,7 +148,7 @@ const useChatContextActions = ({
         icon: 'select',
         handler: () => {
           doneChat({ id: chat.id, value: true });
-          track?.(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Chat Context Menu' });
+          track(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Chat Context Menu' });
         },
       };
 

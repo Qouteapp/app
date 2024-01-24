@@ -54,7 +54,7 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
 
   const handleOpenInbox = useCallback(() => {
     onLeftColumnContentChange(LeftColumnContent.UluInbox);
-    track?.(JUNE_TRACK_EVENTS.OPEN_INBOX);
+    track(JUNE_TRACK_EVENTS.OPEN_INBOX);
   }, [onLeftColumnContentChange, track]);
 
   const { useCommand } = useCommands();

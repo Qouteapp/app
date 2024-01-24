@@ -136,7 +136,7 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
           message: isArchived ? 'Chat unarchived' : 'Chat archived',
         });
       }
-      track?.(isArchived ? JUNE_TRACK_EVENTS.UNARCHIVE_CHAT : JUNE_TRACK_EVENTS.ARCHIVE_CHAT);
+      track(isArchived ? JUNE_TRACK_EVENTS.UNARCHIVE_CHAT : JUNE_TRACK_EVENTS.ARCHIVE_CHAT);
       return true;
     }
     return false;

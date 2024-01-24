@@ -155,7 +155,7 @@ const CommandMenu: FC<StateProps> = ({
 
   const handleSelectWorkspace = (workspaceId: string) => {
     setCurrentWorkspaceId(workspaceId);
-    track?.(JUNE_TRACK_EVENTS.SWITCH_WORKSPACE, { source: 'Сommand Menu' });
+    track(JUNE_TRACK_EVENTS.SWITCH_WORKSPACE, { source: 'Сommand Menu' });
     close();
   };
 
@@ -242,7 +242,7 @@ const CommandMenu: FC<StateProps> = ({
     localStorage.setItem('openai_api_key', inputValue);
     showNotification({ message: 'The OpenAI API key has been saved.' });
     setOpen(false);
-    track?.(JUNE_TRACK_EVENTS.ADD_OPENAI_KEY);
+    track(JUNE_TRACK_EVENTS.ADD_OPENAI_KEY);
   }, [inputValue, track]);
 
   // Настройки переходов между страницами
@@ -360,14 +360,14 @@ const CommandMenu: FC<StateProps> = ({
     showNotification({ message: 'All read chats are marked as done!' });
     doneAllReadChats();
     close();
-    track?.(JUNE_TRACK_EVENTS.USE_MARK_ALL_READ_CHATS_DONE_COMMAND);
+    track(JUNE_TRACK_EVENTS.USE_MARK_ALL_READ_CHATS_DONE_COMMAND);
   }, [close, doneAllReadChats, track]);
 
   const commandArchiveAll = useCallback(() => {
     showNotification({ message: 'All older than 24 hours will be archived!' });
     archiveChats();
     close();
-    track?.(JUNE_TRACK_EVENTS.USE_ARCHIVE_ALL_READ_CHATS_COMMAND);
+    track(JUNE_TRACK_EVENTS.USE_ARCHIVE_ALL_READ_CHATS_COMMAND);
   }, [close, archiveChats, track]);
 
   // What's new group
@@ -381,7 +381,7 @@ const CommandMenu: FC<StateProps> = ({
     setIsFoldersTreeEnabled(updIsFoldersTreeEnabled);
     close();
     window.location.reload();
-    track?.(
+    track(
       updIsFoldersTreeEnabled
         ? JUNE_TRACK_EVENTS.SWITCH_TO_FOLDERS_TREE_UI
         : JUNE_TRACK_EVENTS.SWITCH_TO_TELEGRAM_FOLDERS_UI,
@@ -404,7 +404,7 @@ const CommandMenu: FC<StateProps> = ({
       doneChat({ id: currentChatId });
       if (!isCurrentChatDone) {
         close();
-        track?.(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Command Menu' });
+        track(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Command Menu' });
       }
     }
   }, [currentChatId, doneChat, close, track, isCurrentChatDone]);
@@ -416,7 +416,7 @@ const CommandMenu: FC<StateProps> = ({
       const action = isChatUnread ? 'MarkedAsRead' : 'MarkedAsUnread';
       showNotification({ message: lang(action) });
       close();
-      track?.(
+      track(
         isChatUnread
           ? JUNE_TRACK_EVENTS.MARK_CHAT_READ
           : JUNE_TRACK_EVENTS.MARK_CHAT_UNREAD,

@@ -135,7 +135,7 @@ const LeftSideMenuItems = ({
       return newHistory;
     });
     showNotification({ message: 'Workspace is changing...' });
-    track?.(JUNE_TRACK_EVENTS.SWITCH_WORKSPACE, { source: 'Left Side Menu' });
+    track(JUNE_TRACK_EVENTS.SWITCH_WORKSPACE, { source: 'Left Side Menu' });
   }, [track, setCurrentWorkspaceId]); // Убедитесь в правильности зависимостей
 
   const prevWorkspaceShortcut = IS_ELECTRON ? 'Ctrl + Tab' : 'Ctrl + `';

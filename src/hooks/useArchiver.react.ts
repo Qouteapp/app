@@ -128,7 +128,7 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
       showNotification({
         message: `The chat marked as ${isArchived ? '"Not done"' : '"Done"'}`,
       });
-      track?.(isArchived ? JUNE_TRACK_EVENTS.UNARCHIVE_CHAT : JUNE_TRACK_EVENTS.ARCHIVE_CHAT);
+      track(isArchived ? JUNE_TRACK_EVENTS.UNARCHIVE_CHAT : JUNE_TRACK_EVENTS.ARCHIVE_CHAT);
     }
   }, [openChat, closeForumPanel, track]);
 

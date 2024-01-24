@@ -105,7 +105,7 @@ const SuggestedContacts: FC<SuggestedContactsProps> = ({
     openChat({ id, shouldReplaceHistory: true });
     setTimeout(() => addRecentlyFoundChatId({ id }), SEARCH_CLOSE_TIMEOUT_MS);
     close();
-    track?.(JUNE_TRACK_EVENTS.USE_SUGGESTIONS_IN_COMMAND_MENU, { chatId: id });
+    track(JUNE_TRACK_EVENTS.USE_SUGGESTIONS_IN_COMMAND_MENU, { chatId: id });
   }, [close, track]);
 
   return (

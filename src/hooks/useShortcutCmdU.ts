@@ -26,7 +26,7 @@ function useShortcutCmdU() {
           message: lang((chat.unreadCount || chat.hasUnreadMark) ? 'MarkedAsRead' : 'MarkedAsUnread'),
         });
         toggleChatUnread({ id: chat.id });
-        track?.(
+        track(
           (chat.unreadCount || chat.hasUnreadMark)
             ? JUNE_TRACK_EVENTS.MARK_CHAT_READ
             : JUNE_TRACK_EVENTS.MARK_CHAT_UNREAD,

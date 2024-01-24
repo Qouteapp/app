@@ -127,7 +127,7 @@ const AutomationSettings: React.FC<AutomationSettingsProps> = ({ isOpen, onClose
       setKeyword('');
       setSelectedFolderId(undefined);
       setIsDuplicateError(false);
-      track?.(JUNE_TRACK_EVENTS.CREATE_FOLDER_AUTOMATION_RULE);
+      track(JUNE_TRACK_EVENTS.CREATE_FOLDER_AUTOMATION_RULE);
     } else {
       //
     }
