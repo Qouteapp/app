@@ -16,9 +16,9 @@ import useCurrentOrPrev from '../../../hooks/useCurrentOrPrev';
 import useElectronDrag from '../../../hooks/useElectronDrag';
 import useHistoryBack from '../../../hooks/useHistoryBack';
 
-import CommandMenu from '../../main/CommandMenu';
 import ConfettiContainer from '../../main/ConfettiContainer';
 import Transition from '../../ui/Transition';
+import CommandMenuDemo from './components/CommandMenuDemo/CommandMenuDemo';
 import CreateWorkspace from './steps/CreateWorkspace';
 import Finish from './steps/Finish';
 // import FoldersRules from './steps/FoldersRules';
@@ -36,7 +36,7 @@ type StateProps = {
 
 const Onboarding: FC<StateProps> = ({ onboardingStep }) => {
   const {
-    goToOnboardingPreviousStep,
+    goToOnboardingPreviousStep, goToOnboardingNextStep,
   } = getActions();
 
   const handleGoBack = useCallback(() => {
@@ -96,7 +96,7 @@ const Onboarding: FC<StateProps> = ({ onboardingStep }) => {
           stepsCount={getOnboardingStepsCount()}
         />
       </div>
-      <CommandMenu isDemoMode />
+      <CommandMenuDemo onSelect={goToOnboardingNextStep} />
       <ConfettiContainer />
     </Transition>
   );
