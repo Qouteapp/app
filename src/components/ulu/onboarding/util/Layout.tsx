@@ -8,6 +8,7 @@ import Button from '../../../ui/Button';
 import styles from './Layout.module.scss';
 
 type OwnProps = {
+  className?: string;
   classNameTitle?: string;
   classNameSubtitle?: string;
   classNameChildren?: string;
@@ -19,10 +20,10 @@ type OwnProps = {
 };
 
 const Layout: FC<OwnProps> = ({
-  children, title, subtitle, actionText, actionHandler, classNameTitle, classNameSubtitle, classNameChildren,
+  children, title, subtitle, actionText, actionHandler, classNameTitle, classNameSubtitle, classNameChildren, className,
 }) => {
   return (
-    <div className={styles.wrapper}>
+    <div className={buildClassName(styles.wrapper, className)}>
       <div className={styles.content}>
         <div className={styles.titles}>
           <div className={buildClassName(styles.title, classNameTitle)}>{ title }</div>

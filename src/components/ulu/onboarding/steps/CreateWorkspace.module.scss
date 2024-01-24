@@ -20,3 +20,7 @@ $folderHeight: 2.5rem;
 .folders {
 	max-height: calc(#{$folderHeight} * 4);
 }
+
+.layout {
+	gap: 3rem;
+}

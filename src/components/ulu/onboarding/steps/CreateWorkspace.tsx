@@ -21,6 +21,7 @@ const FirstWorkspace: FC = () => {
 
   return (
     <Layout
+      className={styles.layout}
       title={lang('OnboardingCreateWorkspaceTitle')}
       subtitle={lang('OnboardingCreateWorkspaceSubtitle')}
       actionText={lang('OnboardingActionLater')}
