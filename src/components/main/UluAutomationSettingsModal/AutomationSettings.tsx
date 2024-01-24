@@ -4,16 +4,16 @@ import React, { useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   useCallback, useEffect, useState,
-} from '../../lib/teact/teact';
-import { getActions, getGlobal } from '../../global';
+} from '../../../lib/teact/teact';
+import { getActions, getGlobal } from '../../../global';
 
-import { JUNE_TRACK_EVENTS } from '../../config';
-import captureEscKeyListener from '../../util/captureEscKeyListener';
+import { JUNE_TRACK_EVENTS } from '../../../config';
+import captureEscKeyListener from '../../../util/captureEscKeyListener';
 
-import { useJune } from '../../hooks/useJune';
-import useKeywordFolderRule from '../../hooks/useKeywordFolderRule';
+import { useJune } from '../../../hooks/useJune';
+import useKeywordFolderRule from '../../../hooks/useKeywordFolderRule';
 
-import RuleCard from './RuleCard';
+import RuleCard from '../RuleCard';
 
 import './AutomationSettings.scss';
 

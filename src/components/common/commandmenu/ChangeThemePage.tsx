@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 import React from 'react';
 import { Command } from 'cmdk';
-import { type FC } from '../../../../lib/teact/teact';
-import { getActions } from '../../../../global';
+import { type FC } from '../../../lib/teact/teact';
+import { getActions } from '../../../global';
 
-import type { ISettings, ThemeKey } from '../../../../types';
+import type { ISettings, ThemeKey } from '../../../types';
 
-import { getSystemTheme } from '../../../../util/systemTheme';
+import { getSystemTheme } from '../../../util/systemTheme';
 
 interface FolderPageProps {
   theme?: ISettings['theme'];

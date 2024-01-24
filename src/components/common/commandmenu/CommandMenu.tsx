@@ -36,11 +36,11 @@ import { useStorage } from '../../../hooks/useStorage';
 import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
 import CommanMenuChatSearch from '../../left/search/CommanMenuChatSearch';
-import AutomationSettings from '../../main/AutomationSettings';
-import FolderPage from '../FolderPage';
-import HomePage from './HomePage';
-import ChangeThemePage from './HomePage/ChangeThemePage';
-import FocusModePage from './HomePage/FocusModePage';
+import AutomationSettings from '../../main/UluAutomationSettingsModal/AutomationSettings';
+import ChangeThemePage from './ChangeThemePage';
+import FocusModePage from './FocusModePage';
+import FolderPage from './FolderPage';
+import HomePage from './HomePage/HomePage';
 
 import './CommandMenu.scss';
 

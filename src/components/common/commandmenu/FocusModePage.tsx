@@ -1,15 +1,15 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import { Command } from 'cmdk';
-import { type FC } from '../../../../lib/teact/teact';
-import { getActions } from '../../../../global';
+import { type FC } from '../../../lib/teact/teact';
+import { getActions } from '../../../global';
 
-import { JUNE_TRACK_EVENTS } from '../../../../config';
+import { JUNE_TRACK_EVENTS } from '../../../config';
 
-import { useFocusMode } from '../../../../hooks/useFocusMode';
-import { useJune } from '../../../../hooks/useJune';
+import { useFocusMode } from '../../../hooks/useFocusMode';
+import { useJune } from '../../../hooks/useJune';
 
-import CommandMenuListItem from '../CommandMenuListItem';
+import CommandMenuListItem from './CommandMenuListItem';
 
 interface FocusModePageProps {
   close: () => void;
