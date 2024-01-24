@@ -13,7 +13,7 @@ import captureEscKeyListener from '../../../util/captureEscKeyListener';
 import { useJune } from '../../../hooks/useJune';
 import useKeywordFolderRule from '../../../hooks/useKeywordFolderRule';
 
-import RuleCard from '../RuleCard';
+import RuleCard from './RuleCard';
 
 import './AutomationSettings.scss';
 

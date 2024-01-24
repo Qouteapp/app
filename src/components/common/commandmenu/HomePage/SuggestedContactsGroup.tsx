@@ -20,7 +20,7 @@ import renderText from '../../helpers/renderText';
 import { useJune } from '../../../../hooks/useJune';
 import useLang from '../../../../hooks/useLang';
 
-import '../../../main/CommandMenu.scss';
+import '../CommandMenu.scss';
 
 const SEARCH_CLOSE_TIMEOUT_MS = 250;
 

@@ -8,7 +8,7 @@ import { getActions } from '../../../../lib/teact/teactn';
 
 import CommandMenuListItem from '../CommandMenuListItem';
 
-import '../../../main/CommandMenu.scss';
+import '../CommandMenu.scss';
 
 interface BillingGroupProps {
   close: () => void;

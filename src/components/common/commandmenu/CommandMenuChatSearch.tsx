@@ -17,16 +17,16 @@ import {
 import { convertLayout } from '../../../util/convertLayout';
 import { unique } from '../../../util/iteratees';
 import { transliterate } from '../../../util/transliterate';
-import renderText from '../../common/helpers/renderText';
+import renderText from '../helpers/renderText';
 
 import { useJune } from '../../../hooks/useJune';
 import useLang from '../../../hooks/useLang';
 
-import CommandMenuListItem from '../../common/commandmenu/CommandMenuListItem';
+import CommandMenuListItem from './CommandMenuListItem';
 
-import '../../main/CommandMenu.scss';
+import './CommandMenu.scss';
 
-const CommanMenuChatSearch: React.FC<{
+const CommandMenuChatSearch: React.FC<{
   close: () => void;
   searchQuery: string;
   folders: ApiChatFolder[];
@@ -182,4 +182,4 @@ const CommanMenuChatSearch: React.FC<{
     </>
   );
 };
-export default CommanMenuChatSearch;
+export default CommandMenuChatSearch;

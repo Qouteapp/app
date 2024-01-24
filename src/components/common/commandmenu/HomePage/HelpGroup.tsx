@@ -12,7 +12,7 @@ import { FAQ_URL, SHORTCUTS_URL } from '../../../../config';
 
 import CommandMenuListItem from '../CommandMenuListItem';
 
-import '../../../main/CommandMenu.scss';
+import '../CommandMenu.scss';
 
 interface HelpGroupProps {
   close: () => void;

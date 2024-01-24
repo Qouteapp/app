@@ -11,7 +11,7 @@ import {
 
 import captureKeyboardListeners from '../../../util/captureKeyboardListeners';
 
-import '../../main/CommandMenu.scss';
+import './CommandMenu.scss';
 
 export type OwnProps = {
   isOpen: boolean;

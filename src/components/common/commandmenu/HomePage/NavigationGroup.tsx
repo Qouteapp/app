@@ -14,7 +14,7 @@ import useCommands from '../../../../hooks/useCommands';
 
 import CommandMenuListItem from '../CommandMenuListItem';
 
-import '../../../main/CommandMenu.scss';
+import '../CommandMenu.scss';
 
 export type Workspace = {
   id: string;

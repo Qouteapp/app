@@ -35,9 +35,9 @@ import useLang from '../../../hooks/useLang';
 import { useStorage } from '../../../hooks/useStorage';
 import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
-import CommanMenuChatSearch from '../../left/search/CommanMenuChatSearch';
 import AutomationSettings from '../../main/UluAutomationSettingsModal/AutomationSettings';
 import ChangeThemePage from './ChangeThemePage';
+import CommandMenuChatSearch from './CommandMenuChatSearch';
 import FocusModePage from './FocusModePage';
 import FolderPage from './FolderPage';
 import HomePage from './HomePage/HomePage';
@@ -507,7 +507,7 @@ const CommandMenu: FC<StateProps> = ({
                   selectedRange={selectedRange}
                   resetSelectedRange={resetSelectedRange}
                 />
-                <CommanMenuChatSearch
+                <CommandMenuChatSearch
                   close={close}
                   searchQuery={inputValue}
                   folders={folders}
