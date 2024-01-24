@@ -3,23 +3,23 @@
 import React, { useCallback } from 'react';
 // eslint-disable-next-line react/no-deprecated
 import { Command } from 'cmdk';
-import { useEffect } from '../../../lib/teact/teact';
+import { useEffect } from '../../../../lib/teact/teact';
 
-import type { ApiUser } from '../../../api/types';
-import type { Workspace } from '../../../types';
+import type { ApiUser } from '../../../../api/types';
+import type { Workspace } from '../../../../types';
 
-import { cmdKey } from '../../../config';
-import { IS_MAC_OS } from '../../../util/windowEnvironment';
+import { cmdKey } from '../../../../config';
+import { IS_MAC_OS } from '../../../../util/windowEnvironment';
 
-import useCommands from '../../../hooks/useCommands';
-import useLang from '../../../hooks/useLang';
+import useCommands from '../../../../hooks/useCommands';
+import useLang from '../../../../hooks/useLang';
 
-import AIGroup from './HomePage/AIGroup';
-import BillingGroup from './HomePage/BillingGroup';
-import CreateNewGroup from './HomePage/CreateNewGroup';
-import HelpGroup from './HomePage/HelpGroup';
-import NavigationGroup from './HomePage/NavigationGroup';
-import SuggestedContacts from './HomePage/SuggestedContactsGroup';
+import AIGroup from './AIGroup';
+import BillingGroup from './BillingGroup';
+import CreateNewGroup from './CreateNewGroup';
+import HelpGroup from './HelpGroup';
+import NavigationGroup from './NavigationGroup';
+import SuggestedContacts from './SuggestedContactsGroup';
 
 import '../../main/CommandMenu.scss';
 
