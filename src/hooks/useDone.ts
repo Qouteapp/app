@@ -62,8 +62,10 @@ export default function useDone() {
         });
       }
 
-      if (isClose) {
-        openChat({ id: undefined });
+      if (isClose && updDone) {
+        if (togglingChatId === currentChatId) {
+          openChat({ id: undefined });
+        }
         if (togglingChatId === forumPanelChatId) {
           closeForumPanel();
         }
