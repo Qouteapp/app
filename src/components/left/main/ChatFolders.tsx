@@ -75,6 +75,8 @@ const INVISIBLE_CHAT_TREE_STYLES = 'max-height: 0' as CSSProperties;
 const RECALCULATE_TREE_HEIGHT_INTERVAL_MS = 300;
 const COMMON_PADDING = 16;
 
+let recalculateHeightInterval: NodeJS.Timeout;
+
 const ChatFolders: FC<OwnProps & StateProps> = ({
   leftMainHeaderRef,
   foldersDispatch,
@@ -365,24 +367,24 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
   }, [leftMainHeaderRef]);
 
   const [chatFoldersTreeStyles, setChatFoldersTreeStyles] = useState(recalculateFoldersTreeStyles());
-  const recalculateHeightIntervalRef = useRef<NodeJS.Timeout | null>();
 
   const { isFoldersTreeEnabled } = useStorage();
 
   useEffect(() => {
-    recalculateHeightIntervalRef.current = setInterval(() => {
+    recalculateHeightInterval = setInterval(() => {
       const newStyles = recalculateFoldersTreeStyles();
-      setChatFoldersTreeStyles(newStyles);
+      if (newStyles !== INVISIBLE_CHAT_TREE_STYLES) setChatFoldersTreeStyles(newStyles);
     }, RECALCULATE_TREE_HEIGHT_INTERVAL_MS);
+
+    return () => {
+      clearInterval(recalculateHeightInterval);
+    };
   }, [recalculateFoldersTreeStyles]);
 
   useEffect(() => {
-    if (chatFoldersTreeStyles !== INVISIBLE_CHAT_TREE_STYLES) {
-      if (typeof recalculateHeightIntervalRef.current === 'number') {
-        clearInterval(recalculateHeightIntervalRef.current);
-      }
-      recalculateHeightIntervalRef.current = null;
-    }
+    if (chatFoldersTreeStyles === INVISIBLE_CHAT_TREE_STYLES) return;
+
+    clearInterval(recalculateHeightInterval);
   }, [chatFoldersTreeStyles]);
 
   return (
