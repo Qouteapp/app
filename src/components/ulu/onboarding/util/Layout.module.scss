@@ -72,6 +72,7 @@
 	font-style: normal;
 	font-weight: 500;
 	line-height: 1.5rem; /* 150% */
+	cursor: pointer !important;
 
 	@media (max-width: 600px) {
 		font-size: 0.75rem;
