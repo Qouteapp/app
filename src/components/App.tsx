@@ -161,7 +161,7 @@ const App: FC<StateProps> = ({
     activeKey = AppScreens.main;
   }
 
-  if (onboardingStep !== undefined) {
+  if (activeKey === AppScreens.main && onboardingStep !== undefined) {
     switch (onboardingStep) {
       case UluOnboardingStep.alreadyOnboarded:
         page = 'main';
