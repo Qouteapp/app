@@ -6,6 +6,7 @@ src/lib/gramjs/build/
 build-contest/
 tests/
 .idea
+.vscode
 *.iml
 dev/perf/screenshot*
 .DS_store
