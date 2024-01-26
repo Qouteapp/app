@@ -18,7 +18,7 @@ $folderHeight: 2.5rem;
 }
 
 .folders {
-	max-height: calc(#{$folderHeight} * 4);
+	max-height: calc(#{$folderHeight} * 4 + #{$folderHeight} * 0.5);
 }
 
 .layout {
