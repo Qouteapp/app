@@ -32,7 +32,7 @@
 
 .title {
 	text-align: center;
-	color: #FFF;
+	color: var(--color-text);
 	// font-family: Inter Tight;
 	font-size: 2rem;
 	font-style: normal;
@@ -46,7 +46,7 @@
 }
 
 .subtitle {
-	color: rgba(255, 255, 255, 0.40);
+	color: var(--color-text-secondary);
 	text-align: center;
 	// font-family: Inter Tight;
 	font-size: 1.125rem;
@@ -61,11 +61,11 @@
 }
 
 .actionButton {
-	border-radius: 0.75rem;
-	border: 1px solid rgba(255, 255, 255, 0.04);
-	background: rgba(255, 255, 255, 0.04);
+	$color: var(--color-interactive-element-hover);
 
-	// color: rgba(210, 93, 101, 0.80);
+	border-radius: 0.75rem;
+	border: 1px solid $color;
+	background: $color;
 	color: var(--color-primary);
 	// font-family: Inter Tight;
 	font-size: 1rem;

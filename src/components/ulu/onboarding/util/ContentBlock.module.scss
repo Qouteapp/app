@@ -1,6 +1,6 @@
 .wrapper {
 	border-radius: 0.5rem;
-	background: rgba(255, 255, 255, 0.04);
+	background: var(--color-interactive-element-hover);
 	border: 2px solid transparent;
 	display: flex;
 	flex-direction: column;
@@ -14,7 +14,7 @@
 	&.active {
 		border-radius: 0.5rem;
 		border: 2px solid #D25D65;
-		background: #171719;
+		background: var(--color-background-secondary);
 	}
 
 	@media (max-width: 600px) {
@@ -49,7 +49,7 @@
 }
 
 .title {
-	color: #FFF;
+	color: var(--color-text);
 	// font-family: Inter Tight;
 	
 	font-style: normal;
@@ -57,7 +57,7 @@
 }
 
 .subtitle {
-	color: rgba(255, 255, 255, 0.24);
+	color: var(--color-text-secondary);
 	// font-family: Inter Tight;
 	font-style: normal;
 	font-weight: 500;
