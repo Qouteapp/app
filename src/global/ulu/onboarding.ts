@@ -12,5 +12,5 @@ export function getOnboardingLastStep() {
 }
 
 export function getOnboardingStepsCount() {
-  return getOnboardingLastStep() - getOnboardingFirstStep() + 1;
+  return getOnboardingLastStep() - getOnboardingFirstStep();
 }
