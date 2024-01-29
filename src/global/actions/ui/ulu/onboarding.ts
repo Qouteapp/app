@@ -1,11 +1,14 @@
 import { type ActionReturnType, type GlobalState } from '../../../types';
 import { UluOnboardingStep } from '../../../types';
 
+import { ARCHIVED_FOLDER_ID } from '../../../../config';
 import { getCurrentTabId } from '../../../../util/establishMultitabRole';
 import { setOnboardingStep } from '../../../../util/sessions';
+import { callApi } from '../../../../api/gramjs';
 import { addActionHandler, setGlobal } from '../../..';
+import { isChatArchived } from '../../../helpers';
 import { updateTabState } from '../../../reducers/tabs';
-import { selectCanAnimateInterface } from '../../../selectors';
+import { selectCanAnimateInterface, selectChat } from '../../../selectors';
 import {
   selectIsAlreadyOnboarded, selectOnboardingNextStep, selectOnboardingPreviousStep,
 } from '../../../selectors/ulu/onboarding';
@@ -65,6 +68,19 @@ addActionHandler('requestConfetti', (global, actions, payload): ActionReturnType
       ...rest,
     },
   }, tabId);
+});
+
+addActionHandler('toggleChatArchived', (global, actions, payload): ActionReturnType => {
+  if (selectIsAlreadyOnboarded(global)) return;
+
+  const { id } = payload!;
+  const chat = selectChat(global, id);
+  if (chat) {
+    void callApi('toggleChatArchived', {
+      chat,
+      folderId: isChatArchived(chat) ? 0 : ARCHIVED_FOLDER_ID,
+    });
+  }
 });
 
 addActionHandler('completeOnboarding', (global): ActionReturnType => {
