@@ -75,6 +75,7 @@
 	cursor: pointer !important;
 
 	&:hover {
+		--color-text: #fff;
 		$colorHover: var(--color-primary);
 		background: $colorHover;
 		border: 1px solid $colorHover;
