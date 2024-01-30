@@ -12,6 +12,7 @@ type OwnProps = {
   classNameTitle?: string;
   classNameSubtitle?: string;
   classNameChildren?: string;
+  classNameActionButton?: string;
   children: TeactNode;
   title: string;
   actionText: string;
@@ -20,7 +21,8 @@ type OwnProps = {
 };
 
 const Layout: FC<OwnProps> = ({
-  children, title, subtitle, actionText, actionHandler, classNameTitle, classNameSubtitle, classNameChildren, className,
+  children, title, subtitle, actionText, actionHandler,
+  classNameTitle, classNameActionButton, classNameSubtitle, classNameChildren, className,
 }) => {
   return (
     <div className={buildClassName(styles.wrapper, className)}>
@@ -33,7 +35,14 @@ const Layout: FC<OwnProps> = ({
           { children }
         </div>
       </div>
-      <Button className={styles.actionButton} color="none" ripple onClick={actionHandler}>{actionText}</Button>
+      <Button
+        className={buildClassName(styles.actionButton, classNameActionButton)}
+        color="none"
+        ripple
+        onClick={actionHandler}
+      >
+        {actionText}
+      </Button>
     </div>
   );
 };
