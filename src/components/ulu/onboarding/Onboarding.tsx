@@ -90,11 +90,13 @@ const Onboarding: FC<StateProps> = ({ onboardingStep }) => {
         <div className={classNameScreen}>
           {screen}
         </div>
-        <StepsSlider
-          className={classNameSlider}
-          activeStep={onboardingStep - 1}
-          stepsCount={getOnboardingStepsCount()}
-        />
+        { onboardingStep !== UluOnboardingStep.finish && (
+          <StepsSlider
+            className={classNameSlider}
+            activeStep={onboardingStep - 1}
+            stepsCount={getOnboardingStepsCount()}
+          />
+        )}
       </div>
       <CommandMenuDemo onSelect={goToOnboardingNextStep} />
       <ConfettiContainer />

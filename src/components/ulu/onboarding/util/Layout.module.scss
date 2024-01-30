@@ -74,6 +74,13 @@
 	line-height: 1.5rem; /* 150% */
 	cursor: pointer !important;
 
+	&:hover {
+		$colorHover: var(--color-primary);
+		background: $colorHover;
+		border: 1px solid $colorHover;
+		color: var(--color-text);
+	}
+
 	@media (max-width: 600px) {
 		font-size: 0.75rem;
 		line-height: 0.8125rem;
