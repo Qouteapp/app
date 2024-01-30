@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable react/jsx-no-bind */
 import type { ChangeEvent } from 'react';
 import { UploadManager } from '@bytescale/sdk';
@@ -21,14 +22,20 @@ type OwnProps = {
   className?: string;
   classNameFolders?: string;
   classNameFolder?: string;
+  classNameCreateWorkspaceButton?: string;
   workspaceId?: string;
+  createWorkspaceButtonRef?: React.RefObject<HTMLButtonElement>;
   onUpdate?: () => void;
   onCreate?: () => void;
   onDelete?: () => void;
+  onChangeName?: (name: string) => void;
+  onChangeFolders?: (folders: number[]) => void;
 };
 
 const WorkspaceCreator: FC<OwnProps> = ({
-  workspaceId, onUpdate, onCreate, onDelete, className, classNameFolders, classNameFolder,
+  workspaceId, onUpdate, onCreate, onDelete, onChangeName, onChangeFolders,
+  className, classNameFolders, classNameFolder, classNameCreateWorkspaceButton,
+  createWorkspaceButtonRef,
 }) => {
   const global = getGlobal();
   const chatFoldersById = global.chatFolders.byId;
@@ -36,7 +43,11 @@ const WorkspaceCreator: FC<OwnProps> = ({
   const folders = orderedFolderIds ? orderedFolderIds.map((id) => chatFoldersById[id]).filter(Boolean) : [];
 
   const [isInitialized, setIsInitialized] = useState(false); // Новое состояние для отслеживания инициализации
-  const [workspaceName, setWorkspaceName] = useState<string>('');
+  const [workspaceName, _setWorkspaceName] = useState<string>('');
+  const setWorkspaceName = useCallback((name: string) => {
+    _setWorkspaceName(name);
+    onChangeName?.(name);
+  }, [onChangeName]);
   const [logoUrl, setLogoUrl] = useState<string | undefined>('');
   // eslint-disable-next-line no-null/no-null
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +58,11 @@ const WorkspaceCreator: FC<OwnProps> = ({
     apiKey: 'public_kW15bndTdL4cidRTCc1sS8rNYQsu',
   });
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
-  const [selectedFolderIds, setSelectedFolderIds] = useState<number[]>([]);
+  const [selectedFolderIds, _setSelectedFolderIds] = useState<number[]>([]);
+  const setSelectedFolderIds = useCallback((ids: number[]) => {
+    _setSelectedFolderIds(ids);
+    onChangeFolders?.(ids);
+  }, [onChangeFolders]);
   const [isCreating, setIsCreating] = useState(false);
 
   const {
@@ -61,7 +76,7 @@ const WorkspaceCreator: FC<OwnProps> = ({
     setSelectedFile(undefined);
     setIsCreating(false);
     setHasChanges(false);
-  }, []);
+  }, [setWorkspaceName, setSelectedFolderIds]);
 
   useEffect(() => {
     if (workspaceId && !isInitialized) {
@@ -73,7 +88,7 @@ const WorkspaceCreator: FC<OwnProps> = ({
       }
       setIsInitialized(true);
     }
-  }, [workspaceId, isInitialized, resetState, getWorkspaceById]);
+  }, [workspaceId, isInitialized, setWorkspaceName, setSelectedFolderIds, resetState, getWorkspaceById]);
 
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -204,7 +219,12 @@ const WorkspaceCreator: FC<OwnProps> = ({
         onSelectedFoldersChange={handleSelectedFoldersChange}
       />
       <button
-        className={buildClassName(styles.saveButton, isSaveButtonActive && styles.active)}
+        ref={createWorkspaceButtonRef}
+        className={buildClassName(
+          styles.saveButton,
+          isSaveButtonActive && styles.active,
+          classNameCreateWorkspaceButton,
+        )}
         onClick={handleSaveWorkspace}
         disabled={!workspaceName || selectedFolderIds.length === 0}
       >

@@ -6,7 +6,7 @@ import React, {
 import { getActions, withGlobal } from '../../../global';
 
 import type { GlobalState } from '../../../global/types';
-import type { AnimationLevel, ThemeKey } from '../../../types';
+import type { AnimationLevel, ThemeKey, Workspace } from '../../../types';
 
 import {
   ANIMATION_LEVEL_MAX,
@@ -41,6 +41,12 @@ import MenuSeparator from '../../ui/MenuSeparator';
 import Toggle from '../../ui/Toggle';
 
 /* import Switcher from '../../ui/Switcher'; */ // for hiding dark mode switcher
+
+function buildWorkspacePlaceholderText(workspace: Workspace) {
+  return workspace.id !== DEFAULT_WORKSPACE.id && !workspace.logoUrl && workspace.name
+    ? workspace.name[0].toUpperCase()
+    : undefined;
+}
 
 type OwnProps = {
   onSelectSettings: NoneToVoidFunction;
@@ -257,8 +263,7 @@ const LeftSideMenuItems = ({
           userProfile={workspace.id === DEFAULT_WORKSPACE.id}
           isSelected={currentWorkspace.id === workspace.id} // Updated
           customImageUrl={workspace.logoUrl}
-          customPlaceholderText={workspace.id
-            !== DEFAULT_WORKSPACE.id && !workspace.logoUrl ? workspace.name[0].toUpperCase() : undefined}
+          customPlaceholderText={buildWorkspacePlaceholderText(workspace)}
         >
           {workspace.name}
         </MenuItem>

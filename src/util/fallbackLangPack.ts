@@ -540,7 +540,7 @@ export default {
   OnboardingFoldersStyleOptionTelegramSubtitle: 'Default',
   OnboardingCreateWorkspaceTitle: 'Create workspace',
   OnboardingCreateWorkspaceSubtitle: 'Separate work and personal contacts with workspaces',
-  OnboardingCreateWorkspaceAction: 'Create new workspace',
+  OnboardingCreateWorkspaceAction: 'Create workspace',
   OnboardingFolderRulesTitle: 'Groups and rules',
   OnboardingFolderRulesSubtitle: 'We can help group contacts into folders according to their roles or relationship to companies',
   OnboardingSupersearchTitle: 'Supersearch',
