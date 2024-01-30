@@ -41,3 +41,4 @@ import './apiUpdaters/twoFaSettings';
 import './apiUpdaters/calls';
 import './apiUpdaters/payments';
 import './ui/ulu/workspaces';
+import './ui/ulu/onboarding';

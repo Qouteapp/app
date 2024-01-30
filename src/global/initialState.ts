@@ -1,6 +1,6 @@
 import type { PerformanceType } from '../types';
-import type { GlobalState, TabState } from './types';
 import { NewChatMembersProgress } from '../types';
+import { type GlobalState, type TabState } from './types';
 
 import {
   ANIMATION_LEVEL_DEFAULT,
@@ -13,6 +13,7 @@ import {
   MACOS_DEFAULT_MESSAGE_TEXT_SIZE_PX,
 } from '../config';
 import { IS_IOS, IS_MAC_OS } from '../util/windowEnvironment';
+import { getOnboardingFirstStep } from './ulu/onboarding';
 import { getWorkspaces } from './ulu/workspaces';
 
 export const INITIAL_PERFORMANCE_STATE_MAX: PerformanceType = {
@@ -275,6 +276,9 @@ export const INITIAL_GLOBAL_STATE: GlobalState = {
   },
 
   ulu: {
+    onboardingState: {
+      onboardingStep: getOnboardingFirstStep(),
+    },
     workspaceSettings: {
       isOpen: false,
       workspaceId: getWorkspaces().currentWorkspaceId || undefined,

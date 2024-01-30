@@ -1,13 +1,15 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import { Command } from 'cmdk';
-import { type FC } from '../../../../lib/teact/teact';
-import { getActions } from '../../../../global';
+import { type FC } from '../../../lib/teact/teact';
+import { getActions } from '../../../global';
 
-import { useFocusMode } from '../../../../hooks/useFocusMode';
-import { useJune } from '../../../../hooks/useJune';
+import { JUNE_TRACK_EVENTS } from '../../../config';
 
-import CommandMenuListItem from '../CommandMenuListItem';
+import { useFocusMode } from '../../../hooks/useFocusMode';
+import { useJune } from '../../../hooks/useJune';
+
+import CommandMenuListItem from './CommandMenuListItem';
 
 interface FocusModePageProps {
   close: () => void;
@@ -37,7 +39,7 @@ const FocusModePage: FC<FocusModePageProps> = ({
     enableFocusMode(duration);
     showNotification({ message: 'Focus mode is turned on' });
     if (typeof track === 'function') {
-      track('Enable Focus Mode');
+      track(JUNE_TRACK_EVENTS.ENABLE_FOCUS_MODE);
     }
     close();
   };

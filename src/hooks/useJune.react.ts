@@ -3,6 +3,8 @@ import { AnalyticsBrowser } from '@june-so/analytics-next';
 
 const APP_ENV = process.env.APP_ENV;
 
+const noneToVoid = () => undefined;
+
 export function useJune() {
   const [analytics, setAnalytics] = useState<AnalyticsBrowser | undefined>(undefined);
   type TTrack = (eventName: string, properties?: Record<string, unknown>) => void;
@@ -28,5 +30,8 @@ export function useJune() {
     }
   }, []);
 
-  return { analytics, track };
+  return {
+    analytics,
+    track: track || noneToVoid,
+  };
 }

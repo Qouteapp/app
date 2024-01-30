@@ -1,0 +1,35 @@
+$headerHeight: 3.25rem;
+$headerHeightMobile: 2.5rem;
+
+.wrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-direction: column;
+	height: 100%;
+	padding: $headerHeight 0 3rem;
+	gap: 2rem;
+
+	@media (max-width: 600px) {
+		padding: $headerHeightMobile 0 1rem;
+		gap: 1.5rem;
+	}
+}
+
+.header {
+	position: fixed;
+	top: 0;
+	height: $headerHeight;
+
+	@media (max-width: 600px) {
+		height: $headerHeightMobile;
+	}
+}
+
+.screenWrapper {
+	overflow-y: overlay;
+	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}

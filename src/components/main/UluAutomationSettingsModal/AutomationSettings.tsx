@@ -4,13 +4,14 @@ import React, { useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   useCallback, useEffect, useState,
-} from '../../lib/teact/teact';
-import { getActions, getGlobal } from '../../global';
+} from '../../../lib/teact/teact';
+import { getActions, getGlobal } from '../../../global';
 
-import captureEscKeyListener from '../../util/captureEscKeyListener';
+import { JUNE_TRACK_EVENTS } from '../../../config';
+import captureEscKeyListener from '../../../util/captureEscKeyListener';
 
-import { useJune } from '../../hooks/useJune';
-import useKeywordFolderRule from '../../hooks/useKeywordFolderRule';
+import { useJune } from '../../../hooks/useJune';
+import useKeywordFolderRule from '../../../hooks/useKeywordFolderRule';
 
 import RuleCard from './RuleCard';
 
@@ -126,7 +127,7 @@ const AutomationSettings: React.FC<AutomationSettingsProps> = ({ isOpen, onClose
       setKeyword('');
       setSelectedFolderId(undefined);
       setIsDuplicateError(false);
-      track?.('Create folder automation rule');
+      track(JUNE_TRACK_EVENTS.CREATE_FOLDER_AUTOMATION_RULE);
     } else {
       //
     }

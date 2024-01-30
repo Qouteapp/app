@@ -9,7 +9,7 @@ import { getActions, getGlobal } from '../global';
 import type { ApiChat } from '../api/types';
 import type { GlobalState } from '../global/types';
 
-import { SERVICE_NOTIFICATIONS_USER_ID } from '../config';
+import { JUNE_TRACK_EVENTS, SERVICE_NOTIFICATIONS_USER_ID } from '../config';
 import { selectCurrentChat, selectTabState } from '../global/selectors';
 import useInterval from './useInterval.react';
 import { useJune } from './useJune.react';
@@ -128,7 +128,7 @@ export default function useArchiver({ isManual }: { isManual: boolean }) {
       showNotification({
         message: `The chat marked as ${isArchived ? '"Not done"' : '"Done"'}`,
       });
-      track?.(isArchived ? 'toggleChatUnarchived' : 'toggleChatArchived');
+      track(isArchived ? JUNE_TRACK_EVENTS.UNARCHIVE_CHAT : JUNE_TRACK_EVENTS.ARCHIVE_CHAT);
     }
   }, [openChat, closeForumPanel, track]);
 

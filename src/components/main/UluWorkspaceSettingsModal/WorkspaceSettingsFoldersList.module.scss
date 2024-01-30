@@ -1,9 +1,12 @@
-/* FolderSelector.css */
-.folderSelector {
+$itemHeight: 2.5rem;
+
+.wrapper {
   max-width: 480px;
   background: var(--color-interactive-element-hover);
   border-radius: 6px;
   margin-top: 1rem;
+  max-height: calc(#{$itemHeight} * 8);
+  overflow-y: overlay;
 }
 
 .folderItem {
@@ -12,14 +15,15 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
+  max-height: $itemHeight;
   cursor: pointer;
+
+  &:hover {
+    background: var(--color-background-compact-menu-hover);
+  }
 }
 
-.folderItem:hover {
-  background: var(--color-background-compact-menu-hover);
-}
-
-.icon-wrapper {
+.iconWrapper {
   display: flex;
   align-items: center;
   width: 1.5rem;
@@ -39,28 +43,20 @@
   line-height: 24px;
 }
 
-.selectedCheckmark {
-  width: 24px;
-  height: 24px;
-  background: var(--color-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.selectedCheckmark i {
-  color: var(--color-white);
-}
-
-.unselectedCheckmark {
+.checkmark {
   width: 24px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.unselectedCheckmark i {
   color: var(--color-gray);
+
+  &.selected {
+    background: var(--color-primary);
+    border-radius: 50%;
+
+    i {
+      color: var(--color-white);
+    }
+  }
 }

@@ -1,7 +1,7 @@
 /* eslint-disable import/no-cycle */
 import React from 'react';
-import { useState } from '../../lib/teact/teact';
-import { getGlobal } from '../../global';
+import { useState } from '../../../lib/teact/teact';
+import { getGlobal } from '../../../global';
 
 import './AutomationSettings.scss';
 

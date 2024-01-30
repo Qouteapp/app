@@ -3,19 +3,20 @@ import type { FC } from '../lib/teact/teact';
 import React, { useEffect, useLayoutEffect } from '../lib/teact/teact';
 import { getActions, withGlobal } from '../global';
 
-import type { GlobalState } from '../global/types';
 import type { ThemeKey } from '../types';
 import type { UiLoaderPage } from './common/UiLoader';
+import { type GlobalState, UluOnboardingStep } from '../global/types';
 
 import {
   DARK_THEME_BG_COLOR, INACTIVE_MARKER, LIGHT_THEME_BG_COLOR, PAGE_TITLE,
 } from '../config';
 import { selectTabState, selectTheme } from '../global/selectors';
+import { selectOnboardingStep } from '../global/selectors/ulu/onboarding';
 import { addActiveTabChangeListener } from '../util/activeTabMonitor';
 import buildClassName from '../util/buildClassName';
 import { setupBeforeInstallPrompt } from '../util/installPrompt';
 import { parseInitialLocationHash } from '../util/routing';
-import { hasStoredSession } from '../util/sessions';
+import { getOnboardingStep, hasStoredSession } from '../util/sessions';
 import { IS_INSTALL_PROMPT_SUPPORTED, IS_MULTITAB_SUPPORTED, PLATFORM_ENV } from '../util/windowEnvironment';
 import { updateSizes } from '../util/windowSize';
 
@@ -30,11 +31,13 @@ import AppInactive from './main/AppInactive';
 import LockScreen from './main/LockScreen.async';
 import Main from './main/Main.async';
 import Transition from './ui/Transition';
+import Onboarding from './ulu/onboarding/Onboarding';
 
 import styles from './App.module.scss';
 
 type StateProps = {
   authState: GlobalState['authState'];
+  onboardingStep: UluOnboardingStep;
   isScreenLocked?: boolean;
   hasPasscode?: boolean;
   isInactiveAuth?: boolean;
@@ -47,6 +50,7 @@ enum AppScreens {
   main,
   lock,
   inactive,
+  onboarding,
 }
 
 const TRANSITION_RENDER_COUNT = Object.keys(AppScreens).length / 2;
@@ -54,6 +58,7 @@ const INACTIVE_PAGE_TITLE = `${PAGE_TITLE} ${INACTIVE_MARKER}`;
 
 const App: FC<StateProps> = ({
   authState,
+  onboardingStep,
   isScreenLocked,
   hasPasscode,
   isInactiveAuth,
@@ -156,6 +161,43 @@ const App: FC<StateProps> = ({
     activeKey = AppScreens.main;
   }
 
+  if (activeKey === AppScreens.main && onboardingStep !== undefined) {
+    switch (onboardingStep) {
+      case UluOnboardingStep.alreadyOnboarded:
+        page = 'main';
+        activeKey = AppScreens.main;
+        break;
+      case UluOnboardingStep.inbox:
+        page = 'onboardingInbox';
+        activeKey = AppScreens.onboarding;
+        break;
+      case UluOnboardingStep.foldersStyle:
+        page = 'onboardingFoldersStyle';
+        activeKey = AppScreens.onboarding;
+        break;
+      case UluOnboardingStep.firstWorkspace:
+        page = 'onboardingFirstWorkspace';
+        activeKey = AppScreens.onboarding;
+        break;
+      // case UluOnboardingStep.foldersRules:
+      //   page = 'onboardingFoldersRules';
+      //   activeKey = AppScreens.onboarding;
+      //   break;
+      case UluOnboardingStep.superSearch:
+        page = 'onboardingSuperSearch';
+        activeKey = AppScreens.onboarding;
+        break;
+      case UluOnboardingStep.finish:
+        page = 'onboardingFinish';
+        activeKey = AppScreens.onboarding;
+        break;
+      default:
+        page = 'main';
+        activeKey = AppScreens.main;
+        break;
+    }
+  }
+
   useEffect(() => {
     updateSizes();
   }, []);
@@ -194,6 +236,8 @@ const App: FC<StateProps> = ({
         return <LockScreen isLocked={isScreenLocked} />;
       case AppScreens.inactive:
         return <AppInactive />;
+      case AppScreens.onboarding:
+        return <Onboarding />;
     }
   }
 
@@ -228,8 +272,10 @@ const App: FC<StateProps> = ({
 
 export default withGlobal(
   (global): StateProps => {
+    const sessionOnboardingStep = getOnboardingStep();
     return {
       authState: global.authState,
+      onboardingStep: sessionOnboardingStep === undefined ? selectOnboardingStep(global) : sessionOnboardingStep,
       isScreenLocked: global.passcode?.isScreenLocked,
       hasPasscode: global.passcode?.hasPasscode,
       isInactiveAuth: selectTabState(global).isInactive,

@@ -1,0 +1,16 @@
+.subtitle {
+	max-width: 437px;
+}
+
+.iconWrapper {
+	margin-top: 2rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 3rem;
+	width: 3rem;
+
+	@media (max-width: 600px) {
+		margin-top: unset;
+	}
+}

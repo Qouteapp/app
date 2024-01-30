@@ -36,7 +36,13 @@ export type UiLoaderPage =
   | 'authCode'
   | 'authPassword'
   | 'authPhoneNumber'
-  | 'authQrCode';
+  | 'authQrCode'
+  | 'onboardingInbox'
+  | 'onboardingFoldersStyle'
+  | 'onboardingFirstWorkspace'
+  | 'onboardingFoldersRules'
+  | 'onboardingSuperSearch'
+  | 'onboardingFinish';
 
 type OwnProps = {
   page?: UiLoaderPage;
@@ -88,6 +94,12 @@ const preloadTasks = {
   authCode: () => preloadImage(monkeyPath),
   authPassword: () => preloadImage(monkeyPath),
   authQrCode: preloadFonts,
+  onboardingInbox: preloadFonts,
+  onboardingFoldersStyle: preloadFonts,
+  onboardingFirstWorkspace: preloadFonts,
+  onboardingFoldersRules: preloadFonts,
+  onboardingSuperSearch: preloadFonts,
+  onboardingFinish: preloadFonts,
   lock: () => Promise.all([
     preloadFonts(),
     preloadImage(lockPreviewPath),

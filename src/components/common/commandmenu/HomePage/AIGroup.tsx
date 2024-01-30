@@ -10,7 +10,7 @@ import EventBus from '../../../../util/EventBus';
 
 import CommandMenuListItem from '../CommandMenuListItem';
 
-import '../../../main/CommandMenu.scss';
+import '../CommandMenu.scss';
 
 interface AIGroupProps {
   close: () => void;

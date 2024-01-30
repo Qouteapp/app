@@ -21,7 +21,7 @@ import type { LangCode } from '../../types';
 import { ElectronEvent } from '../../types/electron';
 
 import {
-  BASE_EMOJI_KEYWORD_LANG, DEBUG, INACTIVE_MARKER,
+  BASE_EMOJI_KEYWORD_LANG, DEBUG, INACTIVE_MARKER, JUNE_TRACK_EVENTS,
 } from '../../config';
 import { requestNextMutation } from '../../lib/fasterdom/fasterdom';
 import { getMainUsername, getUserFullName } from '../../global/helpers';
@@ -81,6 +81,7 @@ import ActiveCallHeader from '../calls/ActiveCallHeader.async';
 import GroupCall from '../calls/group/GroupCall.async';
 import PhoneCall from '../calls/phone/PhoneCall.async';
 import RatePhoneCallModal from '../calls/phone/RatePhoneCallModal.async';
+import CommandMenu from '../common/commandmenu/CommandMenu';
 import CustomEmojiSetsModal from '../common/CustomEmojiSetsModal.async';
 import StickerSetModal from '../common/StickerSetModal.async';
 import UnreadCount from '../common/UnreadCounter';
@@ -105,7 +106,6 @@ import RightColumn from '../right/RightColumn';
 import StoryViewer from '../story/StoryViewer.async';
 import AttachBotRecipientPicker from './AttachBotRecipientPicker.async';
 import BotTrustModal from './BotTrustModal.async';
-import CommandMenu from './CommandMenu';
 import ConfettiContainer from './ConfettiContainer';
 import DeleteFolderDialog from './DeleteFolderDialog.async';
 import Dialogs from './Dialogs.async';
@@ -120,7 +120,7 @@ import Notifications from './Notifications.async';
 import PremiumLimitReachedModal from './premium/common/PremiumLimitReachedModal.async';
 import PremiumMainModal from './premium/PremiumMainModal.async';
 import SafeLinkModal from './SafeLinkModal.async';
-import UluWorkspaceSettingsModal from './UluWorkspaceSettingsModal.react';
+import UluWorkspaceSettingsModal from './UluWorkspaceSettingsModal/UluWorkspaceSettingsModal.react';
 
 import './Main.scss';
 
@@ -318,7 +318,7 @@ const Main: FC<OwnProps & StateProps> = ({
   useEffect(() => {
     if (!isAppOpen && track) {
       setIsAppOpen(true);
-      track('App: open',
+      track(JUNE_TRACK_EVENTS.APP_OPEN,
         {
           platform: getPlatform(),
         });

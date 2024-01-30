@@ -9,7 +9,7 @@ import { getActions } from '../../../global';
 import type { FolderEditDispatch } from '../../../hooks/reducers/useFoldersReducer';
 import { LeftColumnContent, SettingsScreens } from '../../../types';
 
-import { PRODUCTION_URL } from '../../../config';
+import { JUNE_TRACK_EVENTS, PRODUCTION_URL } from '../../../config';
 import buildClassName from '../../../util/buildClassName';
 import { IS_ELECTRON, IS_TOUCH_ENV } from '../../../util/windowEnvironment';
 
@@ -145,7 +145,7 @@ const LeftMain: FC<OwnProps> = ({
     } else {
       window.location.reload();
     }
-    track?.('Click on Update app button');
+    track(JUNE_TRACK_EVENTS.UPDATE_APP_BUTTON_CLICK);
   });
 
   const handleSelectNewChannel = useLastCallback(() => {

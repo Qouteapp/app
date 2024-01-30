@@ -372,6 +372,33 @@ export const LOCAL_STORAGE_KEYS = {
   IS_FOCUS_MODE_ENABLED: 'ulu_is_focus_mode_enabled',
   FOCUS_MODE_END_TIME: 'ulu_focus_mode_end_time',
   DONE_CHAT_IDS: 'ulu_done_chat_ids',
+  ONBOARDING_STEP: 'ulu_onboarding_step',
+};
+
+export const JUNE_TRACK_EVENTS = {
+  ADD_OPENAI_KEY: 'Add openAI key',
+  APP_OPEN: 'App: open',
+  ARCHIVE_CHAT: 'Archive Chat',
+  CREATE_FOLDER_AUTOMATION_RULE: 'Create folder automation rule',
+  CREATE_WORKSPACE: 'Create new workspace',
+  DISABLE_FOCUS_MODE: 'Disable Focus Mode',
+  ENABLE_FOCUS_MODE: 'Enable Focus Mode',
+  MARK_CHAT_DONE: 'Mark as Done',
+  MARK_CHAT_NOT_DONE: 'Mark as not Done',
+  MARK_CHAT_READ: 'Mark as Read',
+  MARK_CHAT_UNREAD: 'Mark as Unread',
+  OPEN_INBOX: 'Open Inbox',
+  SNOOZE_CHAT: 'Snooze chat',
+  SWITCH_TO_FOLDERS_TREE_UI: 'Switch to Folders Tree UI',
+  SWITCH_TO_TELEGRAM_FOLDERS_UI: 'Switch to Telegram Folders UI',
+  SWITCH_WORKSPACE: 'Switch workspace',
+  UNARCHIVE_CHAT: 'Unarchive Chat',
+  USE_FOLDER_SEARCH_IN_COMMAND_MENU: 'Use folder search in Сommand Menu',
+  USE_GLOBAL_SEARCH_IN_COMMAND_MENU: 'Use global search in Сommand Menu',
+  USE_SUGGESTIONS_IN_COMMAND_MENU: 'Use suggestions in Сommand Menu',
+  USE_MARK_ALL_READ_CHATS_DONE_COMMAND: 'Use "Mark all read chats as done" command',
+  USE_ARCHIVE_ALL_READ_CHATS_COMMAND: 'Use "Archive all read chats" command',
+  UPDATE_APP_BUTTON_CLICK: 'Click on Update app button',
 };
 
 function determineCmdKey() {

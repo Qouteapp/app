@@ -8,6 +8,7 @@ import type { ApiPhoto, ApiUser } from '../../../api/types';
 
 import { DEFAULT_WORKSPACE } from '../../../config';
 import { selectUser, selectUserFullInfo } from '../../../global/selectors';
+import buildClassName from '../../../util/buildClassName';
 
 import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
@@ -16,6 +17,9 @@ import ProfilePhoto from '../../common/ProfilePhoto';
 import styles from './UluHeaderProfile.module.scss';
 
 type OwnProps = {
+  className?: string;
+  classNameUserName?: string;
+  isPersonalWorkspace?: boolean;
   onClick?: (e: ReactMouseEvent<HTMLDivElement, MouseEvent>) => void;
 };
 
@@ -40,10 +44,13 @@ const getUserFullName = (user?: ApiUser) => {
 };
 
 const UluHeaderProfile: FC<OwnProps & StateProps> = ({
-  user, userFallbackPhoto, userPersonalPhoto, userProfilePhoto, onClick,
+  user, userFallbackPhoto, userPersonalPhoto, userProfilePhoto, onClick, className, classNameUserName,
+  isPersonalWorkspace: isPersonalWorkspaceProps,
 }) => {
   const { currentWorkspace } = useWorkspaces();
-  const isPersonalWorkspace = currentWorkspace?.id === DEFAULT_WORKSPACE.id;
+  const isPersonalWorkspace = isPersonalWorkspaceProps || currentWorkspace?.id === DEFAULT_WORKSPACE.id;
+
+  const isActionable = typeof onClick === 'function';
 
   function renderPhoto() {
     if (isPersonalWorkspace) {
@@ -76,11 +83,11 @@ const UluHeaderProfile: FC<OwnProps & StateProps> = ({
   }
 
   return (
-    <div className={styles.wrapper} onClick={onClick}>
+    <div className={buildClassName(styles.wrapper, isActionable && styles.actionable, className)} onClick={onClick}>
       <div className={styles.photoWrapper}>
         {renderPhoto()}
       </div>
-      <div className={styles.userName}>
+      <div className={buildClassName(styles.userName, classNameUserName)}>
         {isPersonalWorkspace ? getUserFullName(user) : currentWorkspace?.name}
       </div>
     </div>

@@ -1,0 +1,89 @@
+.wrapper {
+	width: 30rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex-grow: 1;
+	gap: 5rem;
+
+	@media (max-width: 600px) {
+		width: 18.75rem;
+		gap: 2rem;
+	}
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: 2.5rem;
+
+	@media (max-width: 600px) {
+		gap: 1.5rem;
+	}
+}
+
+.titles {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+}
+
+.title {
+	text-align: center;
+	color: var(--color-text);
+	// font-family: Inter Tight;
+	font-size: 2rem;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 2.5rem; /* 125% */
+
+	@media (max-width: 600px) {
+		font-size: 1rem;
+		line-height: 1.5rem;
+	}
+}
+
+.subtitle {
+	color: var(--color-text-secondary);
+	text-align: center;
+	// font-family: Inter Tight;
+	font-size: 1.125rem;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 1.75rem; /* 155.556% */
+
+	@media (max-width: 600px) {
+		font-size: 0.625rem;
+		line-height: 0.875rem;
+	}
+}
+
+.actionButton {
+	$color: var(--color-interactive-element-hover);
+
+	border-radius: 0.75rem;
+	border: 1px solid $color;
+	background: $color;
+	color: var(--color-primary);
+	// font-family: Inter Tight;
+	font-size: 1rem;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 1.5rem; /* 150% */
+	cursor: pointer !important;
+
+	&:hover {
+		--color-text: #fff;
+		$colorHover: var(--color-primary);
+		background: $colorHover;
+		border: 1px solid $colorHover;
+		color: var(--color-text);
+	}
+
+	@media (max-width: 600px) {
+		font-size: 0.75rem;
+		line-height: 0.8125rem;
+	}
+}

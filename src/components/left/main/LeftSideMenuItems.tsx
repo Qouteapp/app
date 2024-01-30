@@ -6,7 +6,7 @@ import React, {
 import { getActions, withGlobal } from '../../../global';
 
 import type { GlobalState } from '../../../global/types';
-import type { AnimationLevel, ThemeKey } from '../../../types';
+import type { AnimationLevel, ThemeKey, Workspace } from '../../../types';
 
 import {
   ANIMATION_LEVEL_MAX,
@@ -15,10 +15,9 @@ import {
   BETA_CHANGELOG_URL,
   DEFAULT_WORKSPACE,
   FEEDBACK_URL,
-  IS_BETA,
   IS_TEST,
+  JUNE_TRACK_EVENTS,
   PRODUCTION_HOSTNAME,
-  WEB_VERSION_BASE,
 } from '../../../config';
 import {
   INITIAL_PERFORMANCE_STATE_MAX,
@@ -26,7 +25,6 @@ import {
   INITIAL_PERFORMANCE_STATE_MIN,
 } from '../../../global/initialState';
 import { selectTabState, selectTheme } from '../../../global/selectors';
-import { getPromptInstall } from '../../../util/installPrompt';
 import { switchPermanentWebVersion } from '../../../util/permanentWebVersion';
 import { IS_ELECTRON, IS_MAC_OS } from '../../../util/windowEnvironment';
 
@@ -43,6 +41,12 @@ import MenuSeparator from '../../ui/MenuSeparator';
 import Toggle from '../../ui/Toggle';
 
 /* import Switcher from '../../ui/Switcher'; */ // for hiding dark mode switcher
+
+function buildWorkspacePlaceholderText(workspace: Workspace) {
+  return workspace.id !== DEFAULT_WORKSPACE.id && !workspace.logoUrl && workspace.name
+    ? workspace.name[0].toUpperCase()
+    : undefined;
+}
 
 type OwnProps = {
   onSelectSettings: NoneToVoidFunction;
@@ -137,7 +141,7 @@ const LeftSideMenuItems = ({
       return newHistory;
     });
     showNotification({ message: 'Workspace is changing...' });
-    track?.('Switch workspace', { source: 'Left Side Menu' });
+    track(JUNE_TRACK_EVENTS.SWITCH_WORKSPACE, { source: 'Left Side Menu' });
   }, [track, setCurrentWorkspaceId]); // Убедитесь в правильности зависимостей
 
   const prevWorkspaceShortcut = IS_ELECTRON ? 'Ctrl + Tab' : 'Ctrl + `';
@@ -259,8 +263,7 @@ const LeftSideMenuItems = ({
           userProfile={workspace.id === DEFAULT_WORKSPACE.id}
           isSelected={currentWorkspace.id === workspace.id} // Updated
           customImageUrl={workspace.logoUrl}
-          customPlaceholderText={workspace.id
-            !== DEFAULT_WORKSPACE.id && !workspace.logoUrl ? workspace.name[0].toUpperCase() : undefined}
+          customPlaceholderText={buildWorkspacePlaceholderText(workspace)}
         >
           {workspace.name}
         </MenuItem>

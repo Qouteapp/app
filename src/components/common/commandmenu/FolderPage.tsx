@@ -1,20 +1,21 @@
 /* eslint-disable no-null/no-null */
 import React from 'react';
 import { Command } from 'cmdk';
-import { useCallback, useMemo } from '../../lib/teact/teact';
-import { getActions, getGlobal } from '../../global';
+import { useCallback, useMemo } from '../../../lib/teact/teact';
+import { getActions, getGlobal } from '../../../global';
 
-import type { ApiChat, ApiUser } from '../../api/types';
+import type { ApiChat, ApiUser } from '../../../api/types';
 
+import { JUNE_TRACK_EVENTS } from '../../../config';
 import {
   getChatLink,
   getChatTitle, getChatTypeString,
   getMainUsername, getUserFullName, isDeletedUser,
-} from '../../global/helpers';
-import renderText from './helpers/renderText';
+} from '../../../global/helpers';
+import renderText from '../helpers/renderText';
 
-import { useJune } from '../../hooks/useJune';
-import useLang from '../../hooks/useLang';
+import { useJune } from '../../../hooks/useJune';
+import useLang from '../../../hooks/useLang';
 
 interface FolderPageProps {
   folderId: number;
@@ -39,7 +40,7 @@ const FolderPage: React.FC<FolderPageProps> = ({
   const handleClick = useCallback((id: string) => {
     openChat({ id, shouldReplaceHistory: true });
     close();
-    track?.('Use folder search in Сommand Menu');
+    track(JUNE_TRACK_EVENTS.USE_FOLDER_SEARCH_IN_COMMAND_MENU);
   }, [close, track]);
 
   const handeSelect = useCallback((id: string) => () => handleClick(id), [handleClick]);

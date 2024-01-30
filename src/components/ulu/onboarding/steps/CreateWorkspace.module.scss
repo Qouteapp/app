@@ -1,0 +1,30 @@
+.createWorkspace {
+	color: rgba(210, 93, 101, 0.80);
+	// font-family: Inter Tight;
+	font-size: 1rem;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 1.5rem; /* 150% */
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	cursor: pointer;
+}
+
+$folderHeight: 2.5rem;
+
+.folder {
+	max-height: $folderHeight;
+}
+
+.folders {
+	max-height: calc(#{$folderHeight} * 4 + #{$folderHeight} * 0.5);
+}
+
+.layout {
+	gap: 3rem;
+}
+
+.createWorkspaceActionButton {
+	display: none;
+}

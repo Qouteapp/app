@@ -1,0 +1,31 @@
+$color: var(--color-scrollbar);
+
+.outer {
+	border-radius: 1.25rem;
+	height: 5rem;
+	width: 5rem;
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	background-color: $color;
+}
+
+.inner {
+	border-radius: 1rem;
+	height: 4rem;
+	width: 4rem;
+	background-color: $color;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.text {
+	color: var(--color-text);
+	text-align: center;
+	// font-family: Inter Tight;
+	font-size: 1.25rem;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 1.75rem; /* 140% */
+}

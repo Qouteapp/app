@@ -5,42 +5,42 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 // eslint-disable-next-line react/no-deprecated
 import { Command } from 'cmdk';
-import type { FC } from '../../lib/teact/teact';
+import type { FC } from '../../../lib/teact/teact';
 import {
   memo, useCallback, useEffect, useRef,
   useState,
-} from '../../lib/teact/teact';
-import { getGlobal } from '../../lib/teact/teactn';
-import { getActions, withGlobal } from '../../global';
+} from '../../../lib/teact/teact';
+import { getGlobal } from '../../../lib/teact/teactn';
+import { getActions, withGlobal } from '../../../global';
 
-import type { ApiChat, ApiChatFolder, ApiUser } from '../../api/types';
-import type { GlobalState } from '../../global/types';
+import type { ApiChat, ApiChatFolder, ApiUser } from '../../../api/types';
+import type { GlobalState } from '../../../global/types';
 
-import { cmdKey, DEFAULT_WORKSPACE } from '../../config';
+import { cmdKey, DEFAULT_WORKSPACE, JUNE_TRACK_EVENTS } from '../../../config';
 import {
   getChatTitle, getUserFullName,
-} from '../../global/helpers';
-import { selectCurrentChat, selectTabState, selectUser } from '../../global/selectors';
-import { selectIsWorkspaceSettingsOpen } from '../../global/selectors/ulu/workspaces';
-import captureKeyboardListeners from '../../util/captureKeyboardListeners';
-import { convertLayout } from '../../util/convertLayout';
-import { transliterate } from '../../util/transliterate';
+} from '../../../global/helpers';
+import { selectCurrentChat, selectTabState, selectUser } from '../../../global/selectors';
+import { selectIsWorkspaceSettingsOpen } from '../../../global/selectors/ulu/workspaces';
+import captureKeyboardListeners from '../../../util/captureKeyboardListeners';
+import { convertLayout } from '../../../util/convertLayout';
+import { transliterate } from '../../../util/transliterate';
 
-import useArchiver from '../../hooks/useArchiver';
-import useCommands from '../../hooks/useCommands';
-import useDone from '../../hooks/useDone';
-import { useFocusMode } from '../../hooks/useFocusMode';
-import { useJune } from '../../hooks/useJune';
-import useLang from '../../hooks/useLang';
-import { useStorage } from '../../hooks/useStorage';
-import { useWorkspaces } from '../../hooks/useWorkspaces';
+import useArchiver from '../../../hooks/useArchiver';
+import useCommands from '../../../hooks/useCommands';
+import useDone from '../../../hooks/useDone';
+import { useFocusMode } from '../../../hooks/useFocusMode';
+import { useJune } from '../../../hooks/useJune';
+import useLang from '../../../hooks/useLang';
+import { useStorage } from '../../../hooks/useStorage';
+import { useWorkspaces } from '../../../hooks/useWorkspaces';
 
-import HomePage from '../common/commandmenu/HomePage';
-import ChangeThemePage from '../common/commandmenu/HomePage/ChangeThemePage';
-import FocusModePage from '../common/commandmenu/HomePage/FocusModePage';
-import FolderPage from '../common/FolderPage';
-import CommanMenuChatSearch from '../left/search/CommanMenuChatSearch';
-import AutomationSettings from './AutomationSettings';
+import AutomationSettings from '../../main/UluAutomationSettingsModal/AutomationSettings';
+import ChangeThemePage from './ChangeThemePage';
+import CommandMenuChatSearch from './CommandMenuChatSearch';
+import FocusModePage from './FocusModePage';
+import FolderPage from './FolderPage';
+import HomePage from './HomePage/HomePage';
 
 import './CommandMenu.scss';
 
@@ -155,7 +155,7 @@ const CommandMenu: FC<StateProps> = ({
 
   const handleSelectWorkspace = (workspaceId: string) => {
     setCurrentWorkspaceId(workspaceId);
-    track?.('Switch workspace', { source: 'Сommand Menu' });
+    track(JUNE_TRACK_EVENTS.SWITCH_WORKSPACE, { source: 'Сommand Menu' });
     close();
   };
 
@@ -242,7 +242,7 @@ const CommandMenu: FC<StateProps> = ({
     localStorage.setItem('openai_api_key', inputValue);
     showNotification({ message: 'The OpenAI API key has been saved.' });
     setOpen(false);
-    track?.('Add openAI key');
+    track(JUNE_TRACK_EVENTS.ADD_OPENAI_KEY);
   }, [inputValue, track]);
 
   // Настройки переходов между страницами
@@ -284,7 +284,7 @@ const CommandMenu: FC<StateProps> = ({
     disableFocusMode();
     showNotification({ message: 'Focus mode is turned off' });
     if (typeof track === 'function') {
-      track('Disable Focus Mode');
+      track(JUNE_TRACK_EVENTS.DISABLE_FOCUS_MODE);
     }
     close();
   }, [disableFocusMode, close, track]);
@@ -360,14 +360,14 @@ const CommandMenu: FC<StateProps> = ({
     showNotification({ message: 'All read chats are marked as done!' });
     doneAllReadChats();
     close();
-    track?.('Use "Mark all read chats as done" command');
+    track(JUNE_TRACK_EVENTS.USE_MARK_ALL_READ_CHATS_DONE_COMMAND);
   }, [close, doneAllReadChats, track]);
 
   const commandArchiveAll = useCallback(() => {
     showNotification({ message: 'All older than 24 hours will be archived!' });
     archiveChats();
     close();
-    track?.('Use "Archive all read chats" command');
+    track(JUNE_TRACK_EVENTS.USE_ARCHIVE_ALL_READ_CHATS_COMMAND);
   }, [close, archiveChats, track]);
 
   // What's new group
@@ -381,7 +381,11 @@ const CommandMenu: FC<StateProps> = ({
     setIsFoldersTreeEnabled(updIsFoldersTreeEnabled);
     close();
     window.location.reload();
-    track?.(updIsFoldersTreeEnabled ? 'Turn on new Folder view' : 'Turn off new Folder view');
+    track(
+      updIsFoldersTreeEnabled
+        ? JUNE_TRACK_EVENTS.SWITCH_TO_FOLDERS_TREE_UI
+        : JUNE_TRACK_EVENTS.SWITCH_TO_TELEGRAM_FOLDERS_UI,
+    );
   }, [close, isFoldersTreeEnabled, setIsFoldersTreeEnabled, track]);
 
   const handleChangelog = useCallback(() => {
@@ -400,7 +404,7 @@ const CommandMenu: FC<StateProps> = ({
       doneChat({ id: currentChatId });
       if (!isCurrentChatDone) {
         close();
-        track?.('Mark as Done', { source: 'Command Menu' });
+        track(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Command Menu' });
       }
     }
   }, [currentChatId, doneChat, close, track, isCurrentChatDone]);
@@ -412,7 +416,12 @@ const CommandMenu: FC<StateProps> = ({
       const action = isChatUnread ? 'MarkedAsRead' : 'MarkedAsUnread';
       showNotification({ message: lang(action) });
       close();
-      track?.(isChatUnread ? 'Mark as Read' : 'Mark as Unread', { source: 'Сommand Menu' });
+      track(
+        isChatUnread
+          ? JUNE_TRACK_EVENTS.MARK_CHAT_READ
+          : JUNE_TRACK_EVENTS.MARK_CHAT_UNREAD,
+        { source: 'Сommand Menu' },
+      );
     }
   }, [currentChatId, currentChat, isChatUnread, lang, close, track]);
 
@@ -498,7 +507,7 @@ const CommandMenu: FC<StateProps> = ({
                   selectedRange={selectedRange}
                   resetSelectedRange={resetSelectedRange}
                 />
-                <CommanMenuChatSearch
+                <CommandMenuChatSearch
                   close={close}
                   searchQuery={inputValue}
                   folders={folders}

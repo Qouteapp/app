@@ -10,6 +10,7 @@ import { getActions } from '../../../../global';
 
 import type { ApiChat, ApiUser } from '../../../../api/types';
 
+import { JUNE_TRACK_EVENTS } from '../../../../config';
 import {
   getChatTitle, getChatTypeString, getMainUsername, getUserFullName, isDeletedUser,
 } from '../../../../global/helpers';
@@ -19,7 +20,7 @@ import renderText from '../../helpers/renderText';
 import { useJune } from '../../../../hooks/useJune';
 import useLang from '../../../../hooks/useLang';
 
-import '../../../main/CommandMenu.scss';
+import '../CommandMenu.scss';
 
 const SEARCH_CLOSE_TIMEOUT_MS = 250;
 
@@ -104,7 +105,7 @@ const SuggestedContacts: FC<SuggestedContactsProps> = ({
     openChat({ id, shouldReplaceHistory: true });
     setTimeout(() => addRecentlyFoundChatId({ id }), SEARCH_CLOSE_TIMEOUT_MS);
     close();
-    track?.('Use suggestions in Сommand Menu', { chatId: id });
+    track(JUNE_TRACK_EVENTS.USE_SUGGESTIONS_IN_COMMAND_MENU, { chatId: id });
   }, [close, track]);
 
   return (

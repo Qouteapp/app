@@ -1,0 +1,23 @@
+.wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1.5rem;
+}
+
+.item {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background-color: var(--color-scrollbar);
+
+	&.active {
+		background-color: var(--color-primary);
+	}
+}

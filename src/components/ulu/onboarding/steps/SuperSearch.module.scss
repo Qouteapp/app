@@ -1,0 +1,24 @@
+.btns {
+	margin-top: 1.5rem;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.dot {
+	height: 0.25rem;
+	width: 0.25rem;
+	background-color: var(--color-text);
+	border-radius: 50%;
+}
+
+.push {
+	color: var(--color-placeholders);
+	text-align: center;
+	// font-family: Inter Tight;
+	font-size: 1rem;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 1.5rem; /* 150% */
+}

@@ -7,6 +7,7 @@ import { getActions, getGlobal } from '../../../global';
 
 import type { ApiChat, ApiChatFolder, ApiUser } from '../../../api/types';
 
+import { JUNE_TRACK_EVENTS } from '../../../config';
 import {
   getChatLink, getChatTitle,
   getChatTypeString,
@@ -16,16 +17,16 @@ import {
 import { convertLayout } from '../../../util/convertLayout';
 import { unique } from '../../../util/iteratees';
 import { transliterate } from '../../../util/transliterate';
-import renderText from '../../common/helpers/renderText';
+import renderText from '../helpers/renderText';
 
 import { useJune } from '../../../hooks/useJune';
 import useLang from '../../../hooks/useLang';
 
-import CommandMenuListItem from '../../common/commandmenu/CommandMenuListItem';
+import CommandMenuListItem from './CommandMenuListItem';
 
-import '../../main/CommandMenu.scss';
+import './CommandMenu.scss';
 
-const CommanMenuChatSearch: React.FC<{
+const CommandMenuChatSearch: React.FC<{
   close: () => void;
   searchQuery: string;
   folders: ApiChatFolder[];
@@ -105,7 +106,7 @@ const CommanMenuChatSearch: React.FC<{
     setTimeout(() => addRecentlyFoundChatId({ id }), SEARCH_CLOSE_TIMEOUT_MS);
     close();
     if (typeof track === 'function') {
-      track('Use global search in Сommand Menu');
+      track(JUNE_TRACK_EVENTS.USE_GLOBAL_SEARCH_IN_COMMAND_MENU);
     }
   }, [close, track]);
   const handeSelect = useCallback((id: string) => () => handleClick(id), [handleClick]);
@@ -181,4 +182,4 @@ const CommanMenuChatSearch: React.FC<{
     </>
   );
 };
-export default CommanMenuChatSearch;
+export default CommandMenuChatSearch;
