@@ -4,7 +4,7 @@ import type {
 } from '../../../api/types';
 import type { RequiredGlobalActions } from '../../index';
 import type {
-  ActionReturnType, GlobalState, TabArgs,
+  ActionReturnType, GlobalState, RequiredGlobalState, TabArgs,
 } from '../../types';
 import { MAIN_THREAD_ID } from '../../../api/types';
 import {
@@ -905,7 +905,7 @@ addActionHandler('toggleChatArchived', (global, actions, payload): ActionReturnT
   }
 });
 
-addActionHandler('loadChatFolders', async (global): Promise<void> => {
+export const loadChatFoldersHandler = async (global: RequiredGlobalState): Promise<void> => {
   const chatFolders = await callApi('fetchChatFolders');
 
   if (chatFolders) {
@@ -920,7 +920,8 @@ addActionHandler('loadChatFolders', async (global): Promise<void> => {
     };
     setGlobal(global);
   }
-});
+};
+addActionHandler('loadChatFolders', loadChatFoldersHandler);
 
 addActionHandler('loadRecommendedChatFolders', async (global): Promise<void> => {
   const recommendedChatFolders = await callApi('fetchRecommendedChatFolders');
