@@ -1,5 +1,5 @@
 // import { useMemo } from '../lib/teact/teact';
-import TeactDOM from '../lib/teact/teact-dom';
+// import TeactDOM from '../lib/teact/teact-dom';
 import { getActions, getGlobal } from '../global';
 
 import { MAIN_THREAD_ID } from '../api/types/messages';
@@ -21,7 +21,10 @@ export default function useSnooze() {
   const { sendMessage, showNotification } = getActions();
 
   // Используем useSchedule здесь, а не внутри других функций
-  const [requestCalendar, calendar] = useSchedule(true, true);
+  const [
+    requestCalendar,
+    // calendar
+  ] = useSchedule(true, true);
 
   // Обработчик, который будет вызван после выбора времени в календаре
   const handleScheduledMessage = useLastCallback((chatId: string, scheduledAt: number, threadId?: number) => {
@@ -71,9 +74,8 @@ export default function useSnooze() {
     requestCalendar(scheduledMessageHandler);
   });
 
-  // const root = useMemo(() => document.createElement('div'), []);
-  const root = document.createElement('div');
-  TeactDOM.render(calendar, root);
+  // const root = document.getElementById('snooze-root');
+  // TeactDOM.render(calendar, root!);
 
   return { snooze };
 }
