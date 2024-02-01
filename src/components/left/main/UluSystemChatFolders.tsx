@@ -19,6 +19,8 @@ import { useStorage } from '../../../hooks/useStorage';
 import UluChatFolder from './UluChatFolder';
 import UluChatFoldersWrapper from './UluChatFoldersWrapper';
 
+import styles from './UluSystemChatFolders.module.scss';
+
 type OwnProps = {
   ref: RefObject<HTMLDivElement>;
   content: LeftColumnContent;
@@ -79,7 +81,7 @@ const UluSystemFolders: FC<OwnProps & StateProps> = ({
   window.electron?.updateTrayTitle(inboxUnreadCount);
 
   return (
-    <UluChatFoldersWrapper ref={ref}>
+    <UluChatFoldersWrapper ref={ref} className={styles.wrapper}>
       <UluChatFolder
         shouldStressUnreadMessages={false}
         type="inbox"

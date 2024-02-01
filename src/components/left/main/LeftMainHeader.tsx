@@ -1,4 +1,3 @@
-import type { RefObject } from 'react';
 import type { FC } from '../../../lib/teact/teact';
 import React, {
   memo, /*  useCallback, */ useEffect, useMemo, useRef, /* useState, */
@@ -54,7 +53,6 @@ import UluHeaderProfile from './UluHeaderProfile';
 import styles from './LeftMainHeader.module.scss';
 
 type OwnProps = {
-  leftMainHeaderRef: RefObject<HTMLDivElement>;
   shouldHideSearch?: boolean;
   content: LeftColumnContent;
   contactsFilter: string;
@@ -86,7 +84,6 @@ const CLEAR_DATE_SEARCH_PARAM = { date: undefined };
 const CLEAR_CHAT_SEARCH_PARAM = { id: undefined };
 
 const LeftMainHeader: FC<OwnProps & StateProps> = ({
-  leftMainHeaderRef,
   shouldHideSearch,
   content,
   contactsFilter,
@@ -287,7 +284,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
   }, [globalSearchChatId, selectedSearchDate]);
 
   return (
-    <div ref={leftMainHeaderRef} className="LeftMainHeader">
+    <div className="LeftMainHeader">
       <div id="LeftMainHeader" className="left-header" ref={headerRef}>
         {lang.isRtl && <div className="DropdownMenuFiller" />}
         { isSearchFocused ? (
