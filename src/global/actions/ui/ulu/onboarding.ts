@@ -12,6 +12,7 @@ import { selectCanAnimateInterface, selectChat } from '../../../selectors';
 import {
   selectIsAlreadyOnboarded, selectOnboardingNextStep, selectOnboardingPreviousStep,
 } from '../../../selectors/ulu/onboarding';
+import { loadChatFoldersHandler } from '../../api/chats';
 
 type UpdateOnboardingStatePayload = Partial<GlobalState['ulu']['onboardingState']>;
 
@@ -86,4 +87,10 @@ addActionHandler('toggleChatArchived', (global, actions, payload): ActionReturnT
 addActionHandler('completeOnboarding', (global): ActionReturnType => {
   setOnboardingStep(UluOnboardingStep.alreadyOnboarded);
   return updateOnboardingState(global, { onboardingStep: UluOnboardingStep.alreadyOnboarded });
+});
+
+addActionHandler('loadChatFolders', async (global): Promise<void> => {
+  if (selectIsAlreadyOnboarded(global)) return;
+
+  await loadChatFoldersHandler(global);
 });
