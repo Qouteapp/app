@@ -1,0 +1,4 @@
+.chatFoldersPortal {
+  --common-padding: 1rem;
+  max-height: calc(100% - var(--header-height) - var(--ulu-system-folders-height) + 3*var(--common-padding));
+}

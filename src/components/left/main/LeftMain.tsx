@@ -195,8 +195,6 @@ const LeftMain: FC<OwnProps> = ({
 
   const lang = useLang();
 
-  const leftMainHeaderRef = useRef<HTMLDivElement>(null);
-
   return (
     <div
       id="LeftColumn-main"
@@ -204,7 +202,6 @@ const LeftMain: FC<OwnProps> = ({
       onMouseLeave={!IS_TOUCH_ENV ? handleMouseLeave : undefined}
     >
       <LeftMainHeader
-        leftMainHeaderRef={leftMainHeaderRef}
         shouldHideSearch={isForumPanelVisible}
         content={content}
         contactsFilter={contactsFilter}
@@ -229,7 +226,6 @@ const LeftMain: FC<OwnProps> = ({
             case LeftColumnContent.ChatList:
               return (
                 <ChatFolders
-                  leftMainHeaderRef={leftMainHeaderRef}
                   content={content}
                   chatFoldersPortalRef={chatFoldersPortalRef}
                   chatId={chatId}

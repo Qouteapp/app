@@ -1,8 +1,8 @@
 /* eslint-disable no-null/no-null */
-import type { CSSProperties, RefObject } from 'react';
+import type { RefObject } from 'react';
 import type { FC } from '../../../lib/teact/teact';
 import React, {
-  memo, useCallback, useEffect, useMemo, useRef, useState,
+  memo, useEffect, useMemo, useRef,
 } from '../../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../../global';
 
@@ -37,8 +37,9 @@ import ChatList from './ChatList';
 import UluChatFoldersDivider from './UluChatFoldersDivider';
 import UluSystemFolders from './UluSystemChatFolders';
 
+import styles from './ChatFolders.module.scss';
+
 type OwnProps = {
-  leftMainHeaderRef: RefObject<HTMLDivElement>;
   onSettingsScreenSelect: (screen: SettingsScreens) => void;
   foldersDispatch: FolderEditDispatch;
   onLeftColumnContentChange: (content: LeftColumnContent) => void;
@@ -71,14 +72,8 @@ type StateProps = {
 
 const SAVED_MESSAGES_HOTKEY = '0';
 const FIRST_FOLDER_INDEX = 0;
-const INVISIBLE_CHAT_TREE_STYLES = 'max-height: 0' as CSSProperties;
-const RECALCULATE_TREE_HEIGHT_INTERVAL_MS = 300;
-const COMMON_PADDING = 16;
-
-let recalculateHeightInterval: NodeJS.Timeout;
 
 const ChatFolders: FC<OwnProps & StateProps> = ({
-  leftMainHeaderRef,
   foldersDispatch,
   onSettingsScreenSelect,
   onLeftColumnContentChange,
@@ -345,47 +340,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
 
   const uluSystemFoldersRef = useRef<HTMLDivElement>(null);
 
-  const recalculateFoldersTreeStyles = useCallback(() => {
-    // if no refs are initialized, we hide the tree
-    // because otherwise it would be too tall
-    if (!leftMainHeaderRef.current || !uluSystemFoldersRef.current) {
-      return INVISIBLE_CHAT_TREE_STYLES;
-    }
-
-    let heightSubtractionPx = 0;
-    heightSubtractionPx += leftMainHeaderRef.current.getBoundingClientRect().height;
-    heightSubtractionPx += uluSystemFoldersRef.current.getBoundingClientRect().height;
-    heightSubtractionPx -= 2 * COMMON_PADDING;
-
-    // if for some reason modifier is still 0 or less we also hide the tree
-    // for the same reasons as above
-    if (heightSubtractionPx <= 0) {
-      return INVISIBLE_CHAT_TREE_STYLES;
-    }
-
-    return `max-height: calc(100% - ${heightSubtractionPx}px)`;
-  }, [leftMainHeaderRef]);
-
-  const [chatFoldersTreeStyles, setChatFoldersTreeStyles] = useState(recalculateFoldersTreeStyles());
-
   const { isFoldersTreeEnabled } = useStorage();
-
-  useEffect(() => {
-    recalculateHeightInterval = setInterval(() => {
-      const newStyles = recalculateFoldersTreeStyles();
-      if (newStyles !== INVISIBLE_CHAT_TREE_STYLES) setChatFoldersTreeStyles(newStyles);
-    }, RECALCULATE_TREE_HEIGHT_INTERVAL_MS);
-
-    return () => {
-      clearInterval(recalculateHeightInterval);
-    };
-  }, [recalculateFoldersTreeStyles]);
-
-  useEffect(() => {
-    if (chatFoldersTreeStyles === INVISIBLE_CHAT_TREE_STYLES) return;
-
-    clearInterval(recalculateHeightInterval);
-  }, [chatFoldersTreeStyles]);
 
   return (
     <div
@@ -409,7 +364,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
         <div
           ref={chatFoldersPortalRef}
           id="ulu-chat-folders-portal"
-          style={chatFoldersTreeStyles}
+          className={styles.chatFoldersPortal}
         />
       ) }
       { !isFoldersTreeEnabled && (
