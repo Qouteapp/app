@@ -188,7 +188,7 @@ const CommandMenu: FC<StateProps> = ({
   // Toggle the menu when ⌘K is pressed
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'KeyK') {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && (e.code === 'KeyK' || e.code === 'KeyT')) {
         saveSelection();
         setOpen(!isOpen);
         e.preventDefault();
