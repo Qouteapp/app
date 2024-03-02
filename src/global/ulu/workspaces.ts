@@ -95,3 +95,14 @@ export function addChatToCurrentWorkspaceTemp(chatId: string) {
   const newCurrentWorkspace: Workspace = { ...currentWorkspace, chatSnapshotsTemp: newChatSnapshotsTemp };
   saveWorkspace(newCurrentWorkspace);
 }
+
+export function removeChatFromCurrentWorkspaceTemp(chatId: string) {
+  const { currentWorkspace } = getWorkspaces();
+  const { chatSnapshotsTemp = [] } = currentWorkspace;
+  const index = chatSnapshotsTemp.findIndex((chatSnapshot) => chatSnapshot.id === chatId);
+  if (index === -1) return;
+
+  const newChatSnapshotsTemp = [...chatSnapshotsTemp.slice(0, index), ...chatSnapshotsTemp.slice(index + 1)];
+  const newCurrentWorkspace: Workspace = { ...currentWorkspace, chatSnapshotsTemp: newChatSnapshotsTemp };
+  saveWorkspace(newCurrentWorkspace);
+}
