@@ -3,13 +3,15 @@ import type { ReactNode } from 'react';
 import React, { useCallback, useMemo } from 'react';
 import type { TreeItemRenderContext } from 'react-complex-tree';
 import type { FC } from '../../../../../../../lib/teact/teact';
-import { getActions } from '../../../../../../../global';
+import { getActions, getGlobal } from '../../../../../../../global';
 
 import type { ApiTopic } from '../../../../../../../api/types';
 import type { TreeItemChat } from '../../../types';
 
 import { ULU_APP } from '../../../../../../../config';
 import { getOrderedTopics } from '../../../../../../../global/helpers';
+import { selectCurrentChat } from '../../../../../../../global/selectors';
+import { removeChatFromCurrentWorkspaceTemp } from '../../../../../../../global/ulu/workspaces';
 import buildClassName from '../../../../../../../util/buildClassName';
 import { MouseButton } from '../../../../../../../util/windowEnvironment';
 import renderText from '../../../../../../common/helpers/renderText.react';
@@ -31,7 +33,6 @@ import MenuSeparator from '../../../../../../ui/MenuSeparator.react';
 import ChatFolderModal from '../../../../../ChatFolderModal.react';
 import MuteChatModal from '../../../../../MuteChatModal.react';
 import ChatAvatar from './ChatAvatar';
-// import Cross from './Cross';
 import SvgPin from './SvgPin';
 
 import stylesUluChatFolder from '../../../../UluChatFolder/UluChatFolder.module.scss';
@@ -170,6 +171,19 @@ const Chat: FC<{
     handleClickChat();
   });
 
+  const global = getGlobal();
+  const currentChat = selectCurrentChat(global);
+  const handleXClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (currentChat?.id === item.chat!.id) {
+      openChat({ id: undefined }, { forceSyncOnIOs: true });
+    }
+
+    removeChatFromCurrentWorkspaceTemp(item.chat!.id);
+  }, [currentChat?.id, item.chat]);
+
   const getTriggerElement = useLastCallback(() => ref!.current);
   const getRootElement = useLastCallback(() => ref!.current!.closest('.custom-scroll'));
   const getMenuElement = useLastCallback(() => {
@@ -195,9 +209,9 @@ const Chat: FC<{
   const shouldRenderControl = shouldRenderPin || shouldRenderMute;
   const classNameControl = buildClassName(styles['mini-items'], styles.control);
 
-  // const shouldRenderCross = item.isTempChat || true; // TODO
   const shouldRenderUnreadCounter = !!messagesUnreadCount;
-  const shouldRenderRightItems = shouldRenderUnreadCounter;
+  const shouldRenderX = item.isTempChat;
+  const shouldRenderRightItems = shouldRenderUnreadCounter || shouldRenderX;
   const classNameRight = buildClassName(styles['mini-items'], styles.right);
   const { isFocusModeEnabled } = useFocusMode();
 
@@ -239,7 +253,17 @@ const Chat: FC<{
                 { messagesUnreadCount }
               </div>
             ) }
-            {/* { shouldRenderCross && <Cross className={styles.cross} /> } */}
+            { shouldRenderX && (
+              <button
+                className={styles.close}
+                type="button"
+                aria-label="close"
+                onClick={handleXClick}
+                onMouseDown={handleXClick}
+              >
+                <i className="icon icon-close" />
+              </button>
+            ) }
           </div>
         ) }
         {contextActions && contextMenuPosition !== undefined && (
