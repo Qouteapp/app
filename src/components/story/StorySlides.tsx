@@ -6,10 +6,14 @@ import { getActions, getGlobal, withGlobal } from '../../global';
 import type { ApiPeerStories, ApiTypeStory } from '../../api/types';
 import type { RealTouchEvent } from '../../util/captureEvents';
 
-import { ANIMATION_END_DELAY, EDITABLE_STORY_INPUT_ID } from '../../config';
+import { EDITABLE_STORY_INPUT_ID } from '../../config';
 import { requestMutation } from '../../lib/fasterdom/fasterdom';
 import { getStoryKey } from '../../global/helpers';
-import { selectIsStoryViewerOpen, selectPeer, selectTabState } from '../../global/selectors';
+import {
+  selectIsStoryViewerOpen,
+  selectPeer,
+  selectTabState,
+} from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import buildStyle from '../../util/buildStyle';
 import {
@@ -21,9 +25,7 @@ import {
 import focusEditableElement from '../../util/focusEditableElement';
 import { clamp } from '../../util/math';
 import { disableScrolling, enableScrolling } from '../../util/scrollLock';
-import {
-  IS_FIREFOX, IS_IOS, IS_SAFARI,
-} from '../../util/windowEnvironment';
+import { IS_IOS } from '../../util/windowEnvironment';
 import { calculateOffsetX } from './helpers/dimensions';
 
 import useAppLayout from '../../hooks/useAppLayout';
@@ -32,7 +34,7 @@ import useHistoryBack from '../../hooks/useHistoryBack';
 import useLastCallback from '../../hooks/useLastCallback';
 import usePrevious from '../../hooks/usePrevious';
 import useSignal from '../../hooks/useSignal';
-import useWindowSize from '../../hooks/useWindowSize';
+import useWindowSize from '../../hooks/window/useWindowSize';
 import useSlideSizes from './hooks/useSlideSizes';
 
 import Story from './Story';
@@ -60,7 +62,6 @@ interface StateProps {
   isArchive?: boolean;
 }
 
-const ANIMATION_DURATION_MS = 350 + (IS_SAFARI || IS_FIREFOX ? ANIMATION_END_DELAY : 20);
 const ACTIVE_SLIDE_VERTICAL_CORRECTION_REM = 1.75;
 const SWIPE_Y_THRESHOLD = 50;
 const SCROLL_RELEASE_DELAY = 1500;
@@ -101,7 +102,6 @@ function StorySlides({
   const swipeDirectionRef = useRef<SwipeDirection | undefined>(undefined);
   const isReleasedRef = useRef(false);
   const { isMobile } = useAppLayout();
-  const animationDuration = isMobile ? 0 : ANIMATION_DURATION_MS;
 
   const rendersRef = useRef<Record<string, { current: HTMLDivElement | null }>>({});
   const [getIsAnimating, setIsAnimating] = useSignal(false);
@@ -155,46 +155,29 @@ function StorySlides({
   }, [currentPeerId, renderingPeerIds]);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setRenderingPeerId(currentPeerId);
-    }, animationDuration);
+    if (!isMobile) return;
 
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [animationDuration, currentPeerId]);
+    // If animation disabled, set rendering peer id to current peer
+    setRenderingPeerId(currentPeerId);
+  }, [currentPeerId, isMobile]);
 
+  // Handling the flipping of stories from a current user
   useEffect(() => {
-    let timeOutId: number | undefined;
-
-    if (renderingPeerId !== currentPeerId) {
-      timeOutId = window.setTimeout(() => {
-        setRenderingStoryId(currentStoryId);
-      }, animationDuration);
-    } else if (currentStoryId !== renderingStoryId) {
+    if (renderingPeerId === currentPeerId && currentStoryId !== renderingStoryId) {
       setRenderingStoryId(currentStoryId);
     }
-
-    return () => {
-      window.clearTimeout(timeOutId);
-    };
-  }, [renderingPeerId, currentStoryId, currentPeerId, renderingStoryId, animationDuration]);
+  }, [currentPeerId, currentStoryId, renderingPeerId, renderingStoryId]);
 
   useEffect(() => {
-    let timeOutId: number | undefined;
-
+    if (isMobile) return undefined;
     if (prevPeerId && prevPeerId !== currentPeerId) {
       setIsAnimating(true);
-      timeOutId = window.setTimeout(() => {
-        setIsAnimating(false);
-      }, animationDuration);
     }
 
     return () => {
       setIsAnimating(false);
-      window.clearTimeout(timeOutId);
     };
-  }, [prevPeerId, currentPeerId, setIsAnimating, animationDuration]);
+  }, [prevPeerId, currentPeerId, setIsAnimating, isMobile]);
 
   useEffect(() => {
     return () => {
@@ -312,7 +295,7 @@ function StorySlides({
           offsetY = clamp(dragOffsetY, -limit, limit);
           if (offsetY > 0) {
             requestMutation(() => {
-              current.style.setProperty('--slide-translate-y', `${-offsetY}px`);
+              current.style.setProperty('--slide-translate-y', `${offsetY * (isMobile ? 1 : -1)}px`);
             });
           }
           if (event.type === 'wheel' && Math.abs(offsetY) > SWIPE_Y_THRESHOLD * 2) {
@@ -323,9 +306,10 @@ function StorySlides({
       },
       onRelease,
     });
-  }, [isOpen, renderingPeerId, onClose, windowWidth, windowHeight]);
+  }, [isOpen, onClose, windowWidth, windowHeight, isMobile, renderingPeerId]);
 
   useLayoutEffect(() => {
+    if (isMobile) return;
     const transformX = calculateTransformX();
 
     Object.entries(rendersRef.current).forEach(([peerId, { current }]) => {
@@ -336,12 +320,12 @@ function StorySlides({
         current.style.setProperty('--slide-translate-x', '0px');
         current.style.setProperty('--slide-translate-y', '0px');
         current.style.setProperty('--slide-translate-scale', '1');
+        current.style.setProperty('--slide-content-scale', String(slideSizes.toActiveScale));
 
         return;
       }
 
       const getScale = () => {
-        if (isMobile) return '1';
         if (currentPeerId === peerId) {
           return String(slideSizes.toActiveScale);
         }
@@ -353,11 +337,11 @@ function StorySlides({
 
       let offsetY = 0;
       if (peerId === renderingPeerId) {
-        if (!isMobile) offsetY = -ACTIVE_SLIDE_VERTICAL_CORRECTION_REM * slideSizes.fromActiveScale;
+        offsetY = -ACTIVE_SLIDE_VERTICAL_CORRECTION_REM * slideSizes.fromActiveScale;
         current.classList.add(styles.slideAnimationFromActive);
       }
       if (peerId === currentPeerId) {
-        if (!isMobile) offsetY = ACTIVE_SLIDE_VERTICAL_CORRECTION_REM;
+        offsetY = ACTIVE_SLIDE_VERTICAL_CORRECTION_REM;
         current.classList.add(styles.slideAnimationToActive);
       }
 
@@ -366,7 +350,48 @@ function StorySlides({
       current.style.setProperty('--slide-translate-y', `${offsetY}rem`);
       current.style.setProperty('--slide-translate-scale', getScale());
     });
-  }, [currentPeerId, getIsAnimating, renderingPeerId, isMobile, slideSizes]);
+  }, [currentPeerId, getIsAnimating, renderingPeerId, slideSizes, isMobile]);
+
+  const handleTransitionEnd = useLastCallback((event: React.TransitionEvent<HTMLDivElement>) => {
+    // It is `target` that is needed here, not `currentTarget`
+    const target = event.target as HTMLDivElement | null;
+
+    if (!target || !target.classList.contains(styles.activeSlide)) return;
+
+    if (renderingPeerId !== currentPeerId) {
+      setRenderingPeerId(currentPeerId);
+      setRenderingStoryId(currentStoryId);
+    } else if (currentStoryId !== renderingStoryId) {
+      setRenderingStoryId(currentStoryId);
+    }
+    setIsAnimating(false);
+  });
+
+  if (isMobile) {
+    return (
+      <div className={styles.wrapper} ref={containerRef}>
+        <div
+          className={styles.mobileSlide}
+          ref={(ref) => setRef(ref, renderingPeerId!)}
+        >
+          <Story
+            peerId={renderingPeerId!}
+            storyId={renderingStoryId!}
+            onDelete={onDelete}
+            dimensions={slideSizes.activeSlide}
+            isPrivateStories={renderingIsPrivate}
+            isArchivedStories={renderingIsArchive}
+            isReportModalOpen={isReportModalOpen}
+            isDeleteModalOpen={isDeleteModalOpen}
+            isSingleStory={isSingleStory}
+            getIsAnimating={getIsAnimating}
+            onClose={onClose}
+            onReport={onReport}
+          />
+        </div>
+      </div>
+    );
+  }
 
   function renderStoryPreview(peerId: string, index: number, position: number) {
     const style = buildStyle(
@@ -395,7 +420,7 @@ function StorySlides({
   }
 
   function renderStory(peerId: string) {
-    const style = buildStyle(
+    const style = isMobile ? undefined : buildStyle(
       `width: ${slideSizes.activeSlide.width}px`,
       `--slide-media-height: ${slideSizes.activeSlide.height}px`,
     );
@@ -430,6 +455,7 @@ function StorySlides({
       className={styles.wrapper}
       ref={containerRef}
       style={`--story-viewer-scale: ${slideSizes.scale}`}
+      onTransitionEnd={handleTransitionEnd}
     >
       <div className={styles.fullSize} onClick={onClose} />
       {renderingPeerIds.length > 1 && (
@@ -449,15 +475,14 @@ function StorySlides({
 export default memo(withGlobal<OwnProps>((global): StateProps => {
   const {
     storyViewer: {
-      peerId: currentPeerId, storyId: currentStoryId, isSinglePeer, isSingleStory, isPrivate, isArchive,
+      peerId: currentPeerId, storyId: currentStoryId, isSinglePeer, isSingleStory, isPrivate, isArchive, storyList,
     },
   } = selectTabState(global);
-  const { byPeerId, orderedPeerIds: { archived, active } } = global.stories;
-  const peer = currentPeerId ? selectPeer(global, currentPeerId) : undefined;
+  const { byPeerId, orderedPeerIds: { active } } = global.stories;
 
   return {
     byPeerId,
-    peerIds: peer?.areStoriesHidden ? archived : active,
+    peerIds: storyList?.peerIds ?? active,
     currentPeerId,
     currentStoryId,
     isSinglePeer,

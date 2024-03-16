@@ -7,7 +7,7 @@ import { getActions, withGlobal } from '../../global';
 import type {
   ApiMessage, ApiPeer, ApiPhoto, ApiUser,
 } from '../../api/types';
-import { MediaViewerOrigin } from '../../types';
+import { MediaViewerOrigin, type ThreadId } from '../../types';
 
 import { ANIMATION_END_DELAY } from '../../config';
 import { getChatMediaMessageIds, isChatAdmin, isUserId } from '../../global/helpers';
@@ -57,7 +57,7 @@ import './MediaViewer.scss';
 
 type StateProps = {
   chatId?: string;
-  threadId?: number;
+  threadId?: ThreadId;
   mediaId?: number;
   senderId?: string;
   isChatWithSelf?: boolean;
@@ -186,18 +186,10 @@ const MediaViewer: FC<StateProps> = ({
   const forceUpdate = useForceUpdate();
   useEffect(() => {
     const mql = window.matchMedia(MEDIA_VIEWER_MEDIA_QUERY);
-    if (typeof mql.addEventListener === 'function') {
-      mql.addEventListener('change', forceUpdate);
-    } else if (typeof mql.addListener === 'function') {
-      mql.addListener(forceUpdate);
-    }
+    mql.addEventListener('change', forceUpdate);
 
     return () => {
-      if (typeof mql.removeEventListener === 'function') {
-        mql.removeEventListener('change', forceUpdate);
-      } else if (typeof mql.removeListener === 'function') {
-        mql.removeListener(forceUpdate);
-      }
+      mql.removeEventListener('change', forceUpdate);
     };
   }, [forceUpdate]);
 

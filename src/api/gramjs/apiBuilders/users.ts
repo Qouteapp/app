@@ -18,6 +18,7 @@ export function buildApiUserFullInfo(mtpUserFull: GramJs.users.UserFull): ApiUse
       about, commonChatsCount, pinnedMsgId, botInfo, blocked,
       profilePhoto, voiceMessagesForbidden, premiumGifts,
       fallbackPhoto, personalPhoto, translationsDisabled, storiesPinnedAvailable,
+      contactRequirePremium,
     },
     users,
   } = mtpUserFull;
@@ -37,6 +38,7 @@ export function buildApiUserFullInfo(mtpUserFull: GramJs.users.UserFull): ApiUse
     personalPhoto: personalPhoto instanceof GramJs.Photo ? buildApiPhoto(personalPhoto) : undefined,
     ...(premiumGifts && { premiumGifts: premiumGifts.map((gift) => buildApiPremiumGiftOption(gift)) }),
     ...(botInfo && { botInfo: buildApiBotInfo(botInfo, userId) }),
+    isContactRequirePremium: contactRequirePremium,
   };
 }
 
@@ -71,6 +73,7 @@ export function buildApiUser(mtpUser: GramJs.TypeUser): ApiUser | undefined {
     type: userType,
     firstName,
     lastName,
+    canEditBot: Boolean(mtpUser.botCanEdit),
     ...(userType === 'userTypeBot' && { canBeInvitedToGroup: !mtpUser.botNochats }),
     ...(usernames && { usernames }),
     phoneNumber: mtpUser.phone || '',
@@ -107,11 +110,11 @@ export function buildApiUserStatus(mtpStatus?: GramJs.TypeUserStatus): ApiUserSt
   } else if (mtpStatus instanceof GramJs.UserStatusOffline) {
     return { type: 'userStatusOffline', wasOnline: mtpStatus.wasOnline };
   } else if (mtpStatus instanceof GramJs.UserStatusRecently) {
-    return { type: 'userStatusRecently' };
+    return { type: 'userStatusRecently', isReadDateRestrictedByMe: mtpStatus.byMe };
   } else if (mtpStatus instanceof GramJs.UserStatusLastWeek) {
-    return { type: 'userStatusLastWeek' };
+    return { type: 'userStatusLastWeek', isReadDateRestrictedByMe: mtpStatus.byMe };
   } else {
-    return { type: 'userStatusLastMonth' };
+    return { type: 'userStatusLastMonth', isReadDateRestrictedByMe: mtpStatus.byMe };
   }
 }
 

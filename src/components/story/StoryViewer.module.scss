@@ -89,6 +89,7 @@
 }
 
 .slideAnimation {
+  /* Slide switching is made using the `onTransitionEnd` event, so don't remove the animation */
   transition: transform 350ms ease-in-out !important;
 }
 
@@ -113,11 +114,32 @@
 }
 
 .slideAnimationFromActive {
+  .storyHeader,
   .composer,
   .caption,
-  .storyIndicators {
+  .captionGradient,
+  .captionBackdrop{
     transition: opacity 250ms ease-in-out;
     opacity: 0;
+  }
+  .media:not(.mediaPreview) {
+    opacity: 0 !important;
+  }
+  .mediaPreview {
+    opacity: 1;
+  }
+
+  .content {
+    opacity: 1 !important;
+    visibility: visible;
+  }
+
+  .contentInner {
+    width: 100%;
+  }
+
+  .name {
+    width: calc(100% * var(--slide-translate-scale));
   }
 }
 
@@ -147,28 +169,17 @@
       --slide-x: calc(#{$offset} * var(--story-viewer-scale));
     }
   }
+}
 
-  @media (max-width: 600px) {
-    display: none;
-    border-radius: 0;
-  }
+.mobileSlide {
+  width: 100%;
+  height: 100%;
+  transform: translateY(var(--slide-translate-y, 0px));
 }
 
 .slidePreview {
   overflow: hidden;
   transition: opacity 200ms ease-in-out;
-
-  &::before {
-    pointer-events: none;
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1;
-  }
 
   &.slideAnimationToActive::before {
     transition: opacity 350ms ease-in-out !important;
@@ -185,19 +196,6 @@
   height: calc(var(--slide-media-height) + 3.5rem);
   z-index: 1;
 
-  @media (max-width: 600px) {
-    display: block;
-    left: 0;
-    top: 0;
-    width: 100% !important;
-    height: 100%;
-    transform: translate3d(0, calc(var(--slide-translate-y, 0px) * -1), 0);
-
-    &::before {
-      display: none;
-    }
-  }
-
   &::before {
     pointer-events: none;
     content: "";
@@ -211,11 +209,9 @@
     z-index: 3;
   }
 
-  @media (min-width: 600.001px) {
-    &.slideAnimationFromActive::before {
-      transition: opacity 350ms ease-in-out !important;
-      opacity: 1;
-    }
+  .content {
+    transform: scale(var(--slide-content-scale, 1));
+    opacity: 0;
   }
 }
 
@@ -241,10 +237,7 @@
     width: calc(100% - 1rem) !important;
     height: auto !important;
     margin: 0.5rem;
-    bottom: 3.5rem;
-    @supports (bottom: calc(3.5rem + env(safe-area-inset-bottom))) {
-      bottom: calc(3.5rem + env(safe-area-inset-bottom));
-    }
+    bottom: calc(3.5rem + env(safe-area-inset-bottom));
   }
 
   :global(body.ghost-animating) & {
@@ -276,6 +269,18 @@
 }
 
 .content {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  transition: opacity 250ms ease-in-out;
+  z-index: 1;
+}
+
+.contentInner {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -286,7 +291,6 @@
   flex-direction: column;
   align-items: center;
   max-width: 90%;
-  transition: opacity 300ms;
 }
 
 .name {
@@ -371,8 +375,17 @@
   align-items: center;
 }
 
+.senderInfoTransition {
+  position: absolute;
+}
+
 .senderInfo {
-  display: inline-flex;
+  display: flex;
+  align-items: center;
+}
+
+.senderMeta {
+  display: flex;
   flex-direction: column;
   margin-left: 0.75rem;
   line-height: 1.25rem;
@@ -506,20 +519,16 @@
 
 .caption {
   position: absolute;
-  bottom: 5rem;
   left: 0;
   width: 100%;
   top: 4rem;
+  bottom: calc(4.25rem + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   border-radius: 0 0 var(--border-radius-default-small) var(--border-radius-default-small);
   overflow: hidden;
   pointer-events: none;
-
-  @supports (bottom: env(safe-area-inset-bottom)) {
-    bottom: calc(4.25rem + env(safe-area-inset-bottom));
-  }
 }
 
 .captionInner {
@@ -605,17 +614,14 @@
   left: 0;
   margin-bottom: 0;
   z-index: 3;
-  transition: transform var(--layer-transition);
+  transition: transform var(--layer-transition), opacity 0.15s ease;
 
   &:global(.Composer) {
     --base-height: 3rem;
 
     @media (max-width: 600px) {
       padding: 0 0.5rem 0.5rem;
-
-      @supports (margin-bottom: env(safe-area-inset-bottom)) {
-        margin-bottom: env(safe-area-inset-bottom);
-      }
+      margin-bottom: env(safe-area-inset-bottom);
     }
   }
 
@@ -678,11 +684,7 @@
 
 .modal :global(.modal-content) {
   padding: 0.5rem !important;
-  max-height: 35rem;
-
-  @supports (max-height: min(80vh, 35rem)) {
-    max-height: min(80vh, 35rem);
-  }
+  max-height: min(35rem, 80vh);
 }
 
 .thumbnail {
@@ -735,17 +737,17 @@
 
   &.clickable {
     cursor: var(--custom-cursor, pointer);
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
-.forwardHeaderText {
+.headerTitle {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  .forwardHeader.clickable:hover & {
-    text-decoration: underline;
-  }
 }
 
 .forwardInfo {
@@ -756,4 +758,15 @@
   max-width: 100%;
   margin-bottom: 0.5rem;
   z-index: 1;
+}
+
+.fromPeer {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: var(--custom-cursor, pointer);
+
+  &:hover {
+    text-decoration: underline;
+  }
 }

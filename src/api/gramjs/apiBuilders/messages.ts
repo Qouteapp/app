@@ -158,7 +158,8 @@ export type UniversalMessage = (
   & Pick<Partial<GramJs.Message & GramJs.MessageService>, (
     'out' | 'message' | 'entities' | 'fromId' | 'peerId' | 'fwdFrom' | 'replyTo' | 'replyMarkup' | 'post' |
     'media' | 'action' | 'views' | 'editDate' | 'editHide' | 'mediaUnread' | 'groupedId' | 'mentioned' | 'viaBotId' |
-    'replies' | 'fromScheduled' | 'postAuthor' | 'noforwards' | 'reactions' | 'forwards' | 'silent' | 'pinned'
+    'replies' | 'fromScheduled' | 'postAuthor' | 'noforwards' | 'reactions' | 'forwards' | 'silent' | 'pinned' |
+    'savedPeerId' | 'fromBoostsApplied'
   )>
 );
 
@@ -196,8 +197,11 @@ export function buildApiMessageWithChatId(
   const isForwardingAllowed = !mtpMessage.noforwards;
   const emojiOnlyCount = getEmojiOnlyCountForMessage(content, groupedId);
   const hasComments = mtpMessage.replies?.comments;
+  const senderBoosts = mtpMessage.fromBoostsApplied;
 
-  return omitUndefined({
+  const savedPeerId = mtpMessage.savedPeerId && getApiChatIdFromMtpPeer(mtpMessage.savedPeerId);
+
+  return omitUndefined<ApiMessage>({
     id: mtpMessage.id,
     chatId,
     isOutgoing,
@@ -233,7 +237,9 @@ export function buildApiMessageWithChatId(
     isProtected,
     isForwardingAllowed,
     hasComments,
-  } satisfies ApiMessage);
+    savedPeerId,
+    senderBoosts,
+  });
 }
 
 export function buildMessageDraft(draft: GramJs.TypeDraftMessage): ApiDraft | undefined {
@@ -266,13 +272,15 @@ function buildApiMessageForwardInfo(fwdFrom: GramJs.MessageFwdHeader, isChatWith
 
   return {
     date: fwdFrom.date,
+    savedDate: fwdFrom.savedDate,
     isImported: fwdFrom.imported,
     isChannelPost: Boolean(fwdFrom.channelPost),
     channelPostId: fwdFrom.channelPost,
     isLinkedChannelPost: Boolean(fwdFrom.channelPost && savedFromPeerId && !isChatWithSelf),
-    fromChatId: savedFromPeerId || fromId,
+    savedFromPeerId,
+    fromId,
+    fromChatId: fromId || savedFromPeerId,
     fromMessageId: fwdFrom.savedFromMsgId || fwdFrom.channelPost,
-    senderUserId: fromId,
     hiddenUserName: fwdFrom.fromName,
     postAuthorTitle: fwdFrom.postAuthor,
   };
@@ -282,7 +290,7 @@ function buildApiReplyInfo(replyHeader: GramJs.TypeMessageReplyHeader): ApiReply
   if (replyHeader instanceof GramJs.MessageReplyStoryHeader) {
     return {
       type: 'story',
-      userId: replyHeader.userId.toString(),
+      peerId: getApiChatIdFromMtpPeer(replyHeader.peer),
       storyId: replyHeader.storyId,
     };
   }
@@ -557,6 +565,20 @@ function buildAction(
       amount = action.winnersCount;
       pluralValue = action.winnersCount;
     }
+  } else if (action instanceof GramJs.MessageActionBoostApply) {
+    type = 'chatBoost';
+    if (action.boosts === 1) {
+      text = senderId === currentUserId ? 'BoostingBoostsGroupByYouServiceMsg' : 'BoostingBoostsGroupByUserServiceMsg';
+      translationValues.push('%action_origin%');
+    } else {
+      text = senderId === currentUserId ? 'BoostingBoostsGroupByYouServiceMsgCount'
+        : 'BoostingBoostsGroupByUserServiceMsgCount';
+      translationValues.push(action.boosts.toString());
+      if (senderId !== currentUserId) {
+        translationValues.unshift('%action_origin%');
+      }
+      pluralValue = action.boosts;
+    }
   } else {
     text = 'ChatList.UnsupportedMessage';
   }
@@ -747,6 +769,7 @@ function buildNewPoll(poll: ApiNewPoll, localId: number) {
 
 export function buildLocalMessage(
   chat: ApiChat,
+  lastMessageId?: number,
   text?: string,
   entities?: ApiMessageEntity[],
   replyInfo?: ApiInputReplyInfo,
@@ -760,7 +783,7 @@ export function buildLocalMessage(
   sendAs?: ApiPeer,
   story?: ApiStory | ApiStorySkipped,
 ): ApiMessage {
-  const localId = getNextLocalMessageId(chat.lastMessage?.id);
+  const localId = getNextLocalMessageId(lastMessageId);
   const media = attachment && buildUploadingMedia(attachment);
   const isChannel = chat.type === 'chatTypeChannel';
 
@@ -811,6 +834,7 @@ export function buildLocalForwardedMessage({
   noAuthors,
   noCaptions,
   isCurrentUserPremium,
+  lastMessageId,
 }: {
   toChat: ApiChat;
   toThreadId?: number;
@@ -819,8 +843,9 @@ export function buildLocalForwardedMessage({
   noAuthors?: boolean;
   noCaptions?: boolean;
   isCurrentUserPremium?: boolean;
+  lastMessageId?: number;
 }): ApiMessage {
-  const localId = getNextLocalMessageId(toChat?.lastMessage?.id);
+  const localId = getNextLocalMessageId(lastMessageId);
   const {
     content,
     chatId: fromChatId,
@@ -874,11 +899,13 @@ export function buildLocalForwardedMessage({
     // Forward info doesn't get added when users forwards his own messages, also when forwarding audio
     ...(message.chatId !== currentUserId && !isAudio && !noAuthors && {
       forwardInfo: {
-        date: message.date,
+        date: message.forwardInfo?.date || message.date,
+        savedDate: message.date,
         isChannelPost: false,
         fromChatId,
         fromMessageId,
-        senderUserId: senderId,
+        fromId: senderId,
+        savedFromPeerId: message.chatId,
       },
     }),
     ...(message.chatId === currentUserId && !noAuthors && { forwardInfo: message.forwardInfo }),
@@ -890,7 +917,7 @@ function buildReplyInfo(inputInfo: ApiInputReplyInfo, isForum?: boolean): ApiRep
   if (inputInfo.type === 'story') {
     return {
       type: 'story',
-      userId: inputInfo.userId,
+      peerId: inputInfo.peerId,
       storyId: inputInfo.storyId,
     };
   }
@@ -906,7 +933,7 @@ function buildReplyInfo(inputInfo: ApiInputReplyInfo, isForum?: boolean): ApiRep
   };
 }
 
-function buildUploadingMedia(
+export function buildUploadingMedia(
   attachment: ApiAttachment,
 ): MediaContent {
   const {
@@ -918,6 +945,7 @@ function buildUploadingMedia(
     audio,
     shouldSendAsFile,
     shouldSendAsSpoiler,
+    ttlSeconds,
   } = attachment;
 
   if (!shouldSendAsFile) {
@@ -962,6 +990,7 @@ function buildUploadingMedia(
           duration,
           waveform: inputWaveform,
         },
+        ttlSeconds,
       };
     }
     if (SUPPORTED_AUDIO_CONTENT_TYPES.has(mimeType)) {

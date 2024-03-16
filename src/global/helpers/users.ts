@@ -1,7 +1,7 @@
 import type { ApiPeer, ApiUser, ApiUserStatus } from '../../api/types';
 import type { LangFn } from '../../hooks/useLang';
 
-import { SERVICE_NOTIFICATIONS_USER_ID } from '../../config';
+import { ANONYMOUS_USER_ID, SERVICE_NOTIFICATIONS_USER_ID } from '../../config';
 import { formatFullDate, formatTime } from '../../util/dateFormat';
 import { orderBy } from '../../util/iteratees';
 import { formatPhoneNumber } from '../../util/phoneNumber';
@@ -15,6 +15,7 @@ export function getUserFirstOrLastName(user?: ApiUser) {
 
   switch (user.type) {
     case 'userTypeBot':
+      return user.firstName;
     case 'userTypeRegular': {
       return user.firstName || user.lastName;
     }
@@ -162,7 +163,7 @@ export function getUserStatus(
   }
 }
 
-export function isUserOnline(user: ApiUser, userStatus?: ApiUserStatus) {
+export function isUserOnline(user: ApiUser, userStatus?: ApiUserStatus, withSelfOnline = false) {
   const { id, type } = user;
 
   if (!userStatus) {
@@ -173,7 +174,7 @@ export function isUserOnline(user: ApiUser, userStatus?: ApiUserStatus) {
     return false;
   }
 
-  if (user.isSelf) {
+  if (user.isSelf && !withSelfOnline) {
     return false;
   }
 
@@ -190,7 +191,7 @@ export function isUserBot(user: ApiUser) {
 }
 
 export function getCanAddContact(user: ApiUser) {
-  return !user.isSelf && !user.isContact && !isUserBot(user);
+  return !user.isSelf && !user.isContact && !isUserBot(user) && user.id !== ANONYMOUS_USER_ID;
 }
 
 export function sortUserIds(

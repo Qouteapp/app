@@ -1,6 +1,7 @@
 /* eslint-disable eslint-multitab-tt/no-immediate-global */
 import { addCallback, removeCallback } from '../lib/teact/teactn';
 
+import type { ApiAvailableReaction, ApiMessage } from '../api/types';
 import type { ActionReturnType, GlobalState, MessageList } from './types';
 import { MAIN_THREAD_ID } from '../api/types';
 
@@ -12,11 +13,11 @@ import {
   DEBUG,
   DEFAULT_LIMITS,
   GLOBAL_STATE_CACHE_CHAT_LIST_LIMIT,
-  GLOBAL_STATE_CACHE_CHATS_WITH_MESSAGES_LIMIT,
   GLOBAL_STATE_CACHE_CUSTOM_EMOJI_LIMIT,
   GLOBAL_STATE_CACHE_DISABLED,
   GLOBAL_STATE_CACHE_KEY,
   GLOBAL_STATE_CACHE_USER_LIST_LIMIT,
+  SAVED_FOLDER_ID,
 } from '../config';
 import { getOrderedIds } from '../util/folderManager';
 import {
@@ -31,6 +32,7 @@ import { INITIAL_GLOBAL_STATE, INITIAL_PERFORMANCE_STATE_MID, INITIAL_PERFORMANC
 import { clearGlobalForLockScreen } from './reducers';
 import {
   selectChat,
+  selectChatLastMessageId,
   selectChatMessages,
   selectCurrentMessageList,
   selectViewportIds,
@@ -42,7 +44,8 @@ import { isHeavyAnimating } from '../hooks/useHeavyAnimationCheck';
 
 const UPDATE_THROTTLE = 5000;
 
-const updateCacheThrottled = throttle(() => onIdle(updateCache), UPDATE_THROTTLE, false);
+const updateCacheThrottled = throttle(() => onIdle(() => updateCache()), UPDATE_THROTTLE, false);
+const updateCacheForced = () => updateCache(true);
 
 let isCaching = false;
 let unsubscribeFromBeforeUnload: NoneToVoidFunction | undefined;
@@ -68,6 +71,7 @@ export function initCache() {
     }
 
     setupCaching();
+    updateCacheForced();
   });
 
   addActionHandler('reset', resetCache);
@@ -93,15 +97,15 @@ export function loadCache(initialState: GlobalState): GlobalState | undefined {
 
 export function setupCaching() {
   isCaching = true;
-  unsubscribeFromBeforeUnload = onBeforeUnload(updateCache, true);
-  window.addEventListener('blur', updateCache);
+  unsubscribeFromBeforeUnload = onBeforeUnload(updateCacheForced, true);
+  window.addEventListener('blur', updateCacheForced);
   addCallback(updateCacheThrottled);
 }
 
 export function clearCaching() {
   isCaching = false;
   removeCallback(updateCacheThrottled);
-  window.removeEventListener('blur', updateCache);
+  window.removeEventListener('blur', updateCacheForced);
   if (unsubscribeFromBeforeUnload) {
     unsubscribeFromBeforeUnload();
   }
@@ -179,15 +183,6 @@ function unsafeMigrateCache(cached: GlobalState, initialState: GlobalState) {
     cached.appConfig.limits = DEFAULT_LIMITS;
   }
 
-  if (typeof cached.config?.defaultReaction === 'string') {
-    cached.config.defaultReaction = { emoticon: cached.config.defaultReaction };
-  }
-
-  if (typeof cached.availableReactions?.[0].reaction === 'string') {
-    cached.availableReactions = cached.availableReactions
-      .map((r) => ({ ...r, reaction: { emoticon: r.reaction as unknown as string } }));
-  }
-
   if (!cached.archiveSettings) {
     cached.archiveSettings = initialState.archiveSettings;
   }
@@ -209,16 +204,28 @@ function unsafeMigrateCache(cached: GlobalState, initialState: GlobalState) {
     cached.chats.similarChannelsById = initialState.chats.similarChannelsById;
   }
 
+  if (!cached.chats.lastMessageIds) {
+    cached.chats.lastMessageIds = initialState.chats.lastMessageIds;
+  }
+
   // Clear old color storage to optimize cache size
   if (untypedCached?.appConfig?.peerColors) {
     untypedCached.appConfig.peerColors = undefined;
     untypedCached.appConfig.darkPeerColors = undefined;
   }
+
+  if (!cached.fileUploads.byMessageKey) {
+    cached.fileUploads.byMessageKey = {};
+  }
+
+  if (!cached.reactions) {
+    cached.reactions = initialState.reactions;
+  }
 }
 
-function updateCache() {
+function updateCache(force?: boolean) {
   const global = getGlobal();
-  if (!isCaching || global.isLoggingOut || isHeavyAnimating()) {
+  if (!isCaching || global.isLoggingOut || (!force && isHeavyAnimating())) {
     return;
   }
 
@@ -259,8 +266,6 @@ export function serializeGlobal<T extends GlobalState>(global: T) {
       'topInlineBots',
       'recentEmojis',
       'recentCustomEmojis',
-      'topReactions',
-      'recentReactions',
       'push',
       'serviceNotifications',
       'attachmentSettings',
@@ -272,6 +277,7 @@ export function serializeGlobal<T extends GlobalState>(global: T) {
       'trustedBotIds',
       'recentlyFoundChatIds',
       'peerColors',
+      'savedReactionTags',
     ]),
     lastIsChatInfoShown: !getIsMobile() ? global.lastIsChatInfoShown : undefined,
     customEmojis: reduceCustomEmojis(global),
@@ -281,7 +287,15 @@ export function serializeGlobal<T extends GlobalState>(global: T) {
     settings: reduceSettings(global),
     chatFolders: reduceChatFolders(global),
     groupCalls: reduceGroupCalls(global),
-    availableReactions: reduceAvailableReactions(global),
+    reactions: {
+      ...pick(global.reactions, [
+        'defaultTags',
+        'recentReactions',
+        'topReactions',
+        'hash',
+      ]),
+      availableReactions: reduceAvailableReactions(global.reactions.availableReactions),
+    },
     passcode: pick(global.passcode, [
       'isScreenLocked',
       'hasPasscode',
@@ -359,7 +373,8 @@ function reduceChats<T extends GlobalState>(global: T): GlobalState['chats'] {
     const viewportIds = selectViewportIds(global, messageList.chatId, messageList.threadId, tabId);
     return viewportIds?.map((id) => {
       const message = messages[id];
-      const content = message?.content;
+      if (!message) return undefined;
+      const content = message.content;
       const replyPeer = message.replyInfo?.type === 'message' && message.replyInfo.replyToPeerId;
       return content.storyData?.peerId || content.webPage?.story?.peerId || replyPeer;
     });
@@ -369,6 +384,7 @@ function reduceChats<T extends GlobalState>(global: T): GlobalState['chats'] {
     ...currentUserId ? [currentUserId] : [],
     ...currentChatIds,
     ...messagesChatIds,
+    ...getOrderedIds(SAVED_FOLDER_ID) || [],
     ...getOrderedIds(ALL_FOLDER_ID) || [],
     ...getOrderedIds(ARCHIVED_FOLDER_ID) || [],
     ...global.recentlyFoundChatIds || [],
@@ -381,6 +397,10 @@ function reduceChats<T extends GlobalState>(global: T): GlobalState['chats'] {
     isFullyLoaded: {},
     byId: pick(global.chats.byId, idsToSave),
     fullInfoById: pick(global.chats.fullInfoById, idsToSave),
+    lastMessageIds: {
+      all: pick(global.chats.lastMessageIds.all || {}, idsToSave),
+      saved: global.chats.lastMessageIds.saved,
+    },
   };
 }
 
@@ -399,7 +419,7 @@ function reduceMessages<T extends GlobalState>(global: T): GlobalState['messages
     ...currentChatIds,
     ...currentUserId ? [currentUserId] : [],
     ...forumPanelChatIds,
-    ...getOrderedIds(ALL_FOLDER_ID)?.slice(0, GLOBAL_STATE_CACHE_CHATS_WITH_MESSAGES_LIMIT) || [],
+    ...getOrderedIds(ALL_FOLDER_ID) || [],
   ]);
 
   chatIdsToSave.forEach((chatId) => {
@@ -409,6 +429,7 @@ function reduceMessages<T extends GlobalState>(global: T): GlobalState['messages
     }
 
     const chat = selectChat(global, chatId);
+    const chatLastMessageId = selectChatLastMessageId(global, chatId);
 
     const threadIds = unique(compact(Object.values(global.byTabId).map(({ id: tabId }) => {
       const { chatId: tabChatId, threadId } = selectCurrentMessageList(global, tabId) || {};
@@ -422,15 +443,18 @@ function reduceMessages<T extends GlobalState>(global: T): GlobalState['messages
         .map(({ threadInfo }) => (threadInfo?.isCommentsInfo ? threadInfo?.originMessageId : undefined)),
     )));
 
-    const threadIdsToSave = threadIds.length ? [MAIN_THREAD_ID, ...threadIds] : [MAIN_THREAD_ID];
-    const threadsToSave = pickTruthy(current.threadsById, threadIdsToSave);
+    const threadsToSave = pickTruthy(current.threadsById, [MAIN_THREAD_ID, ...threadIds]);
     if (!Object.keys(threadsToSave).length) {
       return;
     }
 
     const viewportIdsToSave = unique(Object.values(threadsToSave).flatMap((thread) => thread.lastViewportIds || []));
-    const lastMessageIdsToSave = chat?.topics
-      ? Object.values(chat.topics).map(({ lastMessageId }) => lastMessageId) : [];
+    const topicLastMessageIds = chat?.topics ? Object.values(chat.topics).map(({ lastMessageId }) => lastMessageId)
+      : [];
+    const savedLastMessageIds = chatId === currentUserId && global.chats.lastMessageIds.saved
+      ? Object.values(global.chats.lastMessageIds.saved) : [];
+    const lastMessageIdsToSave = [chatLastMessageId].concat(topicLastMessageIds).concat(savedLastMessageIds)
+      .filter(Boolean);
     const byId = pick(current.byId, viewportIdsToSave.concat(lastMessageIdsToSave));
     const threadsById = Object.keys(threadsToSave).reduce((acc, key) => {
       const thread = threadsToSave[Number(key)];
@@ -443,8 +467,16 @@ function reduceMessages<T extends GlobalState>(global: T): GlobalState['messages
       return acc;
     }, {} as GlobalState['messages']['byChatId'][string]['threadsById']);
 
+    const cleanedById = Object.values(byId).reduce((acc, message) => {
+      if (!message) return acc;
+
+      const cleanedMessage = omitLocalMedia(message);
+      acc[message.id] = cleanedMessage;
+      return acc;
+    }, {} as Record<number, ApiMessage>);
+
     byChatId[chatId] = {
-      byId,
+      byId: cleanedById,
       threadsById,
     };
   });
@@ -453,6 +485,33 @@ function reduceMessages<T extends GlobalState>(global: T): GlobalState['messages
     byChatId,
     sponsoredByChatId: {},
   };
+}
+
+function omitLocalMedia(message: ApiMessage): ApiMessage {
+  const {
+    photo, video, document, sticker,
+  } = message.content;
+
+  if (photo) {
+    photo.blobUrl = undefined;
+  }
+
+  if (video) {
+    video.blobUrl = undefined;
+    video.previewBlobUrl = undefined;
+  }
+
+  if (document) {
+    document.previewBlobUrl = undefined;
+  }
+
+  if (sticker) {
+    sticker.isPreloadedGlobally = undefined;
+  }
+
+  message.previousLocalId = undefined;
+
+  return message;
 }
 
 function reduceSettings<T extends GlobalState>(global: T): GlobalState['settings'] {
@@ -481,7 +540,7 @@ function reduceGroupCalls<T extends GlobalState>(global: T): GlobalState['groupC
   };
 }
 
-function reduceAvailableReactions(global: GlobalState): GlobalState['availableReactions'] {
-  return global.availableReactions
+function reduceAvailableReactions(availableReactions?: ApiAvailableReaction[]): ApiAvailableReaction[] | undefined {
+  return availableReactions
     ?.map((r) => pick(r, ['reaction', 'staticIcon', 'title', 'isInactive']));
 }

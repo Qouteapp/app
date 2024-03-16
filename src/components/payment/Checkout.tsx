@@ -3,7 +3,7 @@ import React, { memo, useCallback } from '../../lib/teact/teact';
 import { getActions } from '../../global';
 
 import type {
-  ApiChat, ApiInvoice, ApiPaymentCredentials,
+  ApiInvoice, ApiPaymentCredentials,
 } from '../../api/types';
 import type { FormEditDispatch } from '../../hooks/reducers/usePaymentReducer';
 import type { LangCode, Price } from '../../types';
@@ -26,7 +26,6 @@ import Skeleton from '../ui/placeholder/Skeleton';
 import styles from './Checkout.module.scss';
 
 export type OwnProps = {
-  chat?: ApiChat;
   invoice?: ApiInvoice;
   checkoutInfo?: {
     paymentMethod?: string;
@@ -35,6 +34,7 @@ export type OwnProps = {
     name?: string;
     phone?: string;
     shippingMethod?: string;
+    botName?: string;
   };
   prices?: Price[];
   totalPrice?: number;
@@ -47,10 +47,11 @@ export type OwnProps = {
   dispatch?: FormEditDispatch;
   onAcceptTos?: (isAccepted: boolean) => void;
   savedCredentials?: ApiPaymentCredentials[];
+  isPaymentFormUrl?: boolean;
+  botName?: string;
 };
 
 const Checkout: FC<OwnProps> = ({
-  chat,
   invoice,
   prices,
   shippingPrices,
@@ -64,6 +65,8 @@ const Checkout: FC<OwnProps> = ({
   needAddress,
   hasShippingOptions,
   savedCredentials,
+  isPaymentFormUrl,
+  botName,
 }) => {
   const { setPaymentStep } = getActions();
 
@@ -127,7 +130,7 @@ const Checkout: FC<OwnProps> = ({
   }
 
   function renderTosLink(url: string, isRtl?: boolean) {
-    const langString = lang('PaymentCheckoutAcceptRecurrent', chat?.title);
+    const langString = lang('PaymentCheckoutAcceptRecurrent', botName);
     const langStringSplit = langString.split('*');
     return (
       <>
@@ -185,7 +188,7 @@ const Checkout: FC<OwnProps> = ({
         )}
       </div>
       <div className={styles.invoiceInfo}>
-        {renderCheckoutItem({
+        {!isPaymentFormUrl && renderCheckoutItem({
           title: paymentMethod || savedCredentials?.[0].title,
           label: lang('PaymentCheckoutMethod'),
           icon: 'card',
@@ -260,8 +263,8 @@ function renderCheckoutItem({
       icon={icon}
       inactive={!onClick}
       onClick={onClick}
+      leftElement={customIcon && <i className={buildClassName('icon', customIcon)} />}
     >
-      {customIcon && <i className={buildClassName('icon', customIcon)} />}
       <div className={styles.checkoutInfoItemInfoTitle}>
         {title || label}
       </div>

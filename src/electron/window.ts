@@ -12,8 +12,9 @@ import { processDeeplink } from './deeplink';
 import { captureLocalStorage, restoreLocalStorage } from './localStorage';
 import tray from './tray';
 import {
-  checkIsWebContentsUrlAllowed, forceQuit, getAppTitle, getCurrentWindow, getLastWindow, hasExtraWindows,
-  IS_FIRST_RUN, IS_MAC_OS, IS_PREVIEW, IS_WINDOWS, reloadWindows, store, TRAFFIC_LIGHT_POSITION, windows,
+  checkIsWebContentsUrlAllowed, forceQuit, getAppTitle, getCurrentWindow, getLastWindow,
+  hasExtraWindows, IS_FIRST_RUN, IS_MAC_OS, IS_PREVIEW, IS_PRODUCTION, IS_WINDOWS,
+  reloadWindows, store, TRAFFIC_LIGHT_POSITION, windows,
 } from './utils';
 import windowStateKeeper from './windowState';
 
@@ -81,7 +82,7 @@ export function createWindow(url?: string) {
     title: getAppTitle(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      devTools: process.env.APP_ENV !== 'production',
+      devTools: !IS_PRODUCTION,
     },
     ...(IS_WINDOWS && {
       material: 'acrylic',
@@ -177,7 +178,7 @@ export function createWindow(url?: string) {
   window.webContents.once('dom-ready', async () => {
     processDeeplink();
 
-    if (process.env.APP_ENV === 'production') {
+    if (IS_PRODUCTION) {
       setupAutoUpdates(windowState);
     }
 

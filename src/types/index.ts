@@ -30,6 +30,8 @@ export interface IAlbum {
   mainMessage: ApiMessage;
 }
 
+export type ThreadId = string | number;
+
 export type ThemeKey = 'light' | 'dark';
 export type AnimationLevel = 0 | 1 | 2;
 export type PerformanceTypeKey = (
@@ -100,6 +102,8 @@ export interface ISettings extends NotifySettings, Record<string, any> {
   wasTimeFormatSetManually: boolean;
   isConnectionStatusMinimized: boolean;
   shouldArchiveAndMuteNewNonContact?: boolean;
+  shouldNewNonContactPeersRequirePremium?: boolean;
+  shouldHideReadMarks?: boolean;
   canTranslate: boolean;
   canTranslateChats: boolean;
   translationLanguage?: string;
@@ -181,6 +185,7 @@ export enum SettingsScreens {
   PrivacyPhoneP2P,
   PrivacyForwarding,
   PrivacyVoiceMessages,
+  PrivacyMessages,
   PrivacyGroupChats,
   PrivacyPhoneNumberAllowedContacts,
   PrivacyPhoneNumberDeniedContacts,
@@ -312,6 +317,7 @@ export enum AudioOrigin {
   Inline,
   SharedMedia,
   Search,
+  OneTimeModal,
 }
 
 export enum ChatCreationProgress {
@@ -367,7 +373,8 @@ export type ProfileTabType =
   | 'voice'
   | 'stories'
   | 'storiesArchive'
-  | 'similarChannels';
+  | 'similarChannels'
+  | 'dialogs';
 export type SharedMediaType = 'media' | 'documents' | 'links' | 'audio' | 'voice';
 export type ApiPrivacyKey = 'phoneNumber' | 'addByPhone' | 'lastSeen' | 'profilePhoto' | 'voiceMessages' |
 'forwards' | 'chatInvite' | 'phoneCall' | 'phoneP2P' | 'bio';
@@ -378,6 +385,7 @@ export enum ProfileState {
   SharedMedia,
   MemberList,
   StoryList,
+  SavedDialogs,
 }
 
 export enum PaymentStep {
@@ -416,7 +424,7 @@ export enum ManagementScreens {
   JoinRequests,
 }
 
-export type ManagementType = 'user' | 'group' | 'channel';
+export type ManagementType = 'user' | 'group' | 'channel' | 'bot';
 
 export type NotifyException = {
   isMuted: boolean;

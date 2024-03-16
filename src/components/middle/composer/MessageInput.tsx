@@ -7,7 +7,7 @@ import React, {
 import { getActions, withGlobal } from '../../../global';
 
 import type { ApiInputMessageReplyInfo } from '../../../api/types';
-import type { IAnchorPosition, ISettings } from '../../../types';
+import type { IAnchorPosition, ISettings, ThreadId } from '../../../types';
 import type { Signal } from '../../../util/signals';
 
 import { EDITABLE_INPUT_ID } from '../../../config';
@@ -16,8 +16,8 @@ import { selectCanPlayAnimatedEmojis, selectDraft, selectIsInSelectMode } from '
 import buildClassName from '../../../util/buildClassName';
 import captureKeyboardListeners from '../../../util/captureKeyboardListeners';
 import { getIsDirectTextInputDisabled } from '../../../util/directInputManager';
+import parseEmojiOnlyString from '../../../util/emoji/parseEmojiOnlyString';
 import focusEditableElement from '../../../util/focusEditableElement';
-import parseEmojiOnlyString from '../../../util/parseEmojiOnlyString';
 import { debounce } from '../../../util/schedulers';
 import {
   IS_ANDROID, IS_EMOJI_SUPPORTED, IS_IOS, IS_TOUCH_ENV,
@@ -48,7 +48,7 @@ type OwnProps = {
   ref?: RefObject<HTMLDivElement>;
   id: string;
   chatId: string;
-  threadId: number;
+  threadId: ThreadId;
   isAttachmentModalInput?: boolean;
   isStoryInput?: boolean;
   customEmojiPrefix: string;

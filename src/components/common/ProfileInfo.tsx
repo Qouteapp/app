@@ -3,13 +3,13 @@ import React, { memo, useEffect, useState } from '../../lib/teact/teact';
 import { getActions, withGlobal } from '../../global';
 
 import type {
-  ApiChat, ApiPhoto, ApiTopic, ApiUser, ApiUserStatus,
+  ApiChat, ApiPhoto, ApiSticker, ApiTopic, ApiUser, ApiUserStatus,
 } from '../../api/types';
 import type { GlobalState } from '../../global/types';
 import { MediaViewerOrigin } from '../../types';
 
 import {
-  getUserStatus, isChatChannel, isUserId, isUserOnline,
+  getUserStatus, isAnonymousForwardsChat, isChatChannel, isUserId, isUserOnline,
 } from '../../global/helpers';
 import {
   selectChat,
@@ -53,7 +53,6 @@ type StateProps =
     user?: ApiUser;
     userStatus?: ApiUserStatus;
     chat?: ApiChat;
-    isSavedMessages?: boolean;
     mediaId?: number;
     avatarOwnerId?: string;
     topic?: ApiTopic;
@@ -62,6 +61,7 @@ type StateProps =
     userProfilePhoto?: ApiPhoto;
     userFallbackPhoto?: ApiPhoto;
     chatProfilePhoto?: ApiPhoto;
+    emojiStatusSticker?: ApiSticker;
   }
   & Pick<GlobalState, 'connectionState'>;
 
@@ -74,7 +74,6 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
   user,
   userStatus,
   chat,
-  isSavedMessages,
   connectionState,
   mediaId,
   avatarOwnerId,
@@ -84,11 +83,14 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
   userProfilePhoto,
   userFallbackPhoto,
   chatProfilePhoto,
+  emojiStatusSticker,
 }) => {
   const {
     loadFullUser,
     openMediaViewer,
     openPremiumModal,
+    openStickerSet,
+    openPrivacySettingsNoticeModal,
   } = getActions();
 
   const lang = useLang();
@@ -104,8 +106,8 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
   const slideAnimation = hasSlideAnimation ? (lang.isRtl ? 'slideRtl' : 'slide') : 'none';
 
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const isFirst = isSavedMessages || photos.length <= 1 || currentPhotoIndex === 0;
-  const isLast = isSavedMessages || photos.length <= 1 || currentPhotoIndex === photos.length - 1;
+  const isFirst = photos.length <= 1 || currentPhotoIndex === 0;
+  const isLast = photos.length <= 1 || currentPhotoIndex === photos.length - 1;
 
   // Set the current avatar photo to the last selected photo in Media Viewer after it is closed
   useEffect(() => {
@@ -146,7 +148,12 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
   });
 
   const handleStatusClick = useLastCallback(() => {
-    if (!userId) return;
+    if (!userId) {
+      openStickerSet({
+        stickerSetInfo: emojiStatusSticker!.stickerSetInfo,
+      });
+      return;
+    }
 
     openPremiumModal({ fromUserId: userId });
   });
@@ -165,6 +172,10 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
     }
     setHasSlideAnimation(true);
     setCurrentPhotoIndex(currentPhotoIndex + 1);
+  });
+
+  const handleOpenGetReadDateModal = useLastCallback(() => {
+    openPrivacySettingsNoticeModal({ chatId: chat!.id, isReadDate: false });
   });
 
   function handleSelectFallbackPhoto() {
@@ -219,7 +230,7 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
   }
 
   function renderPhotoTabs() {
-    if (isSavedMessages || !photos || photos.length <= 1) {
+    if (!photos || photos.length <= 1) {
       return undefined;
     }
 
@@ -233,7 +244,7 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
   }
 
   function renderPhoto(isActive?: boolean) {
-    const photo = !isSavedMessages && photos.length > 0
+    const photo = photos.length > 0
       ? photos[currentPhotoIndex]
       : undefined;
     const profilePhoto = photo || userPersonalPhoto || userProfilePhoto || chatProfilePhoto || userFallbackPhoto;
@@ -244,7 +255,6 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
         user={user}
         chat={chat}
         photo={profilePhoto}
-        isSavedMessages={isSavedMessages}
         canPlayVideo={Boolean(isActive && canPlayVideo)}
         onClick={handleProfilePhotoClick}
       />
@@ -252,10 +262,28 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
   }
 
   function renderStatus() {
+    const peerId = (chatId || userId)!;
+
+    const isAnonymousForwards = isAnonymousForwardsChat(peerId);
+    if (isAnonymousForwards) return undefined;
+
     if (user) {
       return (
-        <div className={buildClassName(styles.status, 'status', isUserOnline(user, userStatus) && 'online')}>
-          <span className="user-status" dir="auto">{getUserStatus(lang, user, userStatus)}</span>
+        <div
+          className={buildClassName(
+            styles.status,
+            'status',
+            isUserOnline(user, userStatus) && 'online',
+          )}
+        >
+          <span className="user-status" dir="auto">
+            {getUserStatus(lang, user, userStatus)}
+          </span>
+          {userStatus?.isReadDateRestrictedByMe && (
+            <span className="get-status" onClick={handleOpenGetReadDateModal}>
+              {lang('StatusHiddenShow')}
+            </span>
+          )}
         </div>
       );
     }
@@ -340,32 +368,33 @@ const ProfileInfo: FC<OwnProps & StateProps> = ({
             peer={(user || chat)!}
             withEmojiStatus
             emojiStatusSize={EMOJI_STATUS_SIZE}
-            isSavedMessages={isSavedMessages}
             onEmojiStatusClick={handleStatusClick}
             noLoopLimit
             canCopyTitle
           />
         )}
-        {!isSavedMessages && renderStatus()}
+        {renderStatus()}
       </div>
     </div>
   );
 };
 
 export default memo(withGlobal<OwnProps>(
-  (global, { userId, forceShowSelf }): StateProps => {
+  (global, { userId }): StateProps => {
     const { connectionState } = global;
     const user = selectUser(global, userId);
     const isPrivate = isUserId(userId);
     const userStatus = selectUserStatus(global, userId);
     const chat = selectChat(global, userId);
-    const isSavedMessages = !forceShowSelf && user && user.isSelf;
     const { mediaId, avatarOwnerId } = selectTabState(global).mediaViewer;
     const isForum = chat?.isForum;
     const { threadId: currentTopicId } = selectCurrentMessageList(global) || {};
     const topic = isForum && currentTopicId ? chat?.topics?.[currentTopicId] : undefined;
     const userFullInfo = isPrivate ? selectUserFullInfo(global, userId) : undefined;
     const chatFullInfo = !isPrivate ? selectChatFullInfo(global, userId) : undefined;
+
+    const emojiStatus = (user || chat)?.emojiStatus;
+    const emojiStatusSticker = emojiStatus ? global.customEmojis.byId[emojiStatus.documentId] : undefined;
 
     return {
       connectionState,
@@ -376,9 +405,9 @@ export default memo(withGlobal<OwnProps>(
       userProfilePhoto: userFullInfo?.profilePhoto,
       userFallbackPhoto: userFullInfo?.fallbackPhoto,
       chatProfilePhoto: chatFullInfo?.profilePhoto,
-      isSavedMessages,
       mediaId,
       avatarOwnerId,
+      emojiStatusSticker,
       ...(topic && {
         topic,
         messagesCount: selectThreadMessagesCount(global, userId, currentTopicId!),

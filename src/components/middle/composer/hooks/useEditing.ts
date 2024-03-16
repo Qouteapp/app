@@ -3,6 +3,7 @@ import { getActions } from '../../../../global';
 
 import type { ApiFormattedText, ApiMessage } from '../../../../api/types';
 import type { ApiDraft, MessageListType } from '../../../../global/types';
+import type { ThreadId } from '../../../../types';
 import type { Signal } from '../../../../util/signals';
 import { ApiMessageEntityTypes } from '../../../../api/types';
 
@@ -14,11 +15,11 @@ import parseHtmlAsFormattedText from '../../../../util/parseHtmlAsFormattedText'
 import { getTextWithEntitiesAsHtml } from '../../../common/helpers/renderTextWithEntities';
 
 import { useDebouncedResolver } from '../../../../hooks/useAsyncResolvers';
-import useBackgroundMode from '../../../../hooks/useBackgroundMode';
-import useBeforeUnload from '../../../../hooks/useBeforeUnload';
 import useDerivedSignal from '../../../../hooks/useDerivedSignal';
 import useEffectWithPrevDeps from '../../../../hooks/useEffectWithPrevDeps';
 import useLastCallback from '../../../../hooks/useLastCallback';
+import useBackgroundMode from '../../../../hooks/window/useBackgroundMode';
+import useBeforeUnload from '../../../../hooks/window/useBeforeUnload';
 
 const URL_ENTITIES = new Set<string>([ApiMessageEntityTypes.TextUrl, ApiMessageEntityTypes.Url]);
 const DEBOUNCE_MS = 300;
@@ -30,7 +31,7 @@ const useEditing = (
   resetComposer: (shouldPreserveInput?: boolean) => void,
   openDeleteModal: () => void,
   chatId: string,
-  threadId: number,
+  threadId: ThreadId,
   type: MessageListType,
   draft?: ApiDraft,
   editingDraft?: ApiFormattedText,

@@ -62,8 +62,9 @@ function buildApiChatFieldsFromPeerEntity(
   const color = ('color' in peerEntity && peerEntity.color) ? buildApiPeerColor(peerEntity.color) : undefined;
   const emojiStatus = ('emojiStatus' in peerEntity && peerEntity.emojiStatus)
     ? buildApiEmojiStatus(peerEntity.emojiStatus) : undefined;
+  const boostLevel = ('level' in peerEntity) ? peerEntity.level : undefined;
 
-  return omitUndefined({
+  return omitUndefined<PeerEntityApiChatFields>({
     isMin,
     hasPrivateLink,
     isSignaturesShown,
@@ -93,6 +94,7 @@ function buildApiChatFieldsFromPeerEntity(
     maxStoryId,
     hasStories: Boolean(maxStoryId) && !storiesUnavailable,
     emojiStatus,
+    boostLevel,
   });
 }
 
@@ -122,6 +124,20 @@ export function buildApiChatFromDialog(
     ...(unreadMark && { hasUnreadMark: true }),
     ...(draft instanceof GramJs.DraftMessage && { draftDate: draft.date }),
     ...(viewForumAsMessages && { isForumAsMessages: true }),
+    ...buildApiChatFieldsFromPeerEntity(peerEntity),
+  };
+}
+
+export function buildApiChatFromSavedDialog(
+  dialog: GramJs.SavedDialog,
+  peerEntity: GramJs.TypeUser | GramJs.TypeChat,
+): ApiChat {
+  const { peer } = dialog;
+
+  return {
+    id: getApiChatIdFromMtpPeer(peer),
+    type: getApiChatTypeFromPeerEntity(peerEntity),
+    title: getApiChatTitleFromMtpPeer(peer, peerEntity),
     ...buildApiChatFieldsFromPeerEntity(peerEntity),
   };
 }

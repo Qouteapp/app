@@ -1,12 +1,12 @@
 import { getActions, getGlobal } from '../global';
 
 import type { ApiMessage } from '../api/types';
-import type { MessageKey } from '../global/helpers';
+import type { MessageKey } from './messageKey';
 import { AudioOrigin, GlobalSearchContent } from '../types';
 
 import { requestNextMutation } from '../lib/fasterdom/fasterdom';
-import { getMessageKey, parseMessageKey } from '../global/helpers';
 import { selectCurrentMessageList, selectTabState } from '../global/selectors';
+import { getMessageKey, parseMessageKey } from './messageKey';
 import { isSafariPatchInProgress, patchSafariProgressiveAudio } from './patchSafariProgressiveAudio';
 import safePlay from './safePlay';
 import { IS_SAFARI } from './windowEnvironment';
@@ -17,7 +17,7 @@ export type TrackId = `${MessageKey}-${number}`;
 export interface Track {
   audio: HTMLAudioElement;
   proxy: HTMLAudioElement;
-  type: 'voice' | 'audio';
+  type: 'voice' | 'audio' | 'oneTimeVoice';
   handlers: Handler[];
   onForcePlay?: NoneToVoidFunction;
   onTrackChange?: NoneToVoidFunction;

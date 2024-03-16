@@ -6,7 +6,7 @@ import type {
   VideoRotation,
   VideoState,
 } from '../../lib/secret-sauce';
-import type { ApiPrivacyKey, PrivacyVisibility } from '../../types';
+import type { ApiPrivacyKey, PrivacyVisibility, ThreadId } from '../../types';
 import type { ApiBotMenuButton } from './bots';
 import type {
   ApiGroupCall, ApiPhoneCall,
@@ -102,6 +102,12 @@ export type ApiUpdateChat = {
   noTopChatsRequest?: boolean;
 };
 
+export type ApiUpdateChatLastMessage = {
+  '@type': 'updateChatLastMessage';
+  id: string;
+  lastMessage: ApiMessage;
+};
+
 export type ApiUpdateChatJoin = {
   '@type': 'updateChatJoin';
   id: string;
@@ -126,7 +132,7 @@ export type ApiUpdateChatInbox = {
 export type ApiUpdateChatTypingStatus = {
   '@type': 'updateChatTypingStatus';
   id: string;
-  threadId?: number;
+  threadId?: ThreadId;
   typingStatus: ApiTypingStatus | undefined;
 };
 
@@ -166,6 +172,17 @@ export type ApiUpdateChatListType = {
 
 export type ApiUpdateChatPinned = {
   '@type': 'updateChatPinned';
+  id: string;
+  isPinned: boolean;
+};
+
+export type ApiUpdatePinnedSavedDialogIds = {
+  '@type': 'updatePinnedSavedDialogIds';
+  ids: string[];
+};
+
+export type ApiUpdateSavedDialogPinned = {
+  '@type': 'updateSavedDialogPinned';
   id: string;
   isPinned: boolean;
 };
@@ -298,6 +315,11 @@ export type ApiUpdateDeleteHistory = {
   chatId: string;
 };
 
+export type ApiUpdateDeleteSavedHistory = {
+  '@type': 'deleteSavedHistory';
+  chatId: string;
+};
+
 export type ApiUpdateDeleteProfilePhotos = {
   '@type': 'deleteProfilePhotos';
   ids: string[];
@@ -312,7 +334,7 @@ export type ApiUpdateResetMessages = {
 export type ApiUpdateDraftMessage = {
   '@type': 'draftMessage';
   chatId: string;
-  threadId?: number;
+  threadId?: ThreadId;
   draft?: ApiDraft;
 };
 
@@ -684,6 +706,10 @@ export type ApiUpdateGroupInvitePrivacyForbidden = {
   userId: string;
 };
 
+export type ApiUpdateSavedReactionTags = {
+  '@type': 'updateSavedReactionTags';
+};
+
 export type ApiUpdate = (
   ApiUpdateReady | ApiUpdateSession | ApiUpdateWebAuthTokenFailed | ApiUpdateRequestUserUpdate |
   ApiUpdateAuthorizationState | ApiUpdateAuthorizationError | ApiUpdateConnectionState | ApiUpdateCurrentUser |
@@ -702,7 +728,7 @@ export type ApiUpdate = (
   ApiUpdateDeleteScheduledMessages | ApiUpdateResetMessages | ApiUpdateMessageTranslations |
   ApiUpdateTwoFaError | ApiUpdateTwoFaStateWaitCode | ApiUpdateWebViewResultSent |
   ApiUpdateNotifySettings | ApiUpdateNotifyExceptions | ApiUpdatePeerBlocked | ApiUpdatePrivacy |
-  ApiUpdateServerTimeOffset | ApiUpdateShowInvite | ApiUpdateMessageReactions |
+  ApiUpdateServerTimeOffset | ApiUpdateShowInvite | ApiUpdateMessageReactions | ApiUpdateSavedReactionTags |
   ApiUpdateGroupCallParticipants | ApiUpdateGroupCallConnection | ApiUpdateGroupCall | ApiUpdateGroupCallStreams |
   ApiUpdateGroupCallConnectionState | ApiUpdateGroupCallLeavePresentation | ApiUpdateGroupCallChatId |
   ApiUpdatePendingJoinRequests | ApiUpdatePaymentVerificationNeeded | ApiUpdatePaymentStateCompleted |
@@ -713,7 +739,8 @@ export type ApiUpdate = (
   ApiUpdateRecentReactions | ApiUpdateStory | ApiUpdateReadStories | ApiUpdateDeleteStory | ApiUpdateSentStoryReaction |
   ApiRequestReconnectApi | ApiRequestSync | ApiUpdateFetchingDifference | ApiUpdateChannelMessages |
   ApiUpdateStealthMode | ApiUpdateAttachMenuBots | ApiUpdateNewAuthorization | ApiUpdateGroupInvitePrivacyForbidden |
-  ApiUpdateViewForumAsMessages
+  ApiUpdateViewForumAsMessages | ApiUpdateSavedDialogPinned | ApiUpdatePinnedSavedDialogIds | ApiUpdateChatLastMessage |
+  ApiUpdateDeleteSavedHistory
 );
 
 export type OnApiUpdate = (update: ApiUpdate) => void;

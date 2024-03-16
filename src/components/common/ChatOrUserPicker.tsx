@@ -3,9 +3,10 @@ import type { FC } from '../../lib/teact/teact';
 import React, {
   memo, useMemo, useRef, useState,
 } from '../../lib/teact/teact';
-import { getActions } from '../../global';
+import { getActions, getGlobal } from '../../global';
 
-import type { ApiChat, ApiTopic } from '../../api/types';
+import type { ApiTopic } from '../../api/types';
+import type { ThreadId } from '../../types';
 
 /* import { CHAT_HEIGHT_PX } from '../../config'; */
 import { getCanPostInChat, isUserId } from '../../global/helpers';
@@ -34,14 +35,13 @@ import './ChatOrUserPicker.scss';
 export type OwnProps = {
   currentUserId?: string;
   chatOrUserIds: string[];
-  chatsById?: Record<string, ApiChat>;
   isOpen: boolean;
   searchPlaceholder: string;
   search: string;
   className?: string;
   loadMore?: NoneToVoidFunction;
   onSearchChange: (search: string) => void;
-  onSelectChatOrUser: (chatOrUserId: string, threadId?: number) => void;
+  onSelectChatOrUser: (chatOrUserId: string, threadId?: ThreadId) => void;
   onClose: NoneToVoidFunction;
   onCloseAnimationEnd?: NoneToVoidFunction;
 };
@@ -54,7 +54,6 @@ const ChatOrUserPicker: FC<OwnProps> = ({
   isOpen,
   currentUserId,
   chatOrUserIds,
-  chatsById,
   search,
   searchPlaceholder,
   className,
@@ -88,7 +87,11 @@ const ChatOrUserPicker: FC<OwnProps> = ({
   useInputFocusOnOpen(topicSearchRef, isOpen && activeKey === TOPIC_LIST_SLIDE);
 
   const [topicIds, topics] = useMemo(() => {
-    const topicsResult = forumId ? chatsById?.[forumId].topics : undefined;
+    const global = getGlobal();
+    const chatsById = global.chats.byId;
+    const chatFullInfoById = global.chats.fullInfoById;
+
+    const topicsResult = forumId ? chatsById[forumId].topics : undefined;
     if (!topicsResult) {
       return [undefined, undefined];
     }
@@ -98,7 +101,7 @@ const ChatOrUserPicker: FC<OwnProps> = ({
     const result = topicsResult
       ? Object.values(topicsResult).reduce((acc, topic) => {
         if (
-          getCanPostInChat(chatsById![forumId!], topic.id)
+          getCanPostInChat(chatsById[forumId!], topic.id, undefined, chatFullInfoById[forumId!])
           && (!searchTitle || topic.title.toLowerCase().includes(searchTitle))
         ) {
           acc[topic.id] = topic;
@@ -109,7 +112,7 @@ const ChatOrUserPicker: FC<OwnProps> = ({
       : topicsResult;
 
     return [Object.keys(result).map(Number), result];
-  }, [chatsById, forumId, topicSearch]);
+  }, [forumId, topicSearch]);
 
   const handleHeaderBackClick = useLastCallback(() => {
     setForumId(undefined);
@@ -148,6 +151,8 @@ const ChatOrUserPicker: FC<OwnProps> = ({
 
     if (e.key === 'Enter' && selectedIndex >= 0) {
       const chatId = viewportIds[selectedIndex];
+      const global = getGlobal();
+      const chatsById = global.chats.byId;
       const chat = chatsById?.[chatId];
       if (chat?.isForum) {
         if (!chat.topics) loadTopics({ chatId });
@@ -188,6 +193,7 @@ const ChatOrUserPicker: FC<OwnProps> = ({
   };
 
   const handleClick = useLastCallback((e: React.MouseEvent, chatId: string) => {
+    const chatsById = getGlobal().chats.byId;
     const chat = chatsById?.[chatId];
     if (chat?.isForum) {
       if (!chat.topics) loadTopics({ chatId });
@@ -297,10 +303,9 @@ const ChatOrUserPicker: FC<OwnProps> = ({
                   <PrivateChatInfo
                     status={id === currentUserId ? lang('SavedMessagesInfo') : undefined}
                     userId={id}
-                    avatarSize={window.innerWidth > 680 ? 'nano' : 'medium'}
                   />
                 ) : (
-                  <GroupChatInfo chatId={id} avatarSize={window.innerWidth > 680 ? 'nano' : 'medium'} />
+                  <GroupChatInfo chatId={id} />
                 )}
               </ListItem>
             ))}

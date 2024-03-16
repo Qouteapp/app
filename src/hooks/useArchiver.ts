@@ -10,7 +10,7 @@ import type { ApiChat } from '../api/types';
 
 import { JUNE_TRACK_EVENTS, SERVICE_NOTIFICATIONS_USER_ID } from '../config';
 import { selectCurrentChat, selectTabState } from '../global/selectors';
-import useInterval from './useInterval';
+import useInterval from './schedulers/useInterval';
 import { useJune } from './useJune';
 import { useStorage } from './useStorage';
 

@@ -4,7 +4,7 @@ import type {
 } from '../../../api/types';
 import type { RequiredGlobalActions } from '../../index';
 import type {
-  ActionReturnType, GlobalState, RequiredGlobalState, TabArgs,
+  ActionReturnType, ChatListType, GlobalState, RequiredGlobalState, TabArgs,
 } from '../../types';
 import { MAIN_THREAD_ID } from '../../../api/types';
 import {
@@ -12,6 +12,7 @@ import {
   ManagementProgress,
   NewChatMembersProgress,
   SettingsScreens,
+  type ThreadId,
 } from '../../../types';
 
 import {
@@ -20,6 +21,7 @@ import {
   CHAT_LIST_LOAD_SLICE,
   DEBUG,
   RE_TG_LINK,
+  SAVED_FOLDER_ID,
   SERVICE_NOTIFICATIONS_USER_ID,
   TME_WEB_DOMAINS,
   TMP_CHAT_ID,
@@ -28,6 +30,7 @@ import {
   TOPICS_SLICE_SECOND_LOAD,
 } from '../../../config';
 import { formatShareText, parseChooseParameter, processDeepLink } from '../../../util/deeplink';
+import { isDeepLink } from '../../../util/deepLinkParser';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import { getOrderedIds } from '../../../util/folderManager';
 import { buildCollectionByKey, omit, pick } from '../../../util/iteratees';
@@ -36,11 +39,12 @@ import { debounce, pause, throttle } from '../../../util/schedulers';
 import { extractCurrentThemeParams } from '../../../util/themeStyle';
 import { callApi } from '../../../api/gramjs';
 import {
+  getIsSavedDialog,
   isChatArchived,
   isChatBasicGroup,
   isChatChannel,
-  isChatSummaryOnly,
   isChatSuperGroup,
+  isLocalMessageId,
   isUserBot,
   toChannelId,
 } from '../../helpers';
@@ -55,19 +59,24 @@ import {
   addUsers,
   addUserStatuses,
   addUsersToRestrictedInviteList,
+  deleteChatMessages,
   deleteTopic,
   leaveChat,
+  removeChatFromChatLists,
   replaceChatFullInfo,
   replaceChatListIds,
   replaceChats,
   replaceThreadParam,
   replaceUsers,
   replaceUserStatuses,
+  toggleSimilarChannels,
   updateChat,
   updateChatFullInfo,
+  updateChatLastMessageId,
   updateChatListIds,
   updateChatListSecondaryInfo,
   updateChats,
+  updateChatsLastMessageId,
   updateListedTopicIds,
   updateManagementProgress,
   updatePeerFullInfo,
@@ -84,11 +93,15 @@ import {
   selectChatByUsername,
   selectChatFolder,
   selectChatFullInfo,
+  selectChatLastMessage,
+  selectChatLastMessageId,
   selectChatListType,
+  selectChatMessages,
   selectCurrentChat,
   selectCurrentMessageList,
   selectDraft,
   selectIsChatPinned,
+  selectIsChatWithSelf,
   selectLastServiceNotification,
   selectStickerSet,
   selectSupportChat,
@@ -145,12 +158,12 @@ addActionHandler('preloadTopChatMessages', async (global, actions): Promise<void
   }
 });
 
-function abortChatRequests(chatId: string, threadId?: number) {
+function abortChatRequests(chatId: string, threadId?: ThreadId) {
   callApi('abortChatRequests', { chatId, threadId });
 }
 
 function abortChatRequestsForCurrentChat<T extends GlobalState>(
-  global: T, newChatId?: string, newThreadId?: number,
+  global: T, newChatId?: string, newThreadId?: ThreadId,
   ...[tabId = getCurrentTabId()]: TabArgs<T>
 ) {
   const currentMessageList = selectCurrentMessageList(global, tabId);
@@ -201,15 +214,16 @@ addActionHandler('openChat', (global, actions, payload): ActionReturnType => {
     return;
   }
 
-  const { currentUserId } = global;
   const chat = selectChat(global, id);
 
   if (chat?.hasUnreadMark) {
     actions.toggleChatUnread({ id });
   }
 
+  const isChatOnlySummary = !selectChatLastMessageId(global, id);
+
   if (!chat) {
-    if (id === currentUserId) {
+    if (selectIsChatWithSelf(global, id)) {
       void callApi('fetchChat', { type: 'self' });
     } else {
       const user = selectUser(global, id);
@@ -217,10 +231,21 @@ addActionHandler('openChat', (global, actions, payload): ActionReturnType => {
         void callApi('fetchChat', { type: 'user', user });
       }
     }
-  } else if (isChatSummaryOnly(chat) && !chat.isMin) {
+  } else if (isChatOnlySummary && !chat.isMin) {
     actions.requestChatUpdate({ chatId: id });
   }
   actions.closeStoryViewer({ tabId });
+});
+
+addActionHandler('openSavedDialog', (global, actions, payload): ActionReturnType => {
+  const { chatId, tabId = getCurrentTabId(), ...otherParams } = payload;
+
+  actions.openThread({
+    chatId: global.currentUserId!,
+    threadId: chatId,
+    tabId,
+    ...otherParams,
+  });
 });
 
 addActionHandler('openThread', async (global, actions, payload): Promise<void> => {
@@ -230,9 +255,9 @@ addActionHandler('openThread', async (global, actions, payload): Promise<void> =
     tabId = getCurrentTabId(),
   } = payload;
   let { chatId } = payload;
-  let threadId: number | undefined;
+  let threadId: ThreadId | undefined;
   let loadingChatId: string;
-  let loadingThreadId: number;
+  let loadingThreadId: ThreadId;
 
   if (!isComments) {
     loadingChatId = payload.chatId;
@@ -250,7 +275,7 @@ addActionHandler('openThread', async (global, actions, payload): Promise<void> =
         tabId,
       });
       return;
-    } else if (originalChat?.isForum) {
+    } else if (originalChat?.isForum || (chatId && getIsSavedDialog(chatId, threadId, global.currentUserId))) {
       actions.processOpenChatOrThread({
         chatId,
         type,
@@ -279,7 +304,7 @@ addActionHandler('openThread', async (global, actions, payload): Promise<void> =
 
   if (chatId
     && threadInfo?.threadId
-    && (isComments || (thread?.listedIds?.length && thread.listedIds.includes(threadInfo.threadId)))) {
+    && (isComments || (thread?.listedIds?.length && thread.listedIds.includes(Number(threadInfo.threadId))))) {
     global = updateTabState(global, {
       loadingThread: undefined,
     }, tabId);
@@ -305,7 +330,7 @@ addActionHandler('openThread', async (global, actions, payload): Promise<void> =
   global = updateTabState(global, {
     loadingThread: {
       loadingChatId,
-      loadingMessageId: loadingThreadId,
+      loadingMessageId: Number(loadingThreadId),
     },
   }, tabId);
   setGlobal(global);
@@ -336,7 +361,7 @@ addActionHandler('openThread', async (global, actions, payload): Promise<void> =
 
   const result = await callApi('fetchDiscussionMessage', {
     chat: selectChat(global, loadingChatId)!,
-    messageId: loadingThreadId,
+    messageId: Number(loadingThreadId),
   });
 
   global = getGlobal();
@@ -475,13 +500,13 @@ addActionHandler('openSupportChat', async (global, actions, payload): Promise<vo
 });
 
 addActionHandler('loadAllChats', async (global, actions, payload): Promise<void> => {
-  const listType = payload.listType as 'active' | 'archived';
+  const listType = payload.listType;
   const { onReplace } = payload;
   let { shouldReplace } = payload;
   let i = 0;
 
   const getOrderDate = (chat: ApiChat) => {
-    return chat.lastMessage?.date || chat.creationDate;
+    return selectChatLastMessage(global, chat.id)?.date || chat.creationDate;
   };
 
   while (shouldReplace || !global.chats.isFullyLoaded[listType]) {
@@ -562,7 +587,7 @@ addActionHandler('loadTopChats', (): ActionReturnType => {
 });
 
 addActionHandler('requestChatUpdate', (global, actions, payload): ActionReturnType => {
-  const { chatId } = payload!;
+  const { chatId } = payload;
   const chat = selectChat(global, chatId);
   if (!chat) {
     return;
@@ -574,6 +599,49 @@ addActionHandler('requestChatUpdate', (global, actions, payload): ActionReturnTy
       lastLocalMessage: selectLastServiceNotification(global)?.message,
     }),
   });
+});
+
+addActionHandler('requestSavedDialogUpdate', async (global, actions, payload): Promise<void> => {
+  const { chatId } = payload;
+  const chat = selectChat(global, chatId);
+  if (!chat) {
+    return;
+  }
+
+  const result = await callApi('fetchMessages', {
+    chat,
+    isSavedDialog: true,
+    limit: 1,
+  });
+
+  if (!result) return;
+
+  global = getGlobal();
+
+  global = addMessages(global, result.messages);
+  global = addUsers(global, buildCollectionByKey(result.users, 'id'));
+  global = addChats(global, buildCollectionByKey(result.chats, 'id'));
+
+  if (result.messages.length) {
+    global = updateChatLastMessageId(global, chatId, result.messages[0].id, 'saved');
+    global = updateChatListIds(global, 'saved', [chatId]);
+
+    setGlobal(global);
+  } else {
+    global = removeChatFromChatLists(global, chatId, 'saved');
+
+    setGlobal(global);
+
+    Object.values(global.byTabId).forEach(({ id: tabId }) => {
+      const currentMessageList = selectCurrentMessageList(global, tabId);
+      if (!currentMessageList) return;
+      const { chatId: tabChatId, threadId } = currentMessageList;
+
+      if (selectIsChatWithSelf(global, tabChatId) && threadId === chatId) {
+        actions.openChat({ id: undefined, tabId });
+      }
+    });
+  }
 });
 
 addActionHandler('updateChatMutedState', (global, actions, payload): ActionReturnType => {
@@ -733,7 +801,7 @@ addActionHandler('deleteChat', (global, actions, payload): ActionReturnType => {
   void callApi('deleteChat', { chatId: chat.id });
 });
 
-addActionHandler('leaveChannel', (global, actions, payload): ActionReturnType => {
+addActionHandler('leaveChannel', async (global, actions, payload): Promise<void> => {
   const { chatId, tabId = getCurrentTabId() } = payload!;
   const chat = selectChat(global, chatId);
   if (!chat) {
@@ -749,7 +817,12 @@ addActionHandler('leaveChannel', (global, actions, payload): ActionReturnType =>
 
   const { id: channelId, accessHash } = chat;
   if (channelId && accessHash) {
-    void callApi('leaveChannel', { channelId, accessHash });
+    await callApi('leaveChannel', { channelId, accessHash });
+    global = getGlobal();
+    const chatMessages = selectChatMessages(global, chatId);
+    const localMessageIds = Object.keys(chatMessages).map(Number).filter(isLocalMessageId);
+    global = deleteChatMessages(global, chatId, localMessageIds);
+    setGlobal(global);
   }
 });
 
@@ -903,6 +976,28 @@ addActionHandler('toggleChatArchived', (global, actions, payload): ActionReturnT
       folderId: isChatArchived(chat) ? 0 : ARCHIVED_FOLDER_ID,
     });
   }
+});
+
+addActionHandler('toggleSavedDialogPinned', (global, actions, payload): ActionReturnType => {
+  const { id, tabId = getCurrentTabId() } = payload!;
+  const chat = selectChat(global, id);
+  if (!chat) {
+    return;
+  }
+
+  const limit = selectCurrentLimit(global, 'savedDialogsPinned');
+
+  const isPinned = selectIsChatPinned(global, id, SAVED_FOLDER_ID);
+
+  const ids = global.chats.orderedPinnedIds.saved;
+  if ((ids?.length || 0) >= limit && !isPinned) {
+    actions.openLimitReachedModal({
+      limit: 'savedDialogsPinned',
+      tabId,
+    });
+    return;
+  }
+  void callApi('toggleSavedDialogPinned', { chat, shouldBePinned: !isPinned });
 });
 
 export const loadChatFoldersHandler = async (global: RequiredGlobalState): Promise<void> => {
@@ -1168,6 +1263,13 @@ addActionHandler('openTelegramLink', (global, actions, payload): ActionReturnTyp
     tabId = getCurrentTabId(),
   } = payload;
 
+  if (isDeepLink(url)) {
+    const isProcessed = processDeepLink(url);
+    if (isProcessed || url.match(RE_TG_LINK)) {
+      return;
+    }
+  }
+
   const {
     openChatByPhoneNumber,
     openChatByInvite,
@@ -1184,11 +1286,6 @@ addActionHandler('openTelegramLink', (global, actions, payload): ActionReturnTyp
     processBoostParameters,
     checkGiftCode,
   } = actions;
-
-  if (url.match(RE_TG_LINK)) {
-    processDeepLink(url);
-    return;
-  }
 
   const uri = new URL(url.toLowerCase().startsWith('http') ? url : `https://${url}`);
   if (TME_WEB_DOMAINS.has(uri.hostname) && uri.pathname === '/') {
@@ -1367,7 +1464,7 @@ addActionHandler('processBoostParameters', async (global, actions, payload): Pro
     }
   }
 
-  if (!isChatChannel(chat)) {
+  if (!isChatChannel(chat) && !isChatSuperGroup(chat)) {
     actions.openChat({ id: chat.id, tabId });
     return;
   }
@@ -1887,7 +1984,7 @@ addActionHandler('fetchChat', (global, actions, payload): ActionReturnType => {
     return;
   }
 
-  if (chatId === global.currentUserId) {
+  if (selectIsChatWithSelf(global, chatId)) {
     void callApi('fetchChat', { type: 'self' });
   } else {
     const user = selectUser(global, chatId);
@@ -2147,9 +2244,7 @@ addActionHandler('deleteTopic', async (global, actions, payload): Promise<void> 
   const chat = selectChat(global, chatId);
   if (!chat) return;
 
-  const result = await callApi('deleteTopic', { chat, topicId });
-
-  if (!result) return;
+  await callApi('deleteTopic', { chat, topicId });
 
   global = getGlobal();
   global = deleteTopic(global, chatId, topicId);
@@ -2527,9 +2622,9 @@ addActionHandler('fetchChannelRecommendations', async (global, actions, payload)
     return;
   }
 
-  const similarChannels = await callApi('fetchChannelRecommendations', {
+  const { similarChannels, count } = await callApi('fetchChannelRecommendations', {
     chat,
-  });
+  }) || {};
 
   if (!similarChannels) {
     return;
@@ -2537,13 +2632,24 @@ addActionHandler('fetchChannelRecommendations', async (global, actions, payload)
 
   global = getGlobal();
   global = addChats(global, buildCollectionByKey(similarChannels, 'id'));
-  global = addSimilarChannels(global, chatId, similarChannels.map((channel) => channel.id));
+  global = addSimilarChannels(global, chatId, similarChannels.map((channel) => channel.id), count);
+  setGlobal(global);
+});
 
+addActionHandler('toggleChannelRecommendations', (global, actions, payload): ActionReturnType => {
+  const { chatId } = payload;
+  const chat = selectChat(global, chatId);
+
+  if (!chat) {
+    return;
+  }
+
+  global = toggleSimilarChannels(global, chatId);
   setGlobal(global);
 });
 
 async function loadChats(
-  listType: 'active' | 'archived',
+  listType: ChatListType,
   offsetId?: string,
   offsetDate?: number,
   shouldReplace = false,
@@ -2551,13 +2657,17 @@ async function loadChats(
 ) {
   // eslint-disable-next-line eslint-multitab-tt/no-immediate-global
   let global = getGlobal();
-  let lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
-  const result = await callApi('fetchChats', {
+  let lastLocalServiceMessageId = selectLastServiceNotification(global)?.id;
+  const result = listType === 'saved' ? await callApi('fetchSavedChats', {
+    limit: CHAT_LIST_LOAD_SLICE,
+    offsetDate,
+    withPinned: shouldReplace,
+  }) : await callApi('fetchChats', {
     limit: CHAT_LIST_LOAD_SLICE,
     offsetDate,
     archived: listType === 'archived',
     withPinned: shouldReplace,
-    lastLocalServiceMessage,
+    lastLocalServiceMessageId,
   });
 
   if (!result) {
@@ -2571,63 +2681,56 @@ async function loadChats(
   }
 
   global = getGlobal();
+  lastLocalServiceMessageId = selectLastServiceNotification(global)?.id;
 
-  lastLocalServiceMessage = selectLastServiceNotification(global)?.message;
+  if (shouldReplace) {
+    if (listType === 'active') {
+      // Always include service notifications chat
+      if (!chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
+        const result2 = await callApi('fetchChat', {
+          type: 'user',
+          user: SERVICE_NOTIFICATIONS_USER_MOCK,
+        });
 
-  if (shouldReplace && listType === 'active') {
-    // Always include service notifications chat
-    if (!chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
-      const result2 = await callApi('fetchChat', {
-        type: 'user',
-        user: SERVICE_NOTIFICATIONS_USER_MOCK,
-      });
+        global = getGlobal();
 
-      global = getGlobal();
-
-      const notificationsChat = result2 && selectChat(global, result2.chatId);
-      if (notificationsChat) {
-        chatIds.unshift(notificationsChat.id);
-        result.chats.unshift(notificationsChat);
-        if (lastLocalServiceMessage) {
-          notificationsChat.lastMessage = lastLocalServiceMessage;
+        const notificationsChat = result2 && selectChat(global, result2.chatId);
+        if (notificationsChat) {
+          chatIds.unshift(notificationsChat.id);
+          result.chats.unshift(notificationsChat);
+          if (lastLocalServiceMessageId) {
+            result.lastMessageByChatId[notificationsChat.id] = lastLocalServiceMessageId;
+          }
         }
       }
+
+      const tabStates = Object.values(global.byTabId);
+      const visibleChats = tabStates.flatMap(({ id: tabId }) => {
+        const currentChat = selectCurrentChat(global, tabId);
+        return currentChat ? [currentChat] : [];
+      });
+
+      const visibleUsers = tabStates.flatMap(({ id: tabId }) => {
+        return selectVisibleUsers(global, tabId) || [];
+      });
+
+      if (global.currentUserId && global.users.byId[global.currentUserId]) {
+        visibleUsers.push(global.users.byId[global.currentUserId]);
+      }
+
+      global = replaceUsers(global, buildCollectionByKey(visibleUsers.concat(result.users), 'id'));
+      global = replaceUserStatuses(global, result.userStatusesById);
+      global = replaceChats(global, buildCollectionByKey(visibleChats.concat(result.chats), 'id'));
+      global = replaceChatListIds(global, listType, chatIds);
+    } else {
+      // Archived and Saved
+      global = addUsers(global, buildCollectionByKey(result.users, 'id'));
+      global = addUserStatuses(global, result.userStatusesById);
+      global = updateChats(global, buildCollectionByKey(result.chats, 'id'));
+      global = replaceChatListIds(global, listType, chatIds);
     }
-
-    const tabStates = Object.values(global.byTabId);
-    const visibleChats = tabStates.flatMap(({ id: tabId }) => {
-      const currentChat = selectCurrentChat(global, tabId);
-      return currentChat ? [currentChat] : [];
-    });
-
-    const visibleUsers = tabStates.flatMap(({ id: tabId }) => {
-      return selectVisibleUsers(global, tabId) || [];
-    });
-
-    if (global.currentUserId && global.users.byId[global.currentUserId]) {
-      visibleUsers.push(global.users.byId[global.currentUserId]);
-    }
-
-    global = replaceUsers(global, buildCollectionByKey(visibleUsers.concat(result.users), 'id'));
-    global = replaceUserStatuses(global, result.userStatusesById);
-    global = replaceChats(global, buildCollectionByKey(visibleChats.concat(result.chats), 'id'));
-    global = replaceChatListIds(global, listType, chatIds);
-  } else if (shouldReplace && listType === 'archived') {
-    global = addUsers(global, buildCollectionByKey(result.users, 'id'));
-    global = addUserStatuses(global, result.userStatusesById);
-    global = updateChats(global, buildCollectionByKey(result.chats, 'id'));
-    global = replaceChatListIds(global, listType, chatIds);
   } else {
     const newChats = buildCollectionByKey(result.chats, 'id');
-    if (chatIds.includes(SERVICE_NOTIFICATIONS_USER_ID)) {
-      const notificationsChat = newChats[SERVICE_NOTIFICATIONS_USER_ID];
-      if (notificationsChat && lastLocalServiceMessage) {
-        newChats[SERVICE_NOTIFICATIONS_USER_ID] = {
-          ...notificationsChat,
-          lastMessage: lastLocalServiceMessage,
-        };
-      }
-    }
 
     global = addUsers(global, buildCollectionByKey(result.users, 'id'));
     global = addUserStatuses(global, result.userStatusesById);
@@ -2636,6 +2739,8 @@ async function loadChats(
   }
 
   global = updateChatListSecondaryInfo(global, listType, result);
+  global = addMessages(global, result.messages);
+  global = updateChatsLastMessageId(global, result.lastMessageByChatId, listType);
 
   const idsToUpdateDraft = isFullDraftSync ? result.chatIds : Object.keys(result.draftsById);
   idsToUpdateDraft.forEach((chatId) => {
@@ -2651,7 +2756,7 @@ async function loadChats(
     }
   });
 
-  if (chatIds.length === 0 && !global.chats.isFullyLoaded[listType]) {
+  if ((chatIds.length === 0 || chatIds.length === result.totalChatCount) && !global.chats.isFullyLoaded[listType]) {
     global = {
       ...global,
       chats: {
@@ -2677,13 +2782,12 @@ export async function loadFullChat<T extends GlobalState>(
   }
 
   const {
-    users, userStatusesById, fullInfo, groupCall, membersCount, isForumAsMessages,
+    chats, users, userStatusesById, fullInfo, groupCall, membersCount, isForumAsMessages,
   } = result;
 
   global = getGlobal();
-  if (users) {
-    global = addUsers(global, buildCollectionByKey(users, 'id'));
-  }
+  global = addUsers(global, buildCollectionByKey(users, 'id'));
+  global = updateChats(global, buildCollectionByKey(chats, 'id'));
 
   if (userStatusesById) {
     global = addUserStatuses(global, userStatusesById);
@@ -2716,6 +2820,18 @@ export async function loadFullChat<T extends GlobalState>(
       stickerSetInfo: {
         id: stickerSet.id,
         accessHash: stickerSet.accessHash,
+      },
+      tabId,
+    });
+  }
+
+  const emojiSet = fullInfo.emojiSet;
+  const localEmojiSet = emojiSet && selectStickerSet(global, emojiSet);
+  if (emojiSet && !localEmojiSet) {
+    actions.loadStickers({
+      stickerSetInfo: {
+        id: emojiSet.id,
+        accessHash: emojiSet.accessHash,
       },
       tabId,
     });
@@ -2829,7 +2945,7 @@ async function openChatByUsername<T extends GlobalState>(
   global: T,
   actions: RequiredGlobalActions,
   username: string,
-  threadId?: number,
+  threadId?: ThreadId,
   channelPostId?: number,
   startParam?: string,
   startAttach?: string,

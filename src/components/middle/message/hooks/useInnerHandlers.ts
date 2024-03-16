@@ -5,7 +5,7 @@ import type {
   ApiMessage, ApiPeer, ApiStory, ApiTopic, ApiUser,
 } from '../../../../api/types';
 import type { LangFn } from '../../../../hooks/useLang';
-import type { IAlbum } from '../../../../types';
+import type { IAlbum, ThreadId } from '../../../../types';
 import { MAIN_THREAD_ID } from '../../../../api/types';
 import { MediaViewerOrigin } from '../../../../types';
 
@@ -18,7 +18,7 @@ export default function useInnerHandlers(
   selectMessage: (e: React.MouseEvent<HTMLDivElement, MouseEvent>, groupedId?: string) => void,
   message: ApiMessage,
   chatId: string,
-  threadId: number,
+  threadId: ThreadId,
   isInDocumentGroup: boolean,
   asForwarded?: boolean,
   isScheduled?: boolean,
@@ -34,7 +34,7 @@ export default function useInnerHandlers(
 ) {
   const {
     openChat, showNotification, focusMessage, openMediaViewer, openAudioPlayer,
-    markMessagesRead, cancelSendingMessage, sendPollVote, openForwardMenu,
+    markMessagesRead, cancelUploadMedia, sendPollVote, openForwardMenu,
     openChatLanguageModal, openThread, openStoryViewer,
   } = getActions();
 
@@ -121,7 +121,7 @@ export default function useInnerHandlers(
   });
 
   const handleCancelUpload = useLastCallback(() => {
-    cancelSendingMessage({ chatId, messageId });
+    cancelUploadMedia({ chatId, messageId });
   });
 
   const handleVoteSend = useLastCallback((options: string[]) => {

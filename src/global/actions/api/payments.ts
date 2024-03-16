@@ -9,7 +9,7 @@ import { buildCollectionByKey, unique } from '../../../util/iteratees';
 import * as langProvider from '../../../util/langProvider';
 import { buildQueryString } from '../../../util/requestQuery';
 import { callApi } from '../../../api/gramjs';
-import { getStripeError, isChatChannel } from '../../helpers';
+import { getStripeError, isChatChannel, isChatSuperGroup } from '../../helpers';
 import { addActionHandler, getGlobal, setGlobal } from '../../index';
 import {
   addChats,
@@ -19,12 +19,14 @@ import {
   setReceipt,
   setRequestInfoId,
   setSmartGlocalCardInfo, setStripeCardInfo,
+  updateChatFullInfo,
   updatePayment,
   updateShippingOptions,
 } from '../../reducers';
 import { updateTabState } from '../../reducers/tabs';
 import {
   selectChat,
+  selectChatFullInfo,
   selectChatMessage,
   selectPaymentFormId,
   selectPaymentInputInvoice, selectPaymentRequestId,
@@ -33,7 +35,10 @@ import {
   selectSmartGlocalCredentials,
   selectStripeCredentials,
   selectTabState,
+  selectUser,
 } from '../../selectors';
+
+const LOCAL_BOOST_COOLDOWN = 86400; // 24 hours
 
 addActionHandler('validateRequestedInfo', (global, actions, payload): ActionReturnType => {
   const { requestInfo, saveInfo, tabId = getCurrentTabId() } = payload;
@@ -102,12 +107,17 @@ async function getPaymentForm<T extends GlobalState>(
     return undefined;
   }
 
-  const { form, invoice, users } = result;
+  const {
+    form, invoice, users, botId,
+  } = result;
 
   global = getGlobal();
+  global = addUsers(global, buildCollectionByKey(users, 'id'));
   global = setPaymentForm(global, form, tabId);
   global = setPaymentStep(global, PaymentStep.Checkout, tabId);
-  global = addUsers(global, buildCollectionByKey(users, 'id'));
+  global = updatePayment(global, {
+    botName: selectUser(global, botId)?.firstName,
+  }, tabId);
   setGlobal(global);
 
   return invoice;
@@ -185,10 +195,8 @@ addActionHandler('sendPaymentForm', async (global, actions, payload): Promise<vo
   const formId = selectPaymentFormId(global, tabId);
   const requestInfoId = selectPaymentRequestId(global, tabId);
   const { nativeProvider, temporaryPassword } = selectTabState(global, tabId).payment;
-  const publishableKey = nativeProvider === 'stripe'
-    ? selectProviderPublishableKey(global, tabId) : selectProviderPublicToken(global, tabId);
 
-  if (!inputInvoice || !publishableKey || !formId || !nativeProvider) {
+  if (!inputInvoice || !formId) {
     return;
   }
 
@@ -341,21 +349,28 @@ async function sendSmartGlocalCredentials<T extends GlobalState>(
   setGlobal(global);
 }
 
+addActionHandler('setSmartGlocalCardInfo', (global, actions, payload): ActionReturnType => {
+  const { tabId = getCurrentTabId(), type, token } = payload;
+  return setSmartGlocalCardInfo(global, {
+    type,
+    token,
+  }, tabId);
+});
+
 addActionHandler('setPaymentStep', (global, actions, payload): ActionReturnType => {
   const { step, tabId = getCurrentTabId() } = payload;
   return setPaymentStep(global, step ?? PaymentStep.Checkout, tabId);
 });
 
 addActionHandler('closePremiumModal', (global, actions, payload): ActionReturnType => {
-  const { isClosed, tabId = getCurrentTabId() } = payload || {};
+  const { tabId = getCurrentTabId() } = payload || {};
 
   const tabState = selectTabState(global, tabId);
   if (!tabState.premiumModal) return undefined;
   return updateTabState(global, {
     premiumModal: {
-      ...tabState.premiumModal,
-      ...(isClosed && { isOpen: false }),
-      isClosing: !isClosed,
+      promo: tabState.premiumModal.promo, // Cache promo
+      isOpen: false,
     },
   }, tabId);
 });
@@ -399,15 +414,10 @@ addActionHandler('openGiftPremiumModal', async (global, actions, payload): Promi
   global = getGlobal();
   global = addUsers(global, buildCollectionByKey(result.users, 'id'));
 
-  // TODO Support all subscription options
-  const month = result.promo.options.find((option) => option.months === 1)!;
-
   global = updateTabState(global, {
     giftPremiumModal: {
       isOpen: true,
       forUserId,
-      monthlyCurrency: month.currency,
-      monthlyAmount: String(month.amount),
     },
   }, tabId);
   setGlobal(global);
@@ -465,7 +475,7 @@ async function validateRequestedInfo<T extends GlobalState>(
 addActionHandler('openBoostModal', async (global, actions, payload): Promise<void> => {
   const { chatId, tabId = getCurrentTabId() } = payload;
   const chat = selectChat(global, chatId);
-  if (!chat || !isChatChannel(chat)) return;
+  if (!chat || !(isChatChannel(chat) || isChatSuperGroup(chat))) return;
 
   global = updateTabState(global, {
     boostModal: {
@@ -602,19 +612,96 @@ addActionHandler('applyBoost', async (global, actions, payload): Promise<void> =
   const chat = selectChat(global, chatId);
   if (!chat) return;
 
+  const oldChatFullInfo = selectChatFullInfo(global, chatId);
+  const oldBoostsApplied = oldChatFullInfo?.boostsApplied || 0;
+
+  const appliedBoostsCount = slots.length;
+
+  let tabState = selectTabState(global, tabId);
+  const oldStatus = tabState.boostModal?.boostStatus;
+
+  if (oldStatus) {
+    const boostsPerLevel = oldStatus.nextLevelBoosts ? oldStatus.nextLevelBoosts - oldStatus.currentLevelBoosts : 1;
+    const newBoosts = oldStatus.boosts + appliedBoostsCount;
+    const isLevelUp = oldStatus.nextLevelBoosts && newBoosts >= oldStatus.nextLevelBoosts;
+    const newCurrentLevelBoosts = isLevelUp ? oldStatus.nextLevelBoosts! : oldStatus.currentLevelBoosts;
+    const newNextLevelBoosts = isLevelUp ? oldStatus.nextLevelBoosts! + boostsPerLevel : oldStatus.nextLevelBoosts;
+
+    global = updateTabState(global, {
+      boostModal: {
+        ...tabState.boostModal!,
+        boostStatus: {
+          ...oldStatus,
+          level: isLevelUp ? oldStatus.level + 1 : oldStatus.level,
+          currentLevelBoosts: newCurrentLevelBoosts,
+          nextLevelBoosts: newNextLevelBoosts,
+          hasMyBoost: true,
+          boosts: newBoosts,
+        },
+      },
+    }, tabId);
+    setGlobal(global);
+  }
+
+  global = getGlobal();
+  tabState = selectTabState(global, tabId);
+  const oldMyBoosts = tabState.boostModal?.myBoosts;
+
+  if (oldMyBoosts) {
+    const unixNow = Math.floor(Date.now() / 1000);
+    const newMyBoosts = oldMyBoosts.map((boost) => {
+      if (slots.includes(boost.slot)) {
+        return {
+          ...boost,
+          chatId,
+          date: unixNow,
+          cooldownUntil: unixNow + LOCAL_BOOST_COOLDOWN, // Will be refetched below
+        };
+      }
+      return boost;
+    });
+
+    global = updateTabState(global, {
+      boostModal: {
+        ...tabState.boostModal!,
+        myBoosts: newMyBoosts,
+      },
+    }, tabId);
+    setGlobal(global);
+  }
+
   const result = await callApi('applyBoost', {
     slots,
     chat,
   });
 
+  global = getGlobal();
+
   if (!result) {
+    // Rollback local changes
+    const boostModal = selectTabState(global, tabId).boostModal;
+    if (boostModal) {
+      global = updateTabState(global, {
+        boostModal: {
+          ...boostModal,
+          boostStatus: oldStatus,
+          myBoosts: oldMyBoosts,
+        },
+      }, tabId);
+      setGlobal(global);
+    }
     return;
   }
 
-  global = getGlobal();
-  let tabState = selectTabState(global, tabId);
+  tabState = selectTabState(global, tabId);
   global = addUsers(global, buildCollectionByKey(result.users, 'id'));
   global = addChats(global, buildCollectionByKey(result.chats, 'id'));
+  if (oldChatFullInfo) {
+    global = updateChatFullInfo(global, chatId, {
+      boostsApplied: oldBoostsApplied + slots.length,
+    });
+  }
+
   if (tabState.boostModal) {
     global = updateTabState(global, {
       boostModal: {
@@ -623,25 +710,6 @@ addActionHandler('applyBoost', async (global, actions, payload): Promise<void> =
       },
     }, tabId);
   }
-  setGlobal(global);
-
-  const newStatusResult = await callApi('fetchBoostsStatus', {
-    chat,
-  });
-
-  if (!newStatusResult) {
-    return;
-  }
-
-  global = getGlobal();
-  tabState = selectTabState(global, tabId);
-  if (!tabState.boostModal?.boostStatus) return;
-  global = updateTabState(global, {
-    boostModal: {
-      ...tabState.boostModal,
-      boostStatus: newStatusResult,
-    },
-  }, tabId);
   setGlobal(global);
 });
 

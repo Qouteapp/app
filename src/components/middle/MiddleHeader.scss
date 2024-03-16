@@ -49,17 +49,6 @@
     padding-right: max(0.5rem, env(safe-area-inset-right));
   }
 
-  // Target: Old Firefox (Waterfox Classic)
-  @supports not (padding-left: max(1.5rem, env(safe-area-inset-left))) {
-    padding-left: 1.5rem;
-    padding-right: 0.8125rem;
-
-    @media (max-width: 600px) {
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
-    }
-  }
-
   .Transition {
     width: 100%;
     // https://dfmcphee.com/flex-items-and-min-width-0/
@@ -250,6 +239,17 @@
       }
     }
 
+    .saved-dialog-avatar {
+      position: absolute;
+    }
+
+    .overlay-avatar {
+      margin-left: 2.125rem;
+      .inner {
+        outline: 2px solid var(--color-background);
+      }
+    }
+
     .status,
     .typing-status {
       display: inline;
@@ -281,6 +281,10 @@
     .story-circle {
       max-width: 2.625rem !important;
       max-height: 2.625rem !important;
+    }
+
+    .message-count-transition {
+      height: 1.125rem;
     }
   }
 

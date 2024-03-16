@@ -7,7 +7,7 @@ import type {
 } from '../../../api/types';
 
 import buildClassName from '../../../util/buildClassName';
-import { formatDateTimeToString, formatTime } from '../../../util/dateFormat';
+import { formatDateTimeToString, formatPastTimeShort, formatTime } from '../../../util/dateFormat';
 import { formatIntegerCompact } from '../../../util/textFormat';
 import renderText from '../../common/helpers/renderText';
 
@@ -29,6 +29,7 @@ type OwnProps = {
   repliesThreadInfo?: ApiThreadInfo;
   isTranslated?: boolean;
   isPinned?: boolean;
+  withFullDate?: boolean;
   onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   onTranslationClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   renderQuickReactionButton?: () => TeactNode | undefined;
@@ -45,6 +46,7 @@ const MessageMeta: FC<OwnProps> = ({
   noReplies,
   isTranslated,
   isPinned,
+  withFullDate,
   onClick,
   onTranslationClick,
   onOpenThread,
@@ -72,7 +74,12 @@ const MessageMeta: FC<OwnProps> = ({
     const editDateTime = message.isEdited
       && formatDateTimeToString(message.editDate! * 1000, lang.code, undefined, lang.timeFormat);
     const forwardedDateTime = message.forwardInfo
-      && formatDateTimeToString(message.forwardInfo.date * 1000, lang.code, undefined, lang.timeFormat);
+      && formatDateTimeToString(
+        (message.forwardInfo.savedDate || message.forwardInfo.date) * 1000,
+        lang.code,
+        undefined,
+        lang.timeFormat,
+      );
 
     let text = createDateTime;
     if (editDateTime) {
@@ -88,6 +95,15 @@ const MessageMeta: FC<OwnProps> = ({
     // We need to listen to timeformat change
     // eslint-disable-next-line react-hooks-static-deps/exhaustive-deps
   }, [isActivated, lang, message, lang.timeFormat]);
+
+  const date = useMemo(() => {
+    const time = formatTime(lang, message.date * 1000);
+    if (!withFullDate) {
+      return time;
+    }
+
+    return formatPastTimeShort(lang, (message.forwardInfo?.date || message.date) * 1000, true);
+  }, [lang, message.date, message.forwardInfo?.date, withFullDate]);
 
   const fullClassName = buildClassName(
     'MessageMeta',
@@ -137,7 +153,7 @@ const MessageMeta: FC<OwnProps> = ({
           </>
         )}
         {message.isEdited && `${lang('EditedMessage')} `}
-        {formatTime(lang, message.date * 1000)}
+        {date}
       </span>
       {outgoingStatus && (
         <MessageOutgoingStatus status={outgoingStatus} />

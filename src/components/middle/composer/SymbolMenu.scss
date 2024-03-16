@@ -33,20 +33,6 @@
       transform: translate3d(0, calc(var(--symbol-menu-height)), 0);
     }
 
-    // Target: Old Firefox (Waterfox Classic)
-    @supports not (padding-right: env(safe-area-inset-right)) {
-      padding-right: 0;
-      padding-left: 0;
-      transform: translate3d(0, calc(var(--symbol-menu-height)), 0);
-    }
-
-    @media (max-width: 600px) {
-      @supports not (padding-right: env(safe-area-inset-right)) {
-        padding-bottom: env(safe-area-inset-bottom);
-        transform: translate3d(0, calc(var(--symbol-menu-height) + env(safe-area-inset-bottom)), 0);
-      }
-    }
-
     body.no-page-transitions & {
       transition: none;
     }
@@ -61,9 +47,7 @@
     max-height: calc(100vh - var(--symbol-menu-footer-height));
 
     @media (max-width: 600px) {
-      @supports (max-height: calc(100vh - var(--symbol-menu-footer-height) - env(safe-area-inset-bottom))) {
-        max-height: calc(100vh - var(--symbol-menu-footer-height) - env(safe-area-inset-bottom));
-      }
+      max-height: calc(100vh - var(--symbol-menu-footer-height) - env(safe-area-inset-bottom));
     }
   }
 
@@ -181,12 +165,6 @@
     position: absolute;
     right: max(0.25rem, env(safe-area-inset-right));
     top: max(0.25rem, env(safe-area-inset-top));
-
-    // Target: Old Firefox (Waterfox Classic)
-    @supports not (right: max(0.25rem, env(safe-area-inset-right))) {
-      right: 0.25rem;
-      top: 0.25rem;
-    }
   }
 
   @media (orientation: landscape) {
@@ -209,43 +187,53 @@
     color: rgba(var(--color-text-secondary-rgb), 0.75);
   }
 
-  &-name {
+  &-title {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
     font-size: 1rem;
     line-height: 1.6875rem;
     font-weight: 500;
     margin: 0;
     padding: 0 0.25rem 0.125rem;
     overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    text-align: center;
     unicode-bidi: plaintext;
     z-index: 1;
 
     &-external {
       color: var(--color-text);
       text-align: start;
+      margin-right: 0.5rem;
     }
+  }
+
+  &-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
   }
 
   &-amount {
-    display: block;
     font-size: 0.875rem;
     font-weight: normal;
     text-align: left;
-    line-height: 1.125rem;
-    margin-top: -0.125rem;
-    margin-bottom: 0.125rem;
     color: rgba(var(--color-text-secondary-rgb), 0.75);
     unicode-bidi: plaintext;
-
-    .symbol-set-locked & {
-      padding-left: 1.25rem;
-    }
+    white-space: nowrap;
   }
 
-  &-locked-icon {
-    margin-right: 0.25rem;
+  &-chat {
+    background-color: var(--color-text-secondary);
+    color: var(--color-background);
+    border-radius: 1rem;
+    padding-inline: 0.25rem;
+    white-space: nowrap;
+  }
+
+  &-add-button {
+    margin-bottom: 0.25rem;
   }
 
   &-remove {

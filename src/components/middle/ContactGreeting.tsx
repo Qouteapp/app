@@ -1,12 +1,13 @@
 import type { FC } from '../../lib/teact/teact';
-import React, { memo, useEffect, useRef } from '../../lib/teact/teact';
+import React, {
+  memo, useEffect, useMemo, useRef,
+} from '../../lib/teact/teact';
 import { getActions, withGlobal } from '../../global';
 
 import type { ApiSticker, ApiUpdateConnectionStateType } from '../../api/types';
 import type { MessageList } from '../../global/types';
 
-import { getPeerIdDividend } from '../../global/helpers';
-import { selectChat, selectCurrentMessageList } from '../../global/selectors';
+import { selectChat, selectChatLastMessage, selectCurrentMessageList } from '../../global/selectors';
 
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
@@ -20,14 +21,14 @@ type OwnProps = {
 };
 
 type StateProps = {
-  sticker?: ApiSticker;
+  stickers?: ApiSticker[];
   lastUnreadMessageId?: number;
   connectionState?: ApiUpdateConnectionStateType;
   currentMessageList?: MessageList;
 };
 
 const ContactGreeting: FC<OwnProps & StateProps> = ({
-  sticker,
+  stickers,
   connectionState,
   lastUnreadMessageId,
   currentMessageList,
@@ -43,13 +44,20 @@ const ContactGreeting: FC<OwnProps & StateProps> = ({
   // eslint-disable-next-line no-null/no-null
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const sticker = useMemo(() => {
+    if (!stickers?.length) return undefined;
+
+    const randomIndex = Math.floor(Math.random() * stickers.length);
+    return stickers[randomIndex];
+  }, [stickers]);
+
   useEffect(() => {
-    if (sticker || connectionState !== 'connectionStateReady') {
+    if (stickers?.length || connectionState !== 'connectionStateReady') {
       return;
     }
 
     loadGreetingStickers();
-  }, [connectionState, loadGreetingStickers, sticker]);
+  }, [connectionState, loadGreetingStickers, stickers]);
 
   useEffect(() => {
     if (connectionState === 'connectionStateReady' && lastUnreadMessageId) {
@@ -83,6 +91,7 @@ const ContactGreeting: FC<OwnProps & StateProps> = ({
               containerRef={containerRef}
               sticker={sticker}
               size={160}
+              shouldLoop
             />
           )}
         </div>
@@ -94,17 +103,17 @@ const ContactGreeting: FC<OwnProps & StateProps> = ({
 export default memo(withGlobal<OwnProps>(
   (global, { userId }): StateProps => {
     const { stickers } = global.stickers.greeting;
-    const dividend = getPeerIdDividend(userId) + getPeerIdDividend(global.currentUserId!);
-    const sticker = stickers?.length ? stickers[dividend % stickers.length] : undefined;
     const chat = selectChat(global, userId);
     if (!chat) {
       return {};
     }
 
+    const lastMessage = selectChatLastMessage(global, chat.id);
+
     return {
-      sticker,
-      lastUnreadMessageId: chat.lastMessage && chat.lastMessage.id !== chat.lastReadInboxMessageId
-        ? chat.lastMessage.id
+      stickers,
+      lastUnreadMessageId: lastMessage && lastMessage.id !== chat.lastReadInboxMessageId
+        ? lastMessage.id
         : undefined,
       connectionState: global.connectionState,
       currentMessageList: selectCurrentMessageList(global),

@@ -1,24 +1,52 @@
 import { getActions } from '../global';
 
 import type { ApiChatType } from '../api/types';
-import type { DeepLinkMethod } from './deepLinkParser';
+import type { DeepLinkMethod, PrivateMessageLink } from './deepLinkParser';
 
-import { API_CHAT_TYPES } from '../config';
+import { API_CHAT_TYPES, RE_TG_LINK } from '../config';
+import { toChannelId } from '../global/helpers';
+import { tryParseDeepLink } from './deepLinkParser';
 import { IS_SAFARI } from './windowEnvironment';
 
-export const processDeepLink = (url: string) => {
+export const processDeepLink = (url: string): boolean => {
+  const actions = getActions();
+
+  const parsedLink = tryParseDeepLink(url);
+  if (parsedLink) {
+    switch (parsedLink.type) {
+      case 'privateMessageLink':
+        handlePrivateMessageLink(parsedLink, actions);
+        return true;
+      case 'publicUsernameOrBotLink':
+        actions.openChatByUsername({
+          username: parsedLink.username,
+          startParam: parsedLink.parameter,
+        });
+        return true;
+      default:
+        break;
+    }
+  }
+
+  if (!url.match(RE_TG_LINK)) {
+    return false;
+  }
+
   const {
     protocol, searchParams, pathname, hostname,
   } = new URL(url);
 
-  if (protocol !== 'tg:') return;
+  if (protocol !== 'tg:') return false;
+
+  // Safari thinks the path in tg://path links is hostname for some reason
+  const method = (IS_SAFARI ? hostname : pathname).replace(/^\/\//, '') as DeepLinkMethod;
+  const params = Object.fromEntries(searchParams);
 
   const {
     openChatByInvite,
     openChatByUsername,
     openChatByPhoneNumber,
     openStickerSet,
-    focusMessage,
     joinVoiceChatByLink,
     openInvoice,
     processAttachBotParameters,
@@ -27,11 +55,7 @@ export const processDeepLink = (url: string) => {
     openStoryViewerByUsername,
     processBoostParameters,
     checkGiftCode,
-  } = getActions();
-
-  // Safari thinks the path in tg://path links is hostname for some reason
-  const method = (IS_SAFARI ? hostname : pathname).replace(/^\/\//, '') as DeepLinkMethod;
-  const params = Object.fromEntries(searchParams);
+  } = actions;
 
   switch (method) {
     case 'resolve': {
@@ -82,24 +106,6 @@ export const processDeepLink = (url: string) => {
           });
         }
       }
-      break;
-    }
-    case 'privatepost': {
-      const {
-        post, channel,
-      } = params;
-
-      const hasBoost = params.hasOwnProperty('boost');
-
-      if (hasBoost) {
-        processBoostParameters({ usernameOrId: channel, isPrivate: true });
-        return;
-      }
-
-      focusMessage({
-        chatId: `-${channel}`,
-        messageId: Number(post),
-      });
       break;
     }
     case 'bg': {
@@ -163,9 +169,9 @@ export const processDeepLink = (url: string) => {
     }
     default:
       // Unsupported deeplink
-
-      break;
+      return false;
   }
+  return true;
 };
 
 export function parseChooseParameter(choose?: string) {
@@ -176,4 +182,23 @@ export function parseChooseParameter(choose?: string) {
 
 export function formatShareText(url?: string, text?: string, title?: string): string {
   return [url, title, text].filter(Boolean).join('\n');
+}
+
+function handlePrivateMessageLink(link: PrivateMessageLink, actions: ReturnType<typeof getActions>) {
+  const {
+    focusMessage,
+    processBoostParameters,
+  } = actions;
+  const {
+    isBoost, channelId, messageId, threadId,
+  } = link;
+  if (isBoost) {
+    processBoostParameters({ usernameOrId: channelId, isPrivate: true });
+    return;
+  }
+  focusMessage({
+    chatId: toChannelId(channelId),
+    threadId,
+    messageId,
+  });
 }

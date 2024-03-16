@@ -1,26 +1,32 @@
 import { useMemo } from 'react';
 import { getActions } from '../global';
 
-import type { ApiChat, ApiUser } from '../api/types';
 import type { MenuItemContextAction } from '../components/ui/ListItem';
+import { type ApiChat, type ApiUser } from '../api/types';
 
-import { SERVICE_NOTIFICATIONS_USER_ID } from '../config';
+import { JUNE_TRACK_EVENTS, SERVICE_NOTIFICATIONS_USER_ID } from '../config';
 import {
   getCanDeleteChat, isChatArchived, isChatChannel, isChatGroup,
   isUserId,
 } from '../global/helpers';
 import { compact } from '../util/iteratees';
 import { IS_ELECTRON, IS_OPEN_IN_NEW_TAB_SUPPORTED } from '../util/windowEnvironment';
-import useArchiver from './useArchiver.react';
-import useLang from './useLang.react';
+import useArchiver from './useArchiver';
+import useDone from './useDone';
+import { useJune } from './useJune';
+import useLang from './useLang';
+import useSnooze from './useSnooze';
 
 const useChatContextActions = ({
   chat,
   user,
   folderId,
+  isInbox,
   isPinned,
   isMuted,
   canChangeFolder,
+  isSavedDialog,
+  currentUserId,
   handleDelete,
   handleMute,
   handleChatFolderChange,
@@ -29,9 +35,12 @@ const useChatContextActions = ({
   chat: ApiChat | undefined;
   user: ApiUser | undefined;
   folderId?: number;
+  isInbox?: boolean;
   isPinned?: boolean;
   isMuted?: boolean;
   canChangeFolder?: boolean;
+  isSavedDialog?: boolean;
+  currentUserId?: string;
   handleDelete?: NoneToVoidFunction;
   handleMute?: NoneToVoidFunction;
   handleChatFolderChange: NoneToVoidFunction;
@@ -43,6 +52,31 @@ const useChatContextActions = ({
   const isServiceNotifications = user?.id === SERVICE_NOTIFICATIONS_USER_ID;
 
   const { archiveChat } = useArchiver({ isManual: true });
+  const { doneChat, isChatDone } = useDone();
+  const { snooze } = useSnooze();
+  const { track } = useJune();
+
+  const deleteTitle = useMemo(() => {
+    if (!chat) return undefined;
+
+    if (isSavedDialog) {
+      return lang('Delete');
+    }
+
+    if (isUserId(chat.id)) {
+      return lang('DeleteChatUser');
+    }
+
+    if (getCanDeleteChat(chat)) {
+      return lang('DeleteChat');
+    }
+
+    if (isChatChannel(chat)) {
+      return lang('LeaveChannel');
+    }
+
+    return lang('Group.LeaveGroup');
+  }, [chat, isSavedDialog, lang]);
 
   return useMemo(() => {
     if (!chat) {
@@ -51,32 +85,69 @@ const useChatContextActions = ({
 
     const {
       toggleChatPinned,
+      toggleSavedDialogPinned,
       updateChatMutedState,
       toggleChatUnread,
       openChatInNewTab,
     } = getActions();
 
+    const actionNotifyMe = {
+      title: lang('NotifyMeHotkey'),
+      icon: 'schedule',
+      handler: () => {
+        snooze({ chatId: chat.id });
+        track(JUNE_TRACK_EVENTS.SNOOZE_CHAT, { source: 'Chat Context Menu' });
+      },
+    };
+
     const actionOpenInNewTab = IS_OPEN_IN_NEW_TAB_SUPPORTED && {
       title: IS_ELECTRON ? 'Open in new window' : 'Open in new tab',
       icon: 'open-in-new-tab',
       handler: () => {
-        openChatInNewTab({ chatId: chat.id });
+        if (isSavedDialog) {
+          openChatInNewTab({ chatId: currentUserId!, threadId: chat.id });
+        } else {
+          openChatInNewTab({ chatId: chat.id });
+        }
       },
     };
+
+    const togglePinned = () => {
+      if (isSavedDialog) {
+        toggleSavedDialogPinned({ id: chat.id });
+      } else {
+        toggleChatPinned({ id: chat.id, folderId: folderId! });
+      }
+    };
+
+    const actionPin = isPinned
+      ? {
+        title: lang('UnpinFromTop'),
+        icon: 'unpin',
+        handler: togglePinned,
+      }
+      : {
+        title: lang('PinToTop'),
+        icon: 'pin',
+        handler: togglePinned,
+      };
+
+    const actionDelete = {
+      title: deleteTitle,
+      icon: 'delete',
+      destructive: true,
+      handler: handleDelete,
+    };
+
+    if (isSavedDialog) {
+      return compact([actionOpenInNewTab, actionPin, actionDelete]) as MenuItemContextAction[];
+    }
 
     const actionAddToFolder = canChangeFolder ? {
       title: lang('ChatList.Filter.AddToFolder'),
       icon: 'folder',
       handler: handleChatFolderChange,
     } : undefined;
-
-    const actionPin = isPinned
-      ? {
-        title: lang('UnpinFromTop'),
-        icon: 'unpin',
-        handler: () => toggleChatPinned({ id: chat.id, folderId: folderId! }),
-      }
-      : { title: lang('PinToTop'), icon: 'pin', handler: () => toggleChatPinned({ id: chat.id, folderId: folderId! }) };
 
     const actionMute = isMuted
       ? {
@@ -95,25 +166,65 @@ const useChatContextActions = ({
     }
 
     const actionMaskAsRead = (chat.unreadCount || chat.hasUnreadMark)
-      ? { title: lang('MarkAsRead'), icon: 'readchats', handler: () => toggleChatUnread({ id: chat.id }) }
-      : undefined;
-    const actionMarkAsUnread = !(chat.unreadCount || chat.hasUnreadMark) && !chat.isForum
-      ? { title: lang('MarkAsUnread'), icon: 'unread', handler: () => toggleChatUnread({ id: chat.id }) }
+      ? {
+        title:
+        lang('MarkAsReadHotkey'),
+        icon: 'readchats',
+        handler: () => {
+          toggleChatUnread({ id: chat.id });
+          track(JUNE_TRACK_EVENTS.MARK_CHAT_READ, { source: 'Chat Context Menu' });
+        },
+      }
       : undefined;
 
-    const actionArchive = isChatArchived(chat)
+    const actionMarkAsUnread = !(chat.unreadCount || chat.hasUnreadMark) && !chat.isForum
+      ? {
+        title: lang('MarkAsUnreadHotkey'),
+        icon: 'unread',
+        handler: () => {
+          toggleChatUnread({ id: chat.id });
+          track(JUNE_TRACK_EVENTS.MARK_CHAT_UNREAD, { source: 'Chat Context Menu' });
+        },
+      }
+      : undefined;
+
+    const actionDone = isChatDone(chat)
       ? {
         title: lang('MarkNotDone'),
-        icon: 'unarchive',
+        icon: 'select',
         handler: () => {
-          archiveChat({ id: chat.id, value: false });
+          doneChat({ id: chat.id, value: false });
+          track(JUNE_TRACK_EVENTS.MARK_CHAT_NOT_DONE, { source: 'Chat Context Menu' });
         },
       }
       : {
         title: lang('MarkDone'),
+        icon: 'select',
+        handler: () => {
+          doneChat({ id: chat.id, value: true });
+          track(JUNE_TRACK_EVENTS.MARK_CHAT_DONE, { source: 'Chat Context Menu' });
+        },
+      };
+
+    const actionArchive = isChatArchived(chat)
+      ? {
+        title: lang('Unarchive'),
+        icon: 'unarchive',
+        handler: () => {
+          archiveChat({
+            id: chat.id,
+            value: false,
+          });
+        },
+      }
+      : {
+        title: lang('Archive'),
         icon: 'archive',
         handler: () => {
-          archiveChat({ id: chat.id, value: true });
+          archiveChat({
+            id: chat.id,
+            value: true,
+          });
         },
       };
 
@@ -122,33 +233,25 @@ const useChatContextActions = ({
       ? { title: lang('ReportPeer.Report'), icon: 'flag', handler: handleReport }
       : undefined;
 
-    const actionDelete = {
-      title: isUserId(chat.id)
-        ? lang('Delete')
-        : lang(getCanDeleteChat(chat)
-          ? 'DeleteChat'
-          : (isChatChannel(chat) ? 'LeaveChannel' : 'Group.LeaveGroup')),
-      icon: 'delete',
-      destructive: true,
-      handler: handleDelete,
-    };
-
     const isInFolder = folderId !== undefined;
 
     return compact([
-      !isSelf && !isServiceNotifications && !isInFolder && actionArchive,
+      ...[] || actionNotifyMe, // disable snooze
+      !isSelf && !isServiceNotifications && !isInFolder && actionDone,
       actionMaskAsRead,
       actionMarkAsUnread,
+      !isInbox && !isSelf && !isServiceNotifications && !isInFolder && actionArchive,
       !isSelf && actionMute,
-      actionPin,
-      actionAddToFolder,
+      !isInbox && actionPin,
       actionOpenInNewTab,
+      actionAddToFolder,
       actionReport,
-      actionDelete,
+      !isInbox && actionDelete,
     ]) as MenuItemContextAction[];
   }, [
-    chat, user, canChangeFolder, lang, handleChatFolderChange, isPinned, isInSearch, isMuted,
-    handleDelete, handleMute, handleReport, folderId, isSelf, isServiceNotifications, archiveChat,
+    chat, user, canChangeFolder, lang, handleChatFolderChange, isPinned, isInSearch, isMuted, currentUserId,
+    handleDelete, handleMute, handleReport, folderId, isSelf, isServiceNotifications, isSavedDialog, deleteTitle,
+    isInbox, isChatDone, doneChat, archiveChat, snooze, track,
   ]);
 };
 

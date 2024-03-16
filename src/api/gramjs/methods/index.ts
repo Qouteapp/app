@@ -24,7 +24,7 @@ export {
   editTopic, toggleForum, fetchTopicById, createTopic, toggleParticipantsHidden, checkChatlistInvite,
   joinChatlistInvite, createChalistInvite, editChatlistInvite, deleteChatlistInvite, fetchChatlistInvites,
   fetchLeaveChatlistSuggestions, leaveChatlist, togglePeerTranslations, setViewForumAsMessages,
-  fetchChannelRecommendations,
+  fetchChannelRecommendations, fetchSavedChats, toggleSavedDialogPinned,
 } from './chats';
 
 export {
@@ -35,6 +35,8 @@ export {
   reportMessages, sendMessageAction, fetchSeenBy, fetchSponsoredMessages, viewSponsoredMessage, fetchSendAs,
   saveDefaultSendAs, fetchUnreadReactions, readAllReactions, fetchUnreadMentions, readAllMentions, transcribeAudio,
   closePoll, fetchExtendedMedia, translateText, fetchMessageViews, fetchDiscussionMessage, clickSponsoredMessage,
+  fetchOutboxReadDate,
+  deleteSavedHistory,
 } from './messages';
 
 export {
@@ -75,7 +77,8 @@ export {
 } from './twoFaSettings';
 
 export {
-  answerCallbackButton, fetchTopInlineBots, fetchInlineBot, fetchInlineBotResults, sendInlineBotResult, startBot,
+  answerCallbackButton, setBotInfo, fetchTopInlineBots, fetchInlineBot, fetchInlineBotResults,
+  sendInlineBotResult, startBot,
   requestWebView, requestSimpleWebView, sendWebViewData, prolongWebView, loadAttachBots, toggleAttachBot, fetchBotApp,
   requestBotUrlAuth, requestLinkUrlAuth, acceptBotUrlAuth, acceptLinkUrlAuth, loadAttachBot, requestAppWebView,
   allowBotSendMessages, fetchBotCanSendMessage, invokeWebViewCustomMethod,
@@ -88,10 +91,7 @@ export {
   requestCall, getDhConfig, confirmCall, sendSignalingData, acceptCall, discardCall, setCallRating, receivedCall,
 } from './calls';
 
-export {
-  getAvailableReactions, sendReaction, sendEmojiInteraction, fetchMessageReactionsList, clearRecentReactions,
-  setDefaultReaction, fetchMessageReactions, sendWatchingEmojiInteraction, fetchRecentReactions, fetchTopReactions,
-} from './reactions';
+export * from './reactions';
 
 export {
   fetchChannelStatistics, fetchGroupStatistics, fetchMessageStatistics,

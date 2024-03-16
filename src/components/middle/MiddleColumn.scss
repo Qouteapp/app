@@ -204,12 +204,10 @@
       top: 0;
 
       @media (max-width: 600px) {
-        @supports (padding-bottom: env(safe-area-inset-bottom)) {
-          padding-bottom: env(safe-area-inset-bottom);
+        padding-bottom: env(safe-area-inset-bottom);
 
-          body.keyboard-visible & {
-            top: env(safe-area-inset-bottom);
-          }
+        body.keyboard-visible & {
+          top: env(safe-area-inset-bottom);
         }
       }
     }
@@ -269,8 +267,7 @@
 
 .Composer,
 .MessageSelectToolbar,
-.unpin-all-button,
-.join-subscribe-button,
+.composer-button,
 .messaging-disabled {
   width: 100%;
   display: flex;
@@ -279,8 +276,7 @@
 }
 
 .MessageSelectToolbar-inner,
-.unpin-all-button,
-.join-subscribe-button,
+.composer-button,
 .messaging-disabled {
   .mask-image-disabled & {
     box-shadow: 0 0.25rem 0.5rem 0.125rem var(--color-default-shadow);
@@ -325,11 +321,11 @@
     }
   }
 
-  .join-subscribe-button,
-  .unpin-all-button {
+  .composer-button {
     height: 3.5rem;
     transform: scaleX(1);
     transition: transform var(--select-transition), background-color 0.15s, color 0.15s;
+    color: var(--color-primary);
 
     .select-mode-active + .middle-column-footer & {
       box-shadow: none;
@@ -342,12 +338,8 @@
   }
 
   @media (max-width: 600px) {
-    padding-bottom: 0.75rem;
     margin-left: -0.5rem;
-
-    @supports (padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))) {
-      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-    }
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   }
 
   .mask-image-disabled &::before {

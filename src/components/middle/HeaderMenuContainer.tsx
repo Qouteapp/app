@@ -5,7 +5,7 @@ import React, {
 import { getActions, withGlobal } from '../../global';
 
 import type { ApiBotCommand, ApiChat } from '../../api/types';
-import type { IAnchorPosition } from '../../types';
+import type { IAnchorPosition, ThreadId } from '../../types';
 import type { IconName } from '../../types/icons';
 import { MAIN_THREAD_ID } from '../../api/types';
 
@@ -15,6 +15,7 @@ import {
   getCanDeleteChat,
   getCanManageTopic,
   getHasAdminRight,
+  getIsSavedDialog,
   isChatChannel,
   isChatGroup,
   isUserId,
@@ -71,7 +72,7 @@ const BOT_BUTTONS: Record<string, { icon: IconName; label: string }> = {
 
 export type OwnProps = {
   chatId: string;
-  threadId: number;
+  threadId: ThreadId;
   isOpen: boolean;
   withExtraActions: boolean;
   anchor: IAnchorPosition;
@@ -83,6 +84,7 @@ export type OwnProps = {
   canMute?: boolean;
   canViewStatistics?: boolean;
   canViewBoosts?: boolean;
+  canShowBoostModal?: boolean;
   withForumActions?: boolean;
   canLeave?: boolean;
   canEnterVoiceChat?: boolean;
@@ -119,6 +121,7 @@ type StateProps = {
   isBlocked?: boolean;
   isBot?: boolean;
   isChatWithSelf?: boolean;
+  savedDialog?: ApiChat;
 };
 
 const CLOSE_MENU_ANIMATION_DURATION = 200;
@@ -163,6 +166,8 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
   isBlocked,
   isBot,
   isChatWithSelf,
+  savedDialog,
+  canShowBoostModal,
   onJoinRequestsClick,
   onSubscribeChannel,
   onSearchClick,
@@ -192,6 +197,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
     blockUser,
     unblockUser,
     setViewForumAsMessages,
+    openBoostModal,
   } = getActions();
 
   const { isMobile } = useAppLayout();
@@ -276,7 +282,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
   });
 
   const handleEditTopicClick = useLastCallback(() => {
-    openEditTopicPanel({ chatId, topicId: threadId });
+    openEditTopicPanel({ chatId, topicId: Number(threadId) });
     setShouldCloseFast(!isRightColumnShown);
     closeMenu();
   });
@@ -343,8 +349,12 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
   });
 
   const handleBoostClick = useLastCallback(() => {
-    openBoostStatistics({ chatId });
-    setShouldCloseFast(!isRightColumnShown);
+    if (canViewBoosts) {
+      openBoostStatistics({ chatId });
+      setShouldCloseFast(!isRightColumnShown);
+    } else {
+      openBoostModal({ chatId });
+    }
     closeMenu();
   });
 
@@ -402,6 +412,28 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
       );
     });
   }, [botCommands, closeMenu, lang, sendBotCommand]);
+
+  const deleteTitle = useMemo(() => {
+    if (!chat) return undefined;
+
+    if (savedDialog) {
+      return lang('Delete');
+    }
+
+    if (isPrivate) {
+      return lang('DeleteChatUser');
+    }
+
+    if (canDeleteChat) {
+      return lang('GroupInfo.DeleteAndExit');
+    }
+
+    if (isChannel) {
+      return lang('LeaveChannel');
+    }
+
+    return lang('Group.LeaveGroup');
+  }, [canDeleteChat, chat, isChannel, isPrivate, savedDialog, lang]);
 
   return (
     <Portal>
@@ -497,6 +529,14 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
               {lang(isChannel ? 'ProfileJoinChannel' : 'ProfileJoinGroup')}
             </MenuItem>
           )}
+          {canShowBoostModal && !canViewBoosts && (
+            <MenuItem
+              icon="boost-outline"
+              onClick={handleBoostClick}
+            >
+              {lang(isChannel ? 'BoostingBoostChannelMenu' : 'BoostingBoostGroupMenu')}
+            </MenuItem>
+          )}
           {canAddContact && (
             <MenuItem
               icon="add-user"
@@ -564,7 +604,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
           )}
           {canViewBoosts && (
             <MenuItem
-              icon="boost"
+              icon="boost-outline"
               onClick={handleBoostClick}
             >
               {lang('Boosts')}
@@ -627,9 +667,7 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
                 icon="delete"
                 onClick={handleDelete}
               >
-                {lang(isPrivate
-                  ? 'DeleteChatUser'
-                  : (canDeleteChat ? 'GroupInfo.DeleteAndExit' : (isChannel ? 'LeaveChannel' : 'Group.LeaveGroup')))}
+                {deleteTitle}
               </MenuItem>
             </>
           )}
@@ -638,7 +676,8 @@ const HeaderMenuContainer: FC<OwnProps & StateProps> = ({
           <DeleteChatModal
             isOpen={isDeleteModalOpen}
             onClose={closeDeleteModal}
-            chat={chat}
+            chat={savedDialog || chat}
+            isSavedDialog={Boolean(savedDialog)}
           />
         )}
         {canMute && shouldRenderMuteModal && chat?.id && (
@@ -694,6 +733,9 @@ export default memo(withGlobal<OwnProps>(
     // Context menu item should only be displayed if user hid translation panel
     const canTranslate = selectCanTranslateChat(global, chatId) && fullInfo?.isTranslationDisabled;
 
+    const isSavedDialog = getIsSavedDialog(chatId, threadId, global.currentUserId);
+    const savedDialog = isSavedDialog ? selectChat(global, String(threadId)) : undefined;
+
     return {
       chat,
       isMuted: selectIsChatMuted(chat, selectNotifySettings(global), selectNotifyExceptions(global)),
@@ -717,6 +759,7 @@ export default memo(withGlobal<OwnProps>(
       isBlocked: userFullInfo?.isBlocked,
       isBot: Boolean(chatBot),
       isChatWithSelf,
+      savedDialog,
     };
   },
 )(HeaderMenuContainer));

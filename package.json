@@ -1,6 +1,6 @@
 {
   "name": "ulu",
-  "version": "10.4.1-64",
+  "version": "10.4.9-64",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,9 +11,9 @@
     "build:mocked": "cross-env APP_ENV=test APP_MOCKED_CLIENT=1 npm run build:dev",
     "build:production": "webpack && bash ./deploy/copy_to_dist.sh",
     "web:release:production": "npm i && npm run build:production && git add -A && git commit -a -m '[Build]' --no-verify && git push",
-    "electron:dev": "npm run electron:webpack && IS_ELECTRON_BUILD=true concurrently -n main,renderer,electron \"npm run electron:webpack -- --watch\" \"npm run dev\" \"electronmon dist/electron\"",
+    "electron:dev": "npm run electron:webpack && IS_PACKAGED_ELECTRON=true concurrently -n main,renderer,electron \"npm run electron:webpack -- --watch\" \"npm run dev\" \"electronmon dist/electron\"",
     "electron:webpack": "cross-env APP_ENV=$ENV webpack --config ./webpack-electron.config.ts",
-    "electron:build": "IS_ELECTRON_BUILD=true npm run build:$ENV && electron-builder install-app-deps && electron-rebuild && ENV=$ENV npm run electron:webpack",
+    "electron:build": "IS_PACKAGED_ELECTRON=true npm run build:$ENV && electron-builder install-app-deps && electron-rebuild && ENV=$ENV npm run electron:webpack",
     "electron:package": "npm run electron:build && npx rimraf dist-electron && electron-builder build --win --mac --linux --config src/electron/config.yml",
     "electron:package:staging": "ENV=staging npm run electron:package -- -p never",
     "electron:release:production": "ENV=production npm run electron:package -- -p always",
@@ -146,7 +146,7 @@
     "chrono-node": "^2.7.0",
     "cmdk": "^0.2.0",
     "croppie": "^2.6.5",
-    "emoji-data-ios": "git+https://github.com/korenskoy/emoji-data-ios#2886b318eae174527c4bc9fcd321940ef3a85527",
+    "emoji-data-ios": "git+https://github.com/korenskoy/emoji-data-ios#de1a69aff2c8eb7548df4e6bcf50c7d2304792fc",
     "idb-keyval": "^6.2.1",
     "lowlight": "^2.9.0",
     "mp4box": "^0.5.2",

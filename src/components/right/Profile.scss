@@ -63,6 +63,10 @@
     flex: 1;
   }
 
+  .saved-dialogs {
+    height: 100% !important;
+  }
+
   .content {
     &.empty-list {
       height: 100%;
@@ -146,7 +150,7 @@
         margin-top: -1.8125rem;
         z-index: 1;
         border-radius: var(--border-radius-default-small);
-        box-shadow: 0px 0px 1rem 1rem white;
+        box-shadow: -1rem 0 1rem 1rem var(--color-background), -1rem 0 1rem 0.3125rem var(--color-background);
 
         .icon {
           margin-left: 0.625rem;
@@ -158,6 +162,6 @@
         margin-top: 1rem;
         font-size: 0.8125rem;
       }
-    } 
+    }
   }
 }

@@ -16,11 +16,9 @@ import Button from '../../ui/Button';
 
 import styles from './EmptyFolder.module.scss';
 
-type FolderType = 'all' | 'archived' | 'folder';
-
 type OwnProps = {
   folderId?: number;
-  folderType: FolderType;
+  folderType: 'all' | 'archived' | 'saved' | 'folder';
   isInbox?: boolean;
   foldersDispatch: FolderEditDispatch;
   onSettingsScreenSelect: (screen: SettingsScreens) => void;
@@ -28,7 +26,7 @@ type OwnProps = {
 
 type StateProps = {
   chatFolder?: ApiChatFolder;
-  folderType?: FolderType;
+  folderType?: 'all' | 'archived' | 'saved' | 'folder';
   isInbox?: boolean;
   animatedEmoji?: ApiSticker;
 };

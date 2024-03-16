@@ -3,7 +3,7 @@ import React, {
   memo, useEffect, useLayoutEffect, useRef, useState,
 } from '../../lib/teact/teact';
 
-import type { MediaViewerOrigin } from '../../types';
+import type { MediaViewerOrigin, ThreadId } from '../../types';
 import type { RealTouchEvent } from '../../util/captureEvents';
 
 import { animateNumber, timingFunctions } from '../../util/animation';
@@ -18,16 +18,16 @@ import { clamp, isBetween, round } from '../../util/math';
 import { debounce } from '../../util/schedulers';
 import { IS_IOS, IS_TOUCH_ENV } from '../../util/windowEnvironment';
 
+import useTimeout from '../../hooks/schedulers/useTimeout';
 import useDebouncedCallback from '../../hooks/useDebouncedCallback';
 import useDerivedState from '../../hooks/useDerivedState';
-import { useFullscreenStatus } from '../../hooks/useFullscreen';
 import useHistoryBack from '../../hooks/useHistoryBack';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 import useSignal from '../../hooks/useSignal';
 import { useSignalRef } from '../../hooks/useSignalRef';
-import useTimeout from '../../hooks/useTimeout';
-import useWindowSize from '../../hooks/useWindowSize';
+import { useFullscreenStatus } from '../../hooks/window/useFullscreen';
+import useWindowSize from '../../hooks/window/useWindowSize';
 import useControlsSignal from './hooks/useControlsSignal';
 import useZoomChange from './hooks/useZoomChangeSignal';
 
@@ -46,7 +46,7 @@ type OwnProps = {
   isOpen?: boolean;
   selectMedia: (id?: number) => void;
   chatId?: string;
-  threadId?: number;
+  threadId?: ThreadId;
   avatarOwnerId?: string;
   origin?: MediaViewerOrigin;
   withAnimation?: boolean;

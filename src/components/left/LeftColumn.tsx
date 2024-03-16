@@ -13,7 +13,7 @@ import { selectCurrentChat, selectIsForumPanelOpen, selectTabState } from '../..
 import captureEscKeyListener from '../../util/captureEscKeyListener';
 import { captureControlledSwipe } from '../../util/swipeController';
 import {
-  IS_APP, IS_MAC_OS, IS_TOUCH_ENV, LAYERS_ANIMATION_NAME,
+  IS_APP, IS_FIREFOX, IS_MAC_OS, IS_TOUCH_ENV, LAYERS_ANIMATION_NAME,
 } from '../../util/windowEnvironment';
 
 import useFoldersReducer from '../../hooks/reducers/useFoldersReducer';
@@ -206,6 +206,7 @@ function LeftColumn({
         case SettingsScreens.PrivacyForwarding:
         case SettingsScreens.PrivacyGroupChats:
         case SettingsScreens.PrivacyVoiceMessages:
+        case SettingsScreens.PrivacyMessages:
         case SettingsScreens.PrivacyBlockedUsers:
         case SettingsScreens.ActiveWebsites:
         case SettingsScreens.TwoFaDisabled:
@@ -418,7 +419,10 @@ function LeftColumn({
 
   useHotkeys({
     'Mod+Shift+F': handleHotkeySearch,
-    'Mod+Shift+S': handleHotkeySavedMessages,
+    // https://support.mozilla.org/en-US/kb/take-screenshots-firefox
+    ...(!IS_FIREFOX && {
+      'Mod+Shift+S': handleHotkeySavedMessages,
+    }),
     ...(IS_APP && {
       'Mod+0': handleHotkeySavedMessages,
       'Mod+9': handleArchivedChats,

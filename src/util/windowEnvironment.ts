@@ -87,8 +87,6 @@ export const IS_WEBM_SUPPORTED = Boolean(TEST_VIDEO.canPlayType('video/webm; cod
 
 export const ARE_WEBCODECS_SUPPORTED = 'VideoDecoder' in window;
 
-export const DPR = window.devicePixelRatio || 1;
-
 export const MASK_IMAGE_DISABLED = true;
 export const IS_OPFS_SUPPORTED = Boolean(navigator.storage?.getDirectory);
 if (IS_OPFS_SUPPORTED) {
@@ -134,7 +132,7 @@ function isLastEmojiVersionSupported() {
   inlineEl.classList.add('emoji-test-element');
   document.body.appendChild(inlineEl);
 
-  inlineEl.innerText = '🫸🏻'; // Emoji from 15.0 version
+  inlineEl.innerText = '🐦‍🔥'; // Emoji from 15.1 version
   const newEmojiWidth = inlineEl.offsetWidth;
   inlineEl.innerText = '❤️'; // Emoji from 1.0 version
   const legacyEmojiWidth = inlineEl.offsetWidth;

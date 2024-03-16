@@ -3,27 +3,27 @@ import type {
   ApiChatAdminRights,
   ApiChatBannedRights,
   ApiChatFolder,
+  ApiChatFullInfo,
   ApiPeer,
   ApiTopic,
   ApiUser,
 } from '../../api/types';
 import type { LangFn } from '../../hooks/useLang';
-import type { ChatTimeSnapshot, NotifyException, NotifySettings } from '../../types';
+import type {
+  ChatTimeSnapshot, NotifyException, NotifySettings, ThreadId,
+} from '../../types';
 import { MAIN_THREAD_ID } from '../../api/types';
 
 import {
+  ANONYMOUS_USER_ID,
   ARCHIVED_FOLDER_ID, CHANNEL_ID_LENGTH, GENERAL_TOPIC_ID, REPLIES_USER_ID, TME_LINK_PREFIX,
 } from '../../config';
 import { formatDateToString, formatTime } from '../../util/dateFormat';
-import { orderBy } from '../../util/iteratees';
 import { prepareSearchWordsForNeedle } from '../../util/searchWords';
 import { getGlobal } from '..';
 import { getMainUsername, getUserFirstOrLastName } from './users';
 
 const FOREVER_BANNED_DATE = Date.now() / 1000 + 31622400; // 366 days
-
-const VERIFIED_PRIORITY_BASE = 3e9;
-const PINNED_PRIORITY_BASE = 3e8;
 
 export function isUserId(entityId: string) {
   return !entityId.startsWith('-');
@@ -83,6 +83,10 @@ export const ULU_APP = {
   doesChatSupportThreads: (chat: ApiChat | undefined) => chat && isChatSuperGroupWithoutTopics(chat),
 };
 
+export function isAnonymousForwardsChat(chatId: string) {
+  return chatId === ANONYMOUS_USER_ID;
+}
+
 export function getChatTypeString(chat: ApiChat) {
   switch (chat.type) {
     case 'chatTypePrivate':
@@ -134,10 +138,6 @@ export function getChatAvatarHash(
   }
 }
 
-export function isChatSummaryOnly(chat: ApiChat) {
-  return !chat.lastMessage;
-}
-
 export function isChatAdmin(chat: ApiChat) {
   return Boolean(chat.adminRights);
 }
@@ -151,14 +151,18 @@ export function getCanManageTopic(chat: ApiChat, topic: ApiTopic) {
   return chat.isCreator || getHasAdminRight(chat, 'manageTopics') || topic.isOwner;
 }
 
-export function isUserRightBanned(chat: ApiChat, key: keyof ApiChatBannedRights) {
+export function isUserRightBanned(chat: ApiChat, key: keyof ApiChatBannedRights, chatFullInfo?: ApiChatFullInfo) {
+  const unrestrictedByBoosts = chatFullInfo?.boostsToUnrestrict
+    && (chatFullInfo.boostsApplied || 0) >= chatFullInfo.boostsToUnrestrict;
   return Boolean(
     (chat.currentUserBannedRights?.[key])
-    || (chat.defaultBannedRights?.[key]),
+    || (chat.defaultBannedRights?.[key] && !unrestrictedByBoosts),
   );
 }
 
-export function getCanPostInChat(chat: ApiChat, threadId: number, isMessageThread?: boolean) {
+export function getCanPostInChat(
+  chat: ApiChat, threadId: ThreadId, isMessageThread?: boolean, chatFullInfo?: ApiChatFullInfo,
+) {
   if (threadId !== MAIN_THREAD_ID) {
     if (chat.isForum) {
       if (chat.isNotJoined) {
@@ -173,7 +177,7 @@ export function getCanPostInChat(chat: ApiChat, threadId: number, isMessageThrea
   }
 
   if (chat.isRestricted || chat.isForbidden || chat.migratedTo
-    || (!isMessageThread && chat.isNotJoined) || isChatWithRepliesBot(chat.id)) {
+    || (!isMessageThread && chat.isNotJoined) || isChatWithRepliesBot(chat.id) || isAnonymousForwardsChat(chat.id)) {
     return false;
   }
 
@@ -189,7 +193,7 @@ export function getCanPostInChat(chat: ApiChat, threadId: number, isMessageThrea
     return getHasAdminRight(chat, 'postMessages');
   }
 
-  return isChatAdmin(chat) || !isUserRightBanned(chat, 'sendMessages');
+  return isChatAdmin(chat) || !isUserRightBanned(chat, 'sendMessages', chatFullInfo);
 }
 
 export interface IAllowedAttachmentOptions {
@@ -209,6 +213,7 @@ export interface IAllowedAttachmentOptions {
 
 export function getAllowedAttachmentOptions(
   chat?: ApiChat,
+  chatFullInfo?: ApiChatFullInfo,
   isChatWithBot = false,
   isStoryReply = false,
 ): IAllowedAttachmentOptions {
@@ -232,20 +237,20 @@ export function getAllowedAttachmentOptions(
   const isAdmin = isChatAdmin(chat);
 
   return {
-    canAttachMedia: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendMedia'),
+    canAttachMedia: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendMedia', chatFullInfo),
     canAttachPolls: !isStoryReply
-      && (isAdmin || !isUserRightBanned(chat, 'sendPolls'))
+      && (isAdmin || !isUserRightBanned(chat, 'sendPolls', chatFullInfo))
       && (!isUserId(chat.id) || isChatWithBot),
-    canSendStickers: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendStickers'),
-    canSendGifs: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendGifs'),
-    canAttachEmbedLinks: !isStoryReply && (isAdmin || !isUserRightBanned(chat, 'embedLinks')),
-    canSendPhotos: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendPhotos'),
-    canSendVideos: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendVideos'),
-    canSendRoundVideos: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendRoundvideos'),
-    canSendAudios: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendAudios'),
-    canSendVoices: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendVoices'),
-    canSendPlainText: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendPlain'),
-    canSendDocuments: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendDocs'),
+    canSendStickers: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendStickers', chatFullInfo),
+    canSendGifs: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendGifs', chatFullInfo),
+    canAttachEmbedLinks: !isStoryReply && (isAdmin || !isUserRightBanned(chat, 'embedLinks', chatFullInfo)),
+    canSendPhotos: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendPhotos', chatFullInfo),
+    canSendVideos: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendVideos', chatFullInfo),
+    canSendRoundVideos: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendRoundvideos', chatFullInfo),
+    canSendAudios: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendAudios', chatFullInfo),
+    canSendVoices: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendVoices', chatFullInfo),
+    canSendPlainText: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendPlain', chatFullInfo),
+    canSendDocuments: isAdmin || isStoryReply || !isUserRightBanned(chat, 'sendDocs', chatFullInfo),
   };
 }
 
@@ -275,7 +280,7 @@ export function getMessageSendingRestrictionReason(
 }
 
 export function getForumComposerPlaceholder(
-  lang: LangFn, chat?: ApiChat, threadId = MAIN_THREAD_ID, isReplying?: boolean,
+  lang: LangFn, chat?: ApiChat, threadId: ThreadId = MAIN_THREAD_ID, isReplying?: boolean,
 ) {
   if (!chat?.isForum) {
     return undefined;
@@ -395,36 +400,6 @@ export function getMessageSenderName(lang: LangFn, chatId: string, sender?: ApiP
   return getUserFirstOrLastName(sender);
 }
 
-export function sortChatIds(
-  chatIds: string[],
-  chatsById: Record<string, ApiChat>,
-  shouldPrioritizeVerified = false,
-  priorityIds?: string[],
-) {
-  return orderBy(chatIds, (id) => {
-    const chat = chatsById[id];
-    if (!chat) {
-      return 0;
-    }
-
-    let priority = 0;
-
-    if (chat.lastMessage) {
-      priority += chat.lastMessage.date;
-    }
-
-    if (shouldPrioritizeVerified && chat.isVerified) {
-      priority += VERIFIED_PRIORITY_BASE; // ~100 years in seconds
-    }
-
-    if (priorityIds && priorityIds.includes(id)) {
-      priority = Date.now() + PINNED_PRIORITY_BASE + (priorityIds.length - priorityIds.indexOf(id));
-    }
-
-    return priority;
-  }, 'desc');
-}
-
 export function filterChatsByName(
   lang: LangFn,
   chatIds: string[],
@@ -512,4 +487,8 @@ export function actualizeChatTimeSnapshot(chatSnapshot: ChatTimeSnapshot) {
     ...chatSnapshot,
     dateUpdated: Number(Date.now()),
   };
+}
+
+export function getIsSavedDialog(chatId: string, threadId: ThreadId | undefined, currentUserId: string | undefined) {
+  return chatId === currentUserId && threadId !== MAIN_THREAD_ID;
 }

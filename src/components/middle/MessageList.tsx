@@ -17,16 +17,19 @@ import type { MessageListType } from '../../global/types';
 import type { Signal } from '../../util/signals';
 import type { PinnedIntersectionChangedCallback } from './hooks/usePinnedMessage';
 import { MAIN_THREAD_ID } from '../../api/types';
-import { LoadMoreDirection } from '../../types';
+import { LoadMoreDirection, type ThreadId } from '../../types';
 
 import {
   ANIMATION_END_DELAY,
+  ANONYMOUS_USER_ID,
   MESSAGE_LIST_SLICE,
   SERVICE_NOTIFICATIONS_USER_ID,
 } from '../../config';
 import { forceMeasure, requestForcedReflow, requestMeasure } from '../../lib/fasterdom/fasterdom';
 import {
+  getIsSavedDialog,
   getMessageHtmlId,
+  isAnonymousForwardsChat,
   isChatChannel,
   isChatGroup,
   isChatWithRepliesBot,
@@ -40,6 +43,7 @@ import {
   selectBot,
   selectChat,
   selectChatFullInfo,
+  selectChatLastMessage,
   selectChatMessages,
   selectChatScheduledMessages,
   selectCurrentMessageIds,
@@ -63,15 +67,15 @@ import { debounce, onTickEnd } from '../../util/schedulers';
 import { groupMessages } from './helpers/groupMessages';
 import { preventMessageInputBlur } from './helpers/preventMessageInputBlur';
 
-import { isBackgroundModeActive } from '../../hooks/useBackgroundMode';
+import useInterval from '../../hooks/schedulers/useInterval';
 import useEffectWithPrevDeps from '../../hooks/useEffectWithPrevDeps';
 import { dispatchHeavyAnimationEvent } from '../../hooks/useHeavyAnimationCheck';
-import useInterval from '../../hooks/useInterval';
 import useLastCallback from '../../hooks/useLastCallback';
 import useLayoutEffectWithPrevDeps from '../../hooks/useLayoutEffectWithPrevDeps';
 import useNativeCopySelectedMessages from '../../hooks/useNativeCopySelectedMessages';
 import { useStateRef } from '../../hooks/useStateRef';
 import useSyncEffect from '../../hooks/useSyncEffect';
+import { isBackgroundModeActive } from '../../hooks/window/useBackgroundMode';
 import useContainerHeight from './hooks/useContainerHeight';
 import useStickyDates from './hooks/useStickyDates';
 
@@ -80,12 +84,13 @@ import ContactGreeting from './ContactGreeting';
 import MessageListBotInfo from './MessageListBotInfo';
 import MessageListContent from './MessageListContent';
 import NoMessages from './NoMessages';
+import PremiumRequiredMessage from './PremiumRequiredMessage';
 
 import './MessageList.scss';
 
 type OwnProps = {
   chatId: string;
-  threadId: number;
+  threadId: ThreadId;
   type: MessageListType;
   isComments?: boolean;
   canPost: boolean;
@@ -97,6 +102,7 @@ type OwnProps = {
   withDefaultBg: boolean;
   onPinnedIntersectionChange: PinnedIntersectionChangedCallback;
   getForceNextPinnedInHeader: Signal<boolean | undefined>;
+  isContactRequirePremium?: boolean;
 };
 
 type StateProps = {
@@ -107,6 +113,7 @@ type StateProps = {
   isGroupChat?: boolean;
   isChatWithSelf?: boolean;
   isRepliesChat?: boolean;
+  isAnonymousForwards?: boolean;
   isCreator?: boolean;
   isBot?: boolean;
   isSynced?: boolean;
@@ -125,6 +132,7 @@ type StateProps = {
   isServiceNotificationsChat?: boolean;
   isEmptyThread?: boolean;
   isForum?: boolean;
+  currentUserId: string;
 };
 
 const MESSAGE_REACTIONS_POLLING_INTERVAL = 20 * 1000;
@@ -160,6 +168,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
   isReady,
   isChatWithSelf,
   isRepliesChat,
+  isAnonymousForwards,
   isCreator,
   isBot,
   messageIds,
@@ -179,8 +188,10 @@ const MessageList: FC<OwnProps & StateProps> = ({
   topic,
   noMessageSendingAnimation,
   isServiceNotificationsChat,
-  onPinnedIntersectionChange,
+  currentUserId,
   getForceNextPinnedInHeader,
+  onPinnedIntersectionChange,
+  isContactRequirePremium,
 }) => {
   const {
     loadViewportMessages, setScrollOffset, loadSponsoredMessages, loadMessageReactions, copyMessagesByIds,
@@ -208,6 +219,8 @@ const MessageList: FC<OwnProps & StateProps> = ({
   const shouldAnimateAppearanceRef = useRef(Boolean(lastMessage));
 
   // const withRepliesToThreads = doesChatSupportThreads ? ULU_APP_WITH_REPLIES_IN_MAIN_THREAD : true; // TODO other group types
+  const isSavedDialog = getIsSavedDialog(chatId, threadId, currentUserId);
+  const hasOpenChatButton = isSavedDialog && threadId !== ANONYMOUS_USER_ID;
 
   const areMessagesLoaded = Boolean(messageIds);
 
@@ -310,21 +323,25 @@ const MessageList: FC<OwnProps & StateProps> = ({
       ? groupMessages(
         orderBy(listedMessages, orderRule),
         memoUnreadDividerBeforeIdRef.current,
-        !isForum ? threadId : undefined,
+        !isForum ? Number(threadId) : undefined,
         isChatWithSelf,
       )
       : undefined;
   }, [messageIds, messagesByIdFiltered, type, isServiceNotificationsChat, isForum, threadId, isChatWithSelf]);
 
   useInterval(() => {
-    if (!messageIds || !messagesByIdFiltered || type === 'scheduled') {
-      return;
-    }
-    const ids = messageIds.filter((id) => messagesById[id]?.reactions?.results.length);
+    if (!messageIds || !messagesById || type === 'scheduled') return;
+    if (!isChannelChat && !isGroupChat) return;
+
+    const ids = messageIds.filter((id) => {
+      const message = messagesById[id];
+      return message && message.reactions?.results.length && !message.content.action;
+    });
+
     if (!ids.length) return;
 
     loadMessageReactions({ chatId, ids });
-  }, MESSAGE_REACTIONS_POLLING_INTERVAL);
+  }, MESSAGE_REACTIONS_POLLING_INTERVAL, true);
 
   useInterval(() => {
     if (!messageIds || !messagesByIdFiltered || type === 'scheduled') {
@@ -359,7 +376,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
     if (!ids.length) return;
 
     loadMessageViews({ chatId, ids });
-  }, MESSAGE_COMMENTS_POLLING_INTERVAL);
+  }, MESSAGE_COMMENTS_POLLING_INTERVAL, true);
 
   const loadMoreAround = useMemo(() => {
     if (type !== 'thread') {
@@ -656,9 +673,9 @@ const MessageList: FC<OwnProps & StateProps> = ({
   }, [isSelectModeActive]);
 
   const isPrivate = Boolean(chatId && isUserId(chatId));
-  const withUsers = Boolean((!isPrivate && !isChannelChat) || isChatWithSelf || isRepliesChat);
+  const withUsers = Boolean((!isPrivate && !isChannelChat) || isChatWithSelf || isRepliesChat || isAnonymousForwards);
   const noAvatars = Boolean(!withUsers || isChannelChat);
-  const shouldRenderGreeting = isUserId(chatId) && !isChatWithSelf && !isBot
+  const shouldRenderGreeting = isUserId(chatId) && !isChatWithSelf && !isBot && !isAnonymousForwards
     && (
       (
         !messageGroups && !lastMessage && messageIds
@@ -684,6 +701,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
     isSelectModeActive && 'select-mode-active',
     isScrolled && 'scrolled',
     !isReady && 'is-animating',
+    hasOpenChatButton && 'saved-dialog',
   );
 
   const hasMessages = (messageIds && messageGroups) || lastMessage;
@@ -701,10 +719,12 @@ const MessageList: FC<OwnProps & StateProps> = ({
             {restrictionReason ? restrictionReason.text : `This is a private ${isChannelChat ? 'channel' : 'chat'}`}
           </span>
         </div>
+      ) : isContactRequirePremium ? (
+        <PremiumRequiredMessage userId={chatId} />
       ) : isBot && !hasMessages ? (
         <MessageListBotInfo chatId={chatId} />
       ) : shouldRenderGreeting ? (
-        <ContactGreeting userId={chatId} />
+        <ContactGreeting key={chatId} userId={chatId} />
       ) : messageIds && (!messageGroups || isGroupChatJustCreated || isEmptyTopic) ? (
         <NoMessages
           chatId={chatId}
@@ -719,6 +739,7 @@ const MessageList: FC<OwnProps & StateProps> = ({
           chatId={chatId}
           isComments={isComments}
           isChannelChat={isChannelChat}
+          isSavedDialog={isSavedDialog}
           messageIds={messageIds || [lastMessage!.id]}
           messageGroups={messageGroups || groupMessages([lastMessage!])}
           getContainerHeight={getContainerHeight}
@@ -751,9 +772,10 @@ const MessageList: FC<OwnProps & StateProps> = ({
 
 export default memo(withGlobal<OwnProps>(
   (global, { chatId, threadId, type }): StateProps => {
+    const currentUserId = global.currentUserId!;
     const chat = selectChat(global, chatId);
     if (!chat) {
-      return {};
+      return { currentUserId };
     }
 
     const messageIds = selectCurrentMessageIds(global, chatId, threadId, type);
@@ -761,14 +783,17 @@ export default memo(withGlobal<OwnProps>(
       ? selectChatScheduledMessages(global, chatId)
       : selectChatMessages(global, chatId);
 
+    const isSavedDialog = getIsSavedDialog(chatId, threadId, currentUserId);
+
     if (
-      threadId !== MAIN_THREAD_ID && !chat?.isForum
-      && !(messagesById && threadId && messagesById[threadId])
+      threadId !== MAIN_THREAD_ID && !isSavedDialog && !chat?.isForum
+      && !(messagesById && threadId && messagesById[Number(threadId)])
     ) {
-      return {};
+      return { currentUserId };
     }
 
-    const { isRestricted, restrictionReason, lastMessage } = chat;
+    const { isRestricted, restrictionReason } = chat;
+    const lastMessage = selectChatLastMessage(global, chatId, isSavedDialog ? 'saved' : 'all');
     const focusingId = selectFocusedMessageId(global, chatId);
 
     const withLastMessageWhenPreloading = (
@@ -793,6 +818,7 @@ export default memo(withGlobal<OwnProps>(
       isCreator: chat.isCreator,
       isChatWithSelf: selectIsChatWithSelf(global, chatId),
       isRepliesChat: isChatWithRepliesBot(chatId),
+      isAnonymousForwards: isAnonymousForwardsChat(chatId),
       isBot: Boolean(chatBot),
       isSynced: global.isSynced,
       messageIds,
@@ -807,6 +833,7 @@ export default memo(withGlobal<OwnProps>(
       isServiceNotificationsChat: chatId === SERVICE_NOTIFICATIONS_USER_ID,
       isForum: chat.isForum,
       isEmptyThread,
+      currentUserId,
       ...(withLastMessageWhenPreloading && { lastMessage }),
     };
   },

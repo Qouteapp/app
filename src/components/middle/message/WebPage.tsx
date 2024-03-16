@@ -4,7 +4,7 @@ import { getActions } from '../../../global';
 
 import type { ApiMessage, ApiTypeStory } from '../../../api/types';
 import type { ObserveFn } from '../../../hooks/useIntersectionObserver';
-import type { ISettings } from '../../../types';
+import { AudioOrigin, type ISettings } from '../../../types';
 
 import { getMessageWebPage } from '../../../global/helpers';
 import buildClassName from '../../../util/buildClassName';
@@ -18,6 +18,9 @@ import useEnsureStory from '../../../hooks/useEnsureStory';
 import useLang from '../../../hooks/useLang';
 import useLastCallback from '../../../hooks/useLastCallback';
 
+import Audio from '../../common/Audio';
+import Document from '../../common/Document';
+import EmojiIconBackground from '../../common/embedded/EmojiIconBackground';
 import SafeLink from '../../common/SafeLink';
 import Button from '../../ui/Button';
 import BaseStory from './BaseStory';
@@ -40,11 +43,14 @@ type OwnProps = {
   isDownloading?: boolean;
   isProtected?: boolean;
   isConnected?: boolean;
-  noUserColors?: boolean;
+  backgroundEmojiId?: string;
   theme: ISettings['theme'];
   story?: ApiTypeStory;
-  onMediaClick?: () => void;
-  onCancelMediaTransfer?: () => void;
+  shouldWarnAboutSvg?: boolean;
+  autoLoadFileMaxSizeMb?: number;
+  onAudioPlay?: NoneToVoidFunction;
+  onMediaClick?: NoneToVoidFunction;
+  onCancelMediaTransfer?: NoneToVoidFunction;
 };
 
 const WebPage: FC<OwnProps> = ({
@@ -60,7 +66,11 @@ const WebPage: FC<OwnProps> = ({
   isConnected,
   story,
   theme,
+  backgroundEmojiId,
+  shouldWarnAboutSvg,
+  autoLoadFileMaxSizeMb,
   onMediaClick,
+  onAudioPlay,
   onCancelMediaTransfer,
 }) => {
   const { openTelegramLink } = getActions();
@@ -96,7 +106,9 @@ const WebPage: FC<OwnProps> = ({
     description,
     photo,
     video,
+    audio,
     type,
+    document,
   } = webPage;
   const isStory = type === WEBPAGE_STORY_TYPE;
   const isExpiredStory = story && 'isDeleted' in story;
@@ -117,6 +129,7 @@ const WebPage: FC<OwnProps> = ({
     !photo && !video && !inPreview && 'without-media',
     video && 'with-video',
     !isArticle && 'no-article',
+    document && 'with-document',
     quickButtonLangKey && 'with-quick-button',
   );
 
@@ -138,7 +151,7 @@ const WebPage: FC<OwnProps> = ({
     <div
       className={className}
       data-initial={(siteName || displayUrl)[0]}
-      dir="auto"
+      dir={lang.isRtl ? 'rtl' : 'auto'}
     >
       <div className={buildClassName('WebPage--content', isStory && 'is-story')}>
         {isStory && (
@@ -162,6 +175,12 @@ const WebPage: FC<OwnProps> = ({
         )}
         {isArticle && (
           <div className="WebPage-text">
+            {backgroundEmojiId && (
+              <EmojiIconBackground
+                emojiDocumentId={backgroundEmojiId}
+                className="WebPage--background-icons"
+              />
+            )}
             <SafeLink className="site-name" url={url} text={siteName || displayUrl} />
             {!inPreview && title && (
               <p className="site-title">{renderText(title)}</p>
@@ -184,6 +203,40 @@ const WebPage: FC<OwnProps> = ({
             onClick={isMediaInteractive ? handleMediaClick : undefined}
             onCancelUpload={onCancelMediaTransfer}
           />
+        )}
+        {!inPreview && audio && (
+          <Audio
+            theme={theme}
+            message={message}
+            origin={AudioOrigin.Inline}
+            noAvatars={noAvatars}
+            isDownloading={isDownloading}
+            onPlay={onAudioPlay}
+            onCancelUpload={onCancelMediaTransfer}
+          />
+        )}
+        {!inPreview && document && (
+          <Document
+            message={message}
+            observeIntersection={observeIntersection}
+            autoLoadFileMaxSizeMb={autoLoadFileMaxSizeMb}
+            onMediaClick={handleMediaClick}
+            onCancelUpload={onCancelMediaTransfer}
+            isDownloading={isDownloading}
+            shouldWarnAboutSvg={shouldWarnAboutSvg}
+          />
+        )}
+        {inPreview && displayUrl && !isArticle && (
+          <div className="WebPage-text">
+            {backgroundEmojiId && (
+              <EmojiIconBackground
+                emojiDocumentId={backgroundEmojiId}
+                className="WebPage--background-icons"
+              />
+            )}
+            <p className="site-name">{displayUrl}</p>
+            <p className="site-description">{lang('Chat.Empty.LinkPreview')}</p>
+          </div>
         )}
       </div>
       {quickButtonLangKey && renderQuickButton(quickButtonLangKey)}

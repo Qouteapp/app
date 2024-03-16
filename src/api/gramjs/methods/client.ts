@@ -6,6 +6,7 @@ import type { TwoFaParams } from '../../../lib/gramjs/client/2fa';
 import TelegramClient from '../../../lib/gramjs/client/TelegramClient';
 import { Logger as GramJsLogger } from '../../../lib/gramjs/extensions/index';
 
+import type { ThreadId } from '../../../types';
 import type {
   ApiInitialArgs,
   ApiMediaFormat,
@@ -35,7 +36,7 @@ import {
   reset as resetUpdatesManager,
   scheduleGetChannelDifference,
   updateChannelState,
-} from '../updateManager';
+} from '../updates/updateManager';
 import {
   onAuthError, onAuthReady, onCurrentUserUpdate, onRequestCode, onRequestPassword, onRequestPhoneNumber,
   onRequestQrCode, onRequestRegistration, onWebAuthTokenFailed,
@@ -69,7 +70,7 @@ export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) 
   const {
     userAgent, platform, sessionData, isTest, isWebmSupported, maxBufferSize, webAuthToken, dcId,
     mockScenario, shouldForceHttpTransport, shouldAllowHttpTransport,
-    shouldDebugExportedSenders,
+    shouldDebugExportedSenders, langCode,
   } = initialArgs;
   const session = new sessions.CallbackSession(sessionData, onSessionUpdate);
 
@@ -93,6 +94,7 @@ export async function init(_onUpdate: OnApiUpdate, initialArgs: ApiInitialArgs) 
       shouldAllowHttpTransport,
       testServers: isTest,
       dcId,
+      langCode,
     } as any,
   );
 
@@ -222,7 +224,7 @@ type InvokeRequestParams = {
   dcId?: number;
   shouldIgnoreErrors?: boolean;
   abortControllerChatId?: string;
-  abortControllerThreadId?: number;
+  abortControllerThreadId?: ThreadId;
   abortControllerGroup?: 'call';
   shouldRetryOnTimeout?: boolean;
 };
@@ -351,7 +353,7 @@ export function getTmpPassword(currentPassword: string, ttl?: number) {
   return client.getTmpPassword(currentPassword, ttl);
 }
 
-export function abortChatRequests(params: { chatId: string; threadId?: number }) {
+export function abortChatRequests(params: { chatId: string; threadId?: ThreadId }) {
   const { chatId, threadId } = params;
   const controller = CHAT_ABORT_CONTROLLERS.get(chatId);
   if (!threadId) {

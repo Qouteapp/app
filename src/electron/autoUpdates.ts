@@ -64,13 +64,11 @@ async function checkForUpdates(): Promise<void> {
     if (await shouldPerformAutoUpdate()) {
       if (getIsAutoUpdateEnabled()) {
         autoUpdater.checkForUpdates();
-
-        return;
+      } else {
+        BrowserWindow.getAllWindows().forEach((window) => {
+          window.webContents.send(ElectronEvent.UPDATE_AVAILABLE);
+        });
       }
-
-      BrowserWindow.getAllWindows().forEach((window) => {
-        window.webContents.send(ElectronEvent.UPDATE_AVAILABLE);
-      });
     }
 
     await pause(CHECK_UPDATE_INTERVAL);
@@ -85,7 +83,7 @@ function shouldPerformAutoUpdate(): Promise<boolean> {
       let contents = '';
 
       response.on('end', () => {
-        resolve(getIsAppUpdateNeeded(contents, app.getVersion()));
+        resolve(getIsAppUpdateNeeded(contents, app.getVersion(), true));
       });
 
       response.on('data', (data: Buffer) => {

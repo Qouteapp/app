@@ -106,7 +106,7 @@ const MentionTooltip: FC<OwnProps> = ({
         >
           <PrivateChatInfo
             userId={id}
-            avatarSize="nano"
+            avatarSize="small"
             withUsername
           />
         </ListItem>

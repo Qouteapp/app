@@ -22,13 +22,14 @@ type OwnProps = {
   wasTopicOpened?: boolean;
   isPinned?: boolean;
   isMuted?: boolean;
+  isSavedDialog?: boolean;
   shouldShowOnlyMostImportant?: boolean;
   forceHidden?: boolean | Signal<boolean>;
   isFocusMode?: boolean;
 };
 
 const ChatBadge: FC<OwnProps> = ({
-  topic, chat, isPinned, isMuted, shouldShowOnlyMostImportant, wasTopicOpened, forceHidden,
+  topic, chat, isPinned, isMuted, shouldShowOnlyMostImportant, wasTopicOpened, forceHidden, isSavedDialog,
 }) => {
   const {
     unreadMentionsCount = 0, unreadReactionsCount = 0,
@@ -66,7 +67,7 @@ const ChatBadge: FC<OwnProps> = ({
     || isTopicUnopened,
   );
 
-  const isUnread = Boolean(unreadCount || hasUnreadMark);
+  const isUnread = Boolean((unreadCount || hasUnreadMark) && !isSavedDialog);
   const className = buildClassName(
     'ChatBadge',
     shouldBeMuted && 'muted',
@@ -97,15 +98,20 @@ const ChatBadge: FC<OwnProps> = ({
       </div>
     ) : undefined;
 
-    const pinnedElement = isPinned && !unreadCountElement && !unreadMentionsElement && !unreadReactionsElement && (
+    const pinnedElement = isPinned && (
       <div className={className}>
         <i className="icon icon-pinned-chat" />
       </div>
     );
 
+    const visiblePinnedElement = !unreadCountElement && !unreadMentionsElement && !unreadReactionsElement
+      && pinnedElement;
+
     const elements = [
-      unopenedTopicElement, unreadReactionsElement, unreadMentionsElement, unreadCountElement, pinnedElement,
+      unopenedTopicElement, unreadReactionsElement, unreadMentionsElement, unreadCountElement, visiblePinnedElement,
     ].filter(Boolean);
+
+    if (isSavedDialog) return pinnedElement;
 
     if (elements.length === 0) return undefined;
 

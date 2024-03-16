@@ -37,6 +37,7 @@ export interface ApiUser {
   hasUnreadStories?: boolean;
   maxStoryId?: number;
   color?: ApiPeerColor;
+  canEditBot?: boolean;
 }
 
 export interface ApiUserFullInfo {
@@ -52,6 +53,7 @@ export interface ApiUserFullInfo {
   premiumGifts?: ApiPremiumGiftOption[];
   isTranslationDisabled?: true;
   hasPinnedStories?: boolean;
+  isContactRequirePremium?: boolean;
 }
 
 export type ApiFakeType = 'fake' | 'scam';
@@ -65,6 +67,8 @@ export interface ApiUserStatus {
   );
   wasOnline?: number;
   expires?: number;
+  isReadDateRestrictedByMe?: boolean;
+  isReadDateRestricted?: boolean;
 }
 
 export interface ApiUsername {

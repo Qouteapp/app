@@ -1,6 +1,7 @@
+import type { ThreadId } from '../../types';
 import type { ApiBotCommand } from './bots';
 import type {
-  ApiChatReactions, ApiMessage, ApiPhoto, ApiStickerSet,
+  ApiChatReactions, ApiPhoto, ApiStickerSet,
 } from './messages';
 import type { ApiChatInviteImporter } from './misc';
 import type {
@@ -21,7 +22,6 @@ export interface ApiChat {
   type: ApiChatType;
   title: string;
   hasUnreadMark?: boolean;
-  lastMessage?: ApiMessage;
   lastReadOutboxMessageId?: number;
   lastReadInboxMessageId?: number;
   unreadCount?: number;
@@ -49,10 +49,11 @@ export interface ApiChat {
   emojiStatus?: ApiEmojiStatus;
   isForum?: boolean;
   isForumAsMessages?: true;
-  topics?: Record<number, ApiTopic>;
+  topics?: Record<ThreadId, ApiTopic>;
   listedTopicIds?: number[];
   topicsCount?: number;
   orderedPinnedTopicIds?: number[];
+  boostLevel?: number;
 
   // Calls
   isCallActive?: boolean;
@@ -129,10 +130,14 @@ export interface ApiChatFullInfo {
   requestsPending?: number;
   statisticsDcId?: number;
   stickerSet?: ApiStickerSet;
+  emojiSet?: ApiStickerSet;
   profilePhoto?: ApiPhoto;
   areParticipantsHidden?: boolean;
   isTranslationDisabled?: true;
   hasPinnedStories?: boolean;
+
+  boostsApplied?: number;
+  boostsToUnrestrict?: number;
 }
 
 export interface ApiChatMember {

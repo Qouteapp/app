@@ -5,13 +5,15 @@ import React, {
 import { getActions, withGlobal } from '../../global';
 
 import type { MessageListType } from '../../global/types';
-import type { IAnchorPosition } from '../../types';
+import type { IAnchorPosition, ThreadId } from '../../types';
 import { MAIN_THREAD_ID } from '../../api/types';
 import { ManagementScreens } from '../../types';
 
 import { requestMeasure, requestNextMutation } from '../../lib/fasterdom/fasterdom';
 import {
   getHasAdminRight,
+  getIsSavedDialog,
+  isAnonymousForwardsChat,
   isChatBasicGroup, isChatChannel, isChatSuperGroup, isUserId,
 } from '../../global/helpers';
 import {
@@ -45,7 +47,7 @@ import HeaderMenuContainer from './HeaderMenuContainer.async';
 
 interface OwnProps {
   chatId: string;
-  threadId: number;
+  threadId: ThreadId;
   messageListType: MessageListType;
   canExpandActions: boolean;
   isForForum?: boolean;
@@ -66,6 +68,7 @@ interface StateProps {
   canMute?: boolean;
   canViewStatistics?: boolean;
   canViewBoosts?: boolean;
+  canShowBoostModal?: boolean;
   canLeave?: boolean;
   canEnterVoiceChat?: boolean;
   canCreateVoiceChat?: boolean;
@@ -99,6 +102,7 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
   canMute,
   canViewStatistics,
   canViewBoosts,
+  canShowBoostModal,
   canLeave,
   canEnterVoiceChat,
   canCreateVoiceChat,
@@ -214,9 +218,9 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
     setViewForumAsMessages({ chatId, isEnabled: true });
   });
 
-  function handleRequestCall() {
+  const handleRequestCall = useLastCallback(() => {
     requestMasterAndRequestCall({ userId: chatId });
-  }
+  });
 
   const handleHotkeySearchClick = useLastCallback((e: KeyboardEvent) => {
     if (!canSearch || !IS_APP || e.shiftKey) {
@@ -389,7 +393,6 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
               round
               color="translucent"
               size="smaller"
-              // eslint-disable-next-line react/jsx-no-bind
               onClick={handleRequestCall}
               ariaLabel="Call"
             >
@@ -440,6 +443,7 @@ const HeaderActions: FC<OwnProps & StateProps> = ({
           canMute={canMute}
           canViewStatistics={canViewStatistics}
           canViewBoosts={canViewBoosts}
+          canShowBoostModal={canShowBoostModal}
           canLeave={canLeave}
           canEnterVoiceChat={canEnterVoiceChat}
           canCreateVoiceChat={canCreateVoiceChat}
@@ -463,6 +467,7 @@ export default memo(withGlobal<OwnProps>(
   }): StateProps => {
     const chat = selectChat(global, chatId);
     const isChannel = Boolean(chat && isChatChannel(chat));
+    const isSuperGroup = Boolean(chat && isChatSuperGroup(chat));
     const language = selectLanguageCode(global);
     const translationLanguage = selectTranslationLanguage(global);
     const isPrivate = isUserId(chatId);
@@ -486,22 +491,26 @@ export default memo(withGlobal<OwnProps>(
     const isDiscussionThread = messageListType === 'thread' && threadId !== MAIN_THREAD_ID;
     const isRightColumnShown = selectIsRightColumnShown(global, isMobile);
 
+    const isSavedDialog = getIsSavedDialog(chatId, threadId, global.currentUserId);
+
     const isUserBlocked = isPrivate ? selectIsUserBlocked(global, chatId) : false;
     const canRestartBot = Boolean(bot && isUserBlocked);
     const canStartBot = !canRestartBot && Boolean(selectIsChatBotNotStarted(global, chatId));
     const canUnblock = isUserBlocked && !bot;
     const canSubscribe = Boolean(
-      (isMainThread || chat.isForum) && (isChannel || isChatSuperGroup(chat)) && chat.isNotJoined,
+      (isMainThread || chat.isForum) && (isChannel || isSuperGroup) && chat.isNotJoined,
     );
     const canSearch = isMainThread || isDiscussionThread;
-    const canCall = ARE_CALLS_SUPPORTED && isUserId(chat.id) && !isChatWithSelf && !bot;
+    const canCall = ARE_CALLS_SUPPORTED && isUserId(chat.id) && !isChatWithSelf && !bot && !chat.isSupport
+      && !isAnonymousForwardsChat(chat.id);
     const canMute = isMainThread && !isChatWithSelf && !canSubscribe;
-    const canLeave = isMainThread && !canSubscribe;
+    const canLeave = isSavedDialog || (isMainThread && !canSubscribe);
     const canEnterVoiceChat = ARE_CALLS_SUPPORTED && isMainThread && chat.isCallActive;
     const canCreateVoiceChat = ARE_CALLS_SUPPORTED && isMainThread && !chat.isCallActive
       && (chat.adminRights?.manageCall || (chat.isCreator && isChatBasicGroup(chat)));
     const canViewStatistics = isMainThread && chatFullInfo?.canViewStatistics;
     const canViewBoosts = isMainThread && isChannel && (canViewStatistics || getHasAdminRight(chat, 'postStories'));
+    const canShowBoostModal = !canViewBoosts && (isSuperGroup || isChannel);
     const pendingJoinRequests = isMainThread ? chatFullInfo?.requestsPending : undefined;
     const shouldJoinToSend = Boolean(chat?.isNotJoined && chat.isJoinToSend);
     const shouldSendJoinRequest = Boolean(chat?.isNotJoined && chat.isJoinRequest);
@@ -522,6 +531,7 @@ export default memo(withGlobal<OwnProps>(
       canMute,
       canViewStatistics,
       canViewBoosts,
+      canShowBoostModal,
       canLeave,
       canEnterVoiceChat,
       canCreateVoiceChat,

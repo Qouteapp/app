@@ -1,3 +1,4 @@
+import type { ThreadId } from '../../types';
 import type { ApiWebDocument } from './bots';
 import type { ApiGroupCall, PhoneCallAction } from './calls';
 import type { ApiChat } from './chats';
@@ -290,7 +291,15 @@ export interface ApiAction {
   text: string;
   targetUserIds?: string[];
   targetChatId?: string;
-  type: 'historyClear' | 'contactSignUp' | 'chatCreate' | 'topicCreate' | 'suggestProfilePhoto' | 'other';
+  type:
+  | 'historyClear'
+  | 'contactSignUp'
+  | 'chatCreate'
+  | 'topicCreate'
+  | 'suggestProfilePhoto'
+  | 'joinedChannel'
+  | 'chatBoost'
+  | 'other';
   photo?: ApiPhoto;
   amount?: number;
   currency?: string;
@@ -320,6 +329,7 @@ export interface ApiWebPage {
   title?: string;
   description?: string;
   photo?: ApiPhoto;
+  audio?: ApiAudio;
   duration?: number;
   document?: ApiDocument;
   video?: ApiVideo;
@@ -348,7 +358,7 @@ export interface ApiMessageReplyInfo {
 
 export interface ApiStoryReplyInfo {
   type: 'story';
-  userId: string;
+  peerId: string;
   storyId: number;
 }
 
@@ -362,7 +372,7 @@ export interface ApiInputMessageReplyInfo {
 
 export interface ApiInputStoryReplyInfo {
   type: 'story';
-  userId: string;
+  peerId: string;
   storyId: number;
 }
 
@@ -370,12 +380,14 @@ export type ApiInputReplyInfo = ApiInputMessageReplyInfo | ApiInputStoryReplyInf
 
 export interface ApiMessageForwardInfo {
   date: number;
+  savedDate?: number;
   isImported?: boolean;
   isChannelPost: boolean;
   channelPostId?: number;
   isLinkedChannelPost?: boolean;
   fromChatId?: string;
-  senderUserId?: string;
+  fromId?: string;
+  savedFromPeerId?: string;
   fromMessageId?: number;
   hiddenUserName?: string;
   postAuthorTitle?: string;
@@ -475,6 +487,9 @@ export type MediaContent = {
   storyData?: ApiMessageStoryData;
   giveaway?: ApiGiveaway;
   giveawayResults?: ApiGiveawayResults;
+  isExpiredVoice?: boolean;
+  isExpiredRoundVideo?: boolean;
+  ttlSeconds?: number;
 };
 
 export interface ApiMessage {
@@ -524,10 +539,14 @@ export interface ApiMessage {
   };
   reactions?: ApiReactions;
   hasComments?: boolean;
+  readDate?: number;
+  savedPeerId?: string;
+  senderBoosts?: number;
 }
 
 export interface ApiReactions {
   canSeeList?: boolean;
+  areTags?: boolean;
   results: ApiReactionCount[];
   recentReactions?: ApiPeerReaction[];
 }
@@ -583,6 +602,14 @@ export type ApiReactionCustomEmoji = {
 
 export type ApiReaction = ApiReactionEmoji | ApiReactionCustomEmoji;
 
+export type ApiReactionKey = `${string}-${string}`;
+
+export type ApiSavedReactionTag = {
+  reaction: ApiReaction;
+  title?: string;
+  count: number;
+};
+
 interface ApiBaseThreadInfo {
   chatId: string;
   messagesCount: number;
@@ -593,14 +620,14 @@ interface ApiBaseThreadInfo {
 
 export interface ApiCommentsInfo extends ApiBaseThreadInfo {
   isCommentsInfo: true;
-  threadId?: number;
+  threadId?: ThreadId;
   originChannelId: string;
   originMessageId: number;
 }
 
 export interface ApiMessageThreadInfo extends ApiBaseThreadInfo {
   isCommentsInfo: false;
-  threadId: number;
+  threadId: ThreadId;
   // For linked messages in discussion
   fromChannelId?: string;
   fromMessageId?: number;

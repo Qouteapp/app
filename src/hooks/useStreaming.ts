@@ -4,6 +4,7 @@ import { useEffect } from '../lib/teact/teact';
 import { DEBUG } from '../config';
 import { requestMutation } from '../lib/fasterdom/fasterdom';
 import { applyStyles } from '../util/animation';
+import unloadVideo from '../util/browser/unloadVideo';
 import { makeProgressiveLoader } from '../util/progressieveLoader';
 import { IS_SAFARI } from '../util/windowEnvironment';
 
@@ -76,26 +77,24 @@ export function useStreaming(videoRef: RefObject<HTMLVideoElement>, url?: string
     });
 
     return () => {
-      mediaSource.removeEventListener('sourceopen', onSourceOpen);
-      if (mediaSource.readyState === 'open') {
-        endOfStream(mediaSource);
-      }
-      URL.revokeObjectURL(video.src);
       requestMutation(() => {
-        video.src = '';
-        applyStyles(video, {
-          display: 'none',
-          opacity: '0',
-        });
+        const src = video.src;
+        unloadVideo(video);
+        mediaSource.removeEventListener('sourceopen', onSourceOpen);
+        if (mediaSource.readyState === 'open') {
+          endOfStream(mediaSource);
+        }
+        URL.revokeObjectURL(src);
       });
     };
   }, [mimeType, url, videoRef]);
+
+  return checkIfStreamingSupported(mimeType);
 }
 
-export function checkIfStreamingSupported(mimeType: string) {
-  if (!IS_SAFARI) return false;
-  const MS = getMediaSource();
-  return Boolean(MS && MS.isTypeSupported(mimeType));
+export function checkIfStreamingSupported(mimeType?: string) {
+  if (!IS_SAFARI || !mimeType) return false;
+  return Boolean(getMediaSource()?.isTypeSupported(mimeType));
 }
 
 function appendBuffer(sourceBuffer: SourceBuffer, buffer: ArrayBuffer) {

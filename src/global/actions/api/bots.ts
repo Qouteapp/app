@@ -5,8 +5,9 @@ import {
   type ApiChat, type ApiChatType, type ApiContact, type ApiInputMessageReplyInfo, type ApiPeer, type ApiUrlAuthResult,
   MAIN_THREAD_ID,
 } from '../../../api/types';
+import { ManagementProgress } from '../../../types';
 
-import { GENERAL_REFETCH_INTERVAL } from '../../../config';
+import { BOT_FATHER_USERNAME, GENERAL_REFETCH_INTERVAL } from '../../../config';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import { buildCollectionByKey } from '../../../util/iteratees';
 import { translate } from '../../../util/langProvider';
@@ -19,17 +20,32 @@ import { callApi } from '../../../api/gramjs';
 import {
   addActionHandler, getGlobal, setGlobal,
 } from '../../index';
-import { addChats, addUsers, removeBlockedUser } from '../../reducers';
+import {
+  addChats, addUsers, removeBlockedUser, updateManagementProgress, updateUser, updateUserFullInfo,
+} from '../../reducers';
 import { replaceInlineBotSettings, replaceInlineBotsIsLoading } from '../../reducers/bots';
 import { updateTabState } from '../../reducers/tabs';
 import {
-  selectBot, selectChat, selectChatMessage, selectCurrentChat, selectCurrentMessageList, selectDraft,
-  selectIsTrustedBot, selectMessageReplyInfo, selectSendAs, selectTabState, selectUser, selectUserFullInfo,
+  selectBot,
+  selectChat,
+  selectChatLastMessageId,
+  selectChatMessage,
+  selectCurrentChat,
+  selectCurrentMessageList,
+  selectDraft,
+  selectIsTrustedBot,
+  selectMessageReplyInfo,
+  selectSendAs,
+  selectTabState,
+  selectUser,
+  selectUserFullInfo,
 } from '../../selectors';
+import { fetchChatByUsername } from './chats';
 
 const GAMEE_URL = 'https://prizes.gamee.com/';
 const TOP_PEERS_REQUEST_COOLDOWN = 60; // 1 min
 const runDebouncedForSearch = debounce((cb) => cb(), 500, false);
+let botFatherId: string | null;
 
 addActionHandler('clickBotInlineButton', (global, actions, payload): ActionReturnType => {
   const { messageId, button, tabId = getCurrentTabId() } = payload;
@@ -188,8 +204,10 @@ addActionHandler('sendBotCommand', (global, actions, payload): ActionReturnType 
   actions.resetDraftReplyInfo({ tabId });
   actions.clearWebPagePreview({ tabId });
 
+  const lastMessageId = selectChatLastMessageId(global, chat.id);
+
   void sendBotCommand(
-    chat, command, selectDraft(global, chat.id, threadId)?.replyInfo, selectSendAs(global, chat.id),
+    chat, command, selectDraft(global, chat.id, threadId)?.replyInfo, selectSendAs(global, chat.id), lastMessageId,
   );
 });
 
@@ -202,6 +220,8 @@ addActionHandler('restartBot', async (global, actions, payload): Promise<void> =
     return;
   }
 
+  const lastMessageId = selectChatLastMessageId(global, chat.id);
+
   const result = await callApi('unblockUser', { user: bot });
   if (!result) {
     return;
@@ -210,7 +230,7 @@ addActionHandler('restartBot', async (global, actions, payload): Promise<void> =
   global = getGlobal();
   global = removeBlockedUser(global, bot.id);
   setGlobal(global);
-  void sendBotCommand(chat, '/start', undefined, selectSendAs(global, chatId));
+  void sendBotCommand(chat, '/start', undefined, selectSendAs(global, chatId), lastMessageId);
 });
 
 addActionHandler('loadTopInlineBots', async (global): Promise<void> => {
@@ -437,6 +457,7 @@ addActionHandler('sharePhoneWithBot', async (global, actions, payload): Promise<
   const currentUser = selectUser(global, global.currentUserId!)!;
 
   if (!chat) return;
+  const lastMessageId = selectChatLastMessageId(global, chat.id);
 
   await callApi('sendMessage', {
     chat,
@@ -446,6 +467,7 @@ addActionHandler('sharePhoneWithBot', async (global, actions, payload): Promise<
       phoneNumber: currentUser.phoneNumber || '',
       userId: currentUser.id,
     },
+    lastMessageId,
   });
 });
 
@@ -564,12 +586,45 @@ addActionHandler('requestWebView', async (global, actions, payload): Promise<voi
 
 addActionHandler('requestAppWebView', async (global, actions, payload): Promise<void> => {
   const {
-    botId, appName, startApp, theme, isWriteAllowed,
+    botId, appName, startApp, theme, isWriteAllowed, isFromConfirm,
     tabId = getCurrentTabId(),
   } = payload;
 
   const bot = selectUser(global, botId);
   if (!bot) return;
+
+  // Native clients require to install attach bots before using their named mini apps
+  const isAttachBotInstalled = Boolean(global.attachMenu.bots[bot.id]);
+  if (bot.isAttachBot && !isFromConfirm && !isAttachBotInstalled) {
+    const result = await callApi('loadAttachBot', {
+      bot,
+    });
+    if (result) {
+      const attachBot = result.bot;
+      global = getGlobal();
+      global = addUsers(global, buildCollectionByKey(result.users, 'id'));
+      setGlobal(global);
+
+      const shouldAskForTos = attachBot.isDisclaimerNeeded || attachBot.isForAttachMenu || attachBot.isForSideMenu;
+
+      if (shouldAskForTos) {
+        global = updateTabState(global, {
+          requestedAttachBotInstall: {
+            bot: attachBot,
+            onConfirm: {
+              action: 'requestAppWebView',
+              payload: {
+                ...payload,
+                isFromConfirm: true,
+              },
+            },
+          },
+        }, tabId);
+        setGlobal(global);
+        return;
+      }
+    }
+  }
 
   const botApp = await callApi('fetchBotApp', {
     bot,
@@ -1064,13 +1119,14 @@ async function searchInlineBot<T extends GlobalState>(global: T, {
 }
 
 async function sendBotCommand(
-  chat: ApiChat, command: string, replyInfo?: ApiInputMessageReplyInfo, sendAs?: ApiPeer,
+  chat: ApiChat, command: string, replyInfo?: ApiInputMessageReplyInfo, sendAs?: ApiPeer, lastMessageId?: number,
 ) {
   await callApi('sendMessage', {
     chat,
     replyInfo,
     text: command,
     sendAs,
+    lastMessageId,
   });
 }
 
@@ -1128,3 +1184,66 @@ async function answerCallbackButton<T extends GlobalState>(
     }
   }
 }
+
+addActionHandler('setBotInfo', async (global, actions, payload): Promise<void> => {
+  const {
+    bot, name, description: about,
+    tabId = getCurrentTabId(),
+  } = payload;
+
+  let { langCode } = payload;
+  if (!langCode) langCode = global.settings.byKey.language;
+
+  const { currentUserId } = global;
+  if (!currentUserId || !bot) {
+    return;
+  }
+
+  global = getGlobal();
+  global = updateManagementProgress(global, ManagementProgress.InProgress, tabId);
+  setGlobal(global);
+
+  if (name || about) {
+    const result = await callApi('setBotInfo', {
+      bot, langCode, name, about,
+    });
+
+    if (result) {
+      global = getGlobal();
+      global = updateUser(
+        global,
+        bot.id,
+        {
+          firstName: name,
+        },
+      );
+      global = updateUserFullInfo(global, bot.id, { bio: about });
+      setGlobal(global);
+    }
+  }
+
+  global = getGlobal();
+  global = updateManagementProgress(global, ManagementProgress.Complete, tabId);
+  setGlobal(global);
+});
+
+addActionHandler('startBotFatherConversation', async (global, actions, payload): Promise<void> => {
+  const {
+    param,
+    tabId = getCurrentTabId(),
+  } = payload;
+
+  if (!botFatherId) {
+    const chat = await fetchChatByUsername(global, BOT_FATHER_USERNAME);
+    if (!chat) {
+      return;
+    }
+    botFatherId = chat.id;
+  }
+
+  if (param) {
+    actions.startBot({ botId: botFatherId, param });
+  }
+
+  actions.openChat({ id: botFatherId, tabId });
+});

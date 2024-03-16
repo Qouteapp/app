@@ -10,6 +10,7 @@ import { selectCanAnimateInterface } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import { waitForAnimationEnd, waitForTransitionEnd } from '../../util/cssAnimationEndListeners';
 import forceReflow from '../../util/forceReflow';
+import { omit } from '../../util/iteratees';
 import { allowSwipeControlForTransition } from '../../util/swipeController';
 
 import useForceUpdate from '../../hooks/useForceUpdate';
@@ -34,6 +35,7 @@ export type TransitionProps = {
   shouldRestoreHeight?: boolean;
   shouldCleanup?: boolean;
   cleanupExceptionKey?: number;
+  cleanupOnlyKey?: number;
   // Used by async components which are usually remounted during first animation
   shouldWrap?: boolean;
   wrapExceptionKey?: number;
@@ -73,6 +75,7 @@ function Transition({
   shouldRestoreHeight,
   shouldCleanup,
   cleanupExceptionKey,
+  cleanupOnlyKey,
   shouldWrap,
   wrapExceptionKey,
   id,
@@ -122,11 +125,13 @@ function Transition({
       if (!shouldCleanup) {
         return;
       }
-
-      const preservedRender = cleanupExceptionKey !== undefined ? rendersRef.current[cleanupExceptionKey] : undefined;
-
-      rendersRef.current = preservedRender ? { [cleanupExceptionKey!]: preservedRender } : {};
-
+      if (cleanupExceptionKey !== undefined) {
+        rendersRef.current = { [cleanupExceptionKey]: rendersRef.current[cleanupExceptionKey] };
+      } else if (cleanupOnlyKey !== undefined) {
+        rendersRef.current = omit(rendersRef.current, [cleanupOnlyKey]);
+      } else {
+        rendersRef.current = {};
+      }
       forceUpdate();
     }
 
@@ -312,6 +317,7 @@ function Transition({
     shouldDisableAnimation,
     forceUpdate,
     withSwipeControl,
+    cleanupOnlyKey,
   ]);
 
   useEffect(() => {

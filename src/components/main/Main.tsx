@@ -52,16 +52,14 @@ import {
   IS_ANDROID, IS_ELECTRON, IS_FIREFOX, IS_IOS, IS_LINUX, IS_MAC_OS, IS_SAFARI, IS_WINDOWS, IS_YA_BROWSER,
 } from '../../util/windowEnvironment';
 
+import useInterval from '../../hooks/schedulers/useInterval';
+import useTimeout from '../../hooks/schedulers/useTimeout';
 import useAIHotkeys from '../../hooks/useAIHotkeys';
 import useAppLayout from '../../hooks/useAppLayout';
 import useArchiver from '../../hooks/useArchiver';
-import useBackgroundMode from '../../hooks/useBackgroundMode';
-import useBeforeUnload from '../../hooks/useBeforeUnload';
 import { useDoneUpdates } from '../../hooks/useDone';
 import useForceUpdate from '../../hooks/useForceUpdate';
-import { useFullscreenStatus } from '../../hooks/useFullscreen';
 import { dispatchHeavyAnimationEvent } from '../../hooks/useHeavyAnimationCheck';
-import useInterval from '../../hooks/useInterval';
 import { useJune } from '../../hooks/useJune';
 import useLastCallback from '../../hooks/useLastCallback';
 import usePreventPinchZoomGesture from '../../hooks/usePreventPinchZoomGesture';
@@ -75,7 +73,9 @@ import useShortcutCmdShiftM from '../../hooks/useShortcutCmdShiftM';
 import useShortcutCmdU from '../../hooks/useShortcutCmdU';
 import useShowTransition from '../../hooks/useShowTransition';
 import useSyncEffect from '../../hooks/useSyncEffect';
-import useTimeout from '../../hooks/useTimeout';
+import useBackgroundMode from '../../hooks/window/useBackgroundMode';
+import useBeforeUnload from '../../hooks/window/useBeforeUnload';
+import { useFullscreenStatus } from '../../hooks/window/useFullscreen';
 
 import ActiveCallHeader from '../calls/ActiveCallHeader.async';
 import GroupCall from '../calls/group/GroupCall.async';
@@ -90,7 +90,7 @@ import UluChatFolders from '../left/main/UluChatFolders';
 import MediaViewer from '../mediaViewer/MediaViewer.async';
 import AudioPlayer from '../middle/AudioPlayer';
 import Header from '../middle/Header';
-import ReactionPicker from '../middle/message/ReactionPicker.async';
+import ReactionPicker from '../middle/message/reactions/ReactionPicker.async';
 import MessageListHistoryHandler from '../middle/MessageListHistoryHandler';
 import MiddleColumn from '../middle/MiddleColumn';
 import AttachBotInstallModal from '../modals/attachBotInstall/AttachBotInstallModal.async';
@@ -98,6 +98,7 @@ import BoostModal from '../modals/boost/BoostModal.async';
 import ChatlistModal from '../modals/chatlist/ChatlistModal.async';
 import GiftCodeModal from '../modals/giftcode/GiftCodeModal.async';
 import MapModal from '../modals/map/MapModal.async';
+import OneTimeMediaModal from '../modals/oneTimeMedia/OneTimeMediaModal.async';
 import UrlAuthModal from '../modals/urlAuth/UrlAuthModal.async';
 import WebAppModal from '../modals/webApp/WebAppModal.async';
 import PaymentModal from '../payment/PaymentModal.async';
@@ -183,6 +184,7 @@ type StateProps = {
   withInterfaceAnimations?: boolean;
   isSynced?: boolean;
   inviteViaLinkModal?: TabState['inviteViaLinkModal'];
+  oneTimeMediaModal?: TabState['oneTimeMediaModal'];
   isWorkspaceSettingsOpen: boolean;
   workspaceSettingsId: string | undefined;
 };
@@ -247,6 +249,8 @@ const Main: FC<OwnProps & StateProps> = ({
   noRightColumnAnimation,
   isSynced,
   inviteViaLinkModal,
+  oneTimeMediaModal,
+  currentUserId,
   isWorkspaceSettingsOpen,
   workspaceSettingsId,
 }) => {
@@ -286,11 +290,12 @@ const Main: FC<OwnProps & StateProps> = ({
     updatePageTitle,
     loadTopReactions,
     loadRecentReactions,
+    loadDefaultTagReactions,
     loadFeaturedEmojiStickers,
     setIsElectronUpdateAvailable,
-    loadPremiumSetStickers,
     loadAuthorizations,
     loadPeerColors,
+    loadSavedReactionTags,
     closeWorkspaceSettings,
   } = getActions();
 
@@ -446,8 +451,10 @@ const Main: FC<OwnProps & StateProps> = ({
       checkAppVersion();
       loadTopReactions();
       loadRecentReactions();
+      loadDefaultTagReactions();
       loadFeaturedEmojiStickers();
       loadAuthorizations();
+      loadSavedReactionTags();
     }
   }, [isMasterTab, isSynced]);
 
@@ -456,7 +463,6 @@ const Main: FC<OwnProps & StateProps> = ({
     if (isMasterTab && isCurrentUserPremium) {
       loadDefaultStatusIcons();
       loadRecentEmojiStatuses();
-      loadPremiumSetStickers();
     }
   }, [isCurrentUserPremium, isMasterTab]);
 
@@ -524,7 +530,7 @@ const Main: FC<OwnProps & StateProps> = ({
   }, []);
 
   useEffect(() => {
-    const parsedLocationHash = parseLocationHash();
+    const parsedLocationHash = parseLocationHash(currentUserId);
     if (!parsedLocationHash) return;
 
     openThread({
@@ -532,7 +538,7 @@ const Main: FC<OwnProps & StateProps> = ({
       threadId: parsedLocationHash.threadId,
       type: parsedLocationHash.type,
     });
-  }, []);
+  }, [currentUserId]);
 
   // Restore Transition slide class after async rendering
   useLayoutEffect(() => {
@@ -676,6 +682,7 @@ const Main: FC<OwnProps & StateProps> = ({
       />
       <BoostModal info={boostModal} />
       <GiftCodeModal modal={giftCodeModal} />
+      <OneTimeMediaModal info={oneTimeMediaModal} />
       <ChatlistModal info={chatlistModal} />
       <GameModal openedGame={openedGame} gameTitle={gameTitle} />
       <WebAppModal webApp={webApp} />
@@ -692,7 +699,7 @@ const Main: FC<OwnProps & StateProps> = ({
       <AttachBotInstallModal bot={attachBotToInstall} />
       <AttachBotRecipientPicker requestedAttachBotInChat={requestedAttachBotInChat} />
       <MessageListHistoryHandler />
-      {isPremiumModalOpen && <PremiumMainModal isOpen={isPremiumModalOpen} />}
+      <PremiumMainModal isOpen={isPremiumModalOpen} />
       <PremiumLimitReachedModal limit={limitReached} />
       <PaymentModal isOpen={isPaymentModalOpen} onClose={closePaymentModal} />
       <ReceiptModal isOpen={isReceiptModalOpen} onClose={clearReceipt} />
@@ -750,6 +757,7 @@ export default memo(withGlobal<OwnProps>(
       boostModal,
       giftCodeModal,
       inviteViaLinkModal,
+      oneTimeMediaModal,
     } = selectTabState(global);
 
     const { chatId: audioChatId, messageId: audioMessageId } = audioPlayer;
@@ -819,6 +827,7 @@ export default memo(withGlobal<OwnProps>(
       noRightColumnAnimation,
       isSynced: global.isSynced,
       inviteViaLinkModal,
+      oneTimeMediaModal,
       isWorkspaceSettingsOpen: selectIsWorkspaceSettingsOpen(global),
       workspaceSettingsId: selectWorkspaceSettingsId(global),
     };

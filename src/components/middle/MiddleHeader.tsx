@@ -5,12 +5,12 @@ import React, {
 import { getActions, withGlobal } from '../../global';
 
 import type {
-  ApiChat, ApiMessage, ApiPeer, ApiTypingStatus,
+  ApiChat, ApiMessage, ApiPeer, ApiSticker, ApiTypingStatus,
 } from '../../api/types';
 import type { GlobalState, MessageListType } from '../../global/types';
 import type { Signal } from '../../util/signals';
 import { MAIN_THREAD_ID } from '../../api/types';
-import { StoryViewerOrigin } from '../../types';
+import { StoryViewerOrigin, type ThreadId } from '../../types';
 
 import {
   EDITABLE_INPUT_CSS_SELECTOR,
@@ -24,7 +24,7 @@ import {
 import { requestMutation } from '../../lib/fasterdom/fasterdom';
 import {
   getChatTitle,
-  getMessageKey,
+  getIsSavedDialog,
   getSenderTitle,
   isChatChannel,
   isChatSuperGroup,
@@ -50,6 +50,7 @@ import {
 } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import cycleRestrict from '../../util/cycleRestrict';
+import { getMessageKey } from '../../util/messageKey';
 
 import useAppLayout from '../../hooks/useAppLayout';
 import useConnectionStatus from '../../hooks/useConnectionStatus';
@@ -62,7 +63,7 @@ import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 import usePrevious from '../../hooks/usePrevious';
 import useShowTransition from '../../hooks/useShowTransition';
-import useWindowSize from '../../hooks/useWindowSize';
+import useWindowSize from '../../hooks/window/useWindowSize';
 
 import GroupCallTopPane from '../calls/group/GroupCallTopPane';
 import GroupChatInfo from '../common/GroupChatInfo';
@@ -83,7 +84,7 @@ const EMOJI_STATUS_SIZE = 22;
 
 type OwnProps = {
   chatId: string;
-  threadId: number;
+  threadId: ThreadId;
   messageListType: MessageListType;
   isComments?: boolean;
   isReady?: boolean;
@@ -98,6 +99,7 @@ type StateProps = {
   pinnedMessageIds?: number[] | number;
   messagesById?: Record<number, ApiMessage>;
   canUnpin?: boolean;
+  isSavedDialog?: boolean;
   topMessageSender?: ApiPeer;
   typingStatus?: ApiTypingStatus;
   isSelectModeActive?: boolean;
@@ -113,6 +115,7 @@ type StateProps = {
   isSyncing?: boolean;
   isSynced?: boolean;
   isFetchingDifference?: boolean;
+  emojiStatusSticker?: ApiSticker;
 };
 
 const MiddleHeader: FC<OwnProps & StateProps> = ({
@@ -143,6 +146,8 @@ const MiddleHeader: FC<OwnProps & StateProps> = ({
   isFetchingDifference,
   getCurrentPinnedIndexes,
   getLoadingPinnedId,
+  emojiStatusSticker,
+  isSavedDialog,
   onFocusPinnedMessage,
 }) => {
   const {
@@ -156,6 +161,7 @@ const MiddleHeader: FC<OwnProps & StateProps> = ({
     exitMessageSelectMode,
     openPremiumModal,
     openThread,
+    openStickerSet,
   } = getActions();
 
   const lang = useLang();
@@ -226,8 +232,14 @@ const MiddleHeader: FC<OwnProps & StateProps> = ({
     }, BACK_BUTTON_INACTIVE_TIME);
   });
 
-  const handleStatusClick = useLastCallback(() => {
+  const handleUserStatusClick = useLastCallback(() => {
     openPremiumModal({ fromUserId: chatId });
+  });
+
+  const handleChannelStatusClick = useLastCallback(() => {
+    openStickerSet({
+      stickerSetInfo: emojiStatusSticker!.stickerSetInfo,
+    });
   });
 
   const handleBackClick = useLastCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
@@ -343,7 +355,7 @@ const MiddleHeader: FC<OwnProps & StateProps> = ({
 
   function renderInfo() {
     if (messageListType === 'thread') {
-      if (threadId === MAIN_THREAD_ID || chat?.isForum) {
+      if (threadId === MAIN_THREAD_ID || isSavedDialog || chat?.isForum) {
         return renderChatInfo();
       }
     }
@@ -368,44 +380,51 @@ const MiddleHeader: FC<OwnProps & StateProps> = ({
   }
 
   function renderChatInfo() {
+    // TODO Implement count
+    const savedMessagesStatus = isSavedDialog ? lang('SavedMessages') : undefined;
+
+    const realChatId = isSavedDialog ? String(threadId) : chatId;
     return (
       <>
-        {(isLeftColumnHideable || currentTransitionKey > 0) && renderBackButton(shouldShowCloseButton, true)}
+        {(isLeftColumnHideable || currentTransitionKey > 0) && renderBackButton(shouldShowCloseButton, !isSavedDialog)}
         <div
           className="chat-info-wrapper"
           onClick={handleHeaderClick}
           onMouseDown={handleHeaderMouseDown}
         >
-          {isUserId(chatId) ? (
+          {isUserId(realChatId) ? (
             <PrivateChatInfo
-              key={chatId}
-              userId={chatId}
+              key={realChatId}
+              userId={realChatId}
               typingStatus={typingStatus}
-              status={connectionStatusText}
+              status={connectionStatusText || savedMessagesStatus}
               withDots={Boolean(connectionStatusText)}
               withFullInfo
               withMediaViewer
               withStory={!isChatWithSelf}
               withUpdatingStatus
+              isSavedDialog={isSavedDialog}
               storyViewerOrigin={StoryViewerOrigin.MiddleHeaderAvatar}
               emojiStatusSize={EMOJI_STATUS_SIZE}
               noRtl
-              onEmojiStatusClick={handleStatusClick}
+              onEmojiStatusClick={handleUserStatusClick}
             />
           ) : (
             <GroupChatInfo
-              key={chatId}
-              chatId={chatId}
-              threadId={threadId}
+              key={realChatId}
+              chatId={realChatId}
+              threadId={!isSavedDialog ? threadId : undefined}
               typingStatus={typingStatus}
-              status={connectionStatusText}
+              status={connectionStatusText || savedMessagesStatus}
               withDots={Boolean(connectionStatusText)}
               withMediaViewer={threadId === MAIN_THREAD_ID}
               withFullInfo={threadId === MAIN_THREAD_ID}
               withUpdatingStatus
               withStory
+              isSavedDialog={isSavedDialog}
               storyViewerOrigin={StoryViewerOrigin.MiddleHeaderAvatar}
               emojiStatusSize={EMOJI_STATUS_SIZE}
+              onEmojiStatusClick={handleChannelStatusClick}
               noRtl
             />
           )}
@@ -539,6 +558,11 @@ export default memo(withGlobal<OwnProps>(
     const shouldSendJoinRequest = Boolean(chat?.isNotJoined && chat.isJoinRequest);
     const typingStatus = selectThreadParam(global, chatId, threadId, 'typingStatus');
 
+    const emojiStatus = chat?.emojiStatus;
+    const emojiStatusSticker = emojiStatus && global.customEmojis.byId[emojiStatus.documentId];
+
+    const isSavedDialog = getIsSavedDialog(chatId, threadId, global.currentUserId);
+
     const state: StateProps = {
       typingStatus,
       isLeftColumnShown,
@@ -554,7 +578,9 @@ export default memo(withGlobal<OwnProps>(
       isSyncing: global.isSyncing,
       isSynced: global.isSynced,
       isFetchingDifference: global.isFetchingDifference,
+      emojiStatusSticker,
       hasButtonInHeader: canStartBot || canRestartBot || canSubscribe || shouldSendJoinRequest,
+      isSavedDialog,
     };
 
     const messagesById = selectChatMessages(global, chatId);
@@ -562,8 +588,8 @@ export default memo(withGlobal<OwnProps>(
       return state;
     }
 
-    if (threadId !== MAIN_THREAD_ID && !chat?.isForum) {
-      const pinnedMessageId = threadId;
+    if (threadId !== MAIN_THREAD_ID && !isSavedDialog && !chat?.isForum) {
+      const pinnedMessageId = Number(threadId);
       const message = pinnedMessageId ? selectChatMessage(global, chatId, pinnedMessageId) : undefined;
       const topMessageSender = message ? selectForwardedSender(global, message) : undefined;
 
@@ -576,12 +602,16 @@ export default memo(withGlobal<OwnProps>(
       };
     }
 
-    const pinnedMessageIds = selectPinnedIds(global, chatId, threadId);
+    const pinnedMessageIds = !isSavedDialog ? selectPinnedIds(global, chatId, threadId) : undefined;
     if (pinnedMessageIds?.length) {
       const firstPinnedMessage = messagesById[pinnedMessageIds[0]];
       const {
-        canUnpin,
-      } = (firstPinnedMessage && selectAllowedMessageActions(global, firstPinnedMessage, threadId)) || {};
+        canUnpin = false,
+      } = (
+        firstPinnedMessage
+        && pinnedMessageIds.length === 1
+        && selectAllowedMessageActions(global, firstPinnedMessage, threadId)
+      ) || {};
 
       return {
         ...state,

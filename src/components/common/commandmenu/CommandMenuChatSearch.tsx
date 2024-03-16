@@ -12,12 +12,12 @@ import {
   getChatLink, getChatTitle,
   getChatTypeString,
   getMainUsername, getUserFullName, isDeletedUser,
-  sortChatIds,
 } from '../../../global/helpers';
 import { convertLayout } from '../../../util/convertLayout';
 import { unique } from '../../../util/iteratees';
 import { transliterate } from '../../../util/transliterate';
 import renderText from '../helpers/renderText';
+import sortChatIds from '../helpers/sortChatIds';
 
 import { useJune } from '../../../hooks/useJune';
 import useLang from '../../../hooks/useLang';
@@ -138,7 +138,7 @@ const CommandMenuChatSearch: React.FC<{
     });
 
     const allIds = unique([...chatIds, ...userIds]);
-    const sortedIds = sortChatIds(allIds, chatsById);
+    const sortedIds: string[] = sortChatIds(allIds);
 
     // Удаление приоритетных ID из отсортированных ID
     const finalIds = sortedIds.filter((id) => !priorityIds.includes(id));

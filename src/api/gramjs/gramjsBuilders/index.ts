@@ -365,7 +365,6 @@ export function isMessageWithMedia(message: GramJs.Message | GramJs.UpdateServic
       && (
         media.webpage.photo instanceof GramJs.Photo || (
           media.webpage.document instanceof GramJs.Document
-          && media.webpage.document.mimeType.startsWith('video')
         )
       )
     ) || (
@@ -646,7 +645,7 @@ export function buildInputBotApp(app: ApiBotApp) {
 export function buildInputReplyTo(replyInfo: ApiInputReplyInfo) {
   if (replyInfo.type === 'story') {
     return new GramJs.InputReplyToStory({
-      userId: buildInputPeerFromLocalDb(replyInfo.userId)!,
+      peer: buildInputPeerFromLocalDb(replyInfo.peerId)!,
       storyId: replyInfo.storyId,
     });
   }

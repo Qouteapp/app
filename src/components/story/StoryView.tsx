@@ -159,8 +159,7 @@ const StoryView = ({
         styles.opacityFadeIn,
         (storyView.isUserBlocked || storyView.areStoriesBlocked) && styles.blocked,
       )}
-      // eslint-disable-next-line react/jsx-no-bind
-      onClick={() => handleClick()}
+      onClick={handleClick}
       rightElement={storyView.type === 'user' && storyView.reaction ? (
         <ReactionStaticEmoji
           reaction={storyView.reaction}
@@ -202,6 +201,6 @@ export default memo(withGlobal<OwnProps>((global, { storyView }) => {
 
   return {
     peer,
-    availableReactions: global.availableReactions,
+    availableReactions: global.reactions.availableReactions,
   };
 })(StoryView));

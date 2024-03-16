@@ -20,10 +20,11 @@ import { getColorLuma } from '../../../util/colors';
 import { hexToRgb } from '../../../util/switchTheme';
 import { extractCurrentThemeParams, validateHexColor } from '../../../util/themeStyle';
 import { callApi } from '../../../api/gramjs';
+import renderText from '../../common/helpers/renderText';
 
+import useInterval from '../../../hooks/schedulers/useInterval';
 import useAppLayout from '../../../hooks/useAppLayout';
 import useFlag from '../../../hooks/useFlag';
-import useInterval from '../../../hooks/useInterval';
 import useLang from '../../../hooks/useLang';
 import useLastCallback from '../../../hooks/useLastCallback';
 import usePrevious from '../../../hooks/usePrevious';
@@ -31,6 +32,7 @@ import useSyncEffect from '../../../hooks/useSyncEffect';
 import usePopupLimit from './hooks/usePopupLimit';
 import useWebAppFrame from './hooks/useWebAppFrame';
 
+import Icon from '../../common/Icon';
 import Button from '../../ui/Button';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import DropdownMenu from '../../ui/DropdownMenu';
@@ -114,6 +116,7 @@ const WebAppModal: FC<OwnProps & StateProps> = ({
 
   const [shouldConfirmClosing, setShouldConfirmClosing] = useState(false);
   const [isCloseModalOpen, openCloseModal, hideCloseModal] = useFlag(false);
+  const [isRemoveModalOpen, openRemoveModal, hideRemoveModal] = useFlag(false);
 
   const [isLoaded, markLoaded, markUnloaded] = useFlag(false);
 
@@ -226,10 +229,23 @@ const WebAppModal: FC<OwnProps & StateProps> = ({
     }
   }, [isPaymentModalOpen, paymentStatus, sendEvent, setWebAppPaymentSlug, webApp]);
 
-  const handleToggleClick = useLastCallback(() => {
+  const handleRemoveAttachBot = useLastCallback(() => {
     toggleAttachBot({
       botId: bot!.id,
-      isEnabled: !attachBot,
+      isEnabled: false,
+    });
+    closeWebApp();
+  });
+
+  const handleToggleClick = useLastCallback(() => {
+    if (attachBot) {
+      openRemoveModal();
+      return;
+    }
+
+    toggleAttachBot({
+      botId: bot!.id,
+      isEnabled: true,
     });
   });
 
@@ -340,6 +356,7 @@ const WebAppModal: FC<OwnProps & StateProps> = ({
 
       setShouldConfirmClosing(false);
       hideCloseModal();
+      hideRemoveModal();
       setPopupParameters(undefined);
       setIsRequestingPhone(false);
       setIsRequestingWriteAccess(false);
@@ -350,7 +367,7 @@ const WebAppModal: FC<OwnProps & StateProps> = ({
       setHeaderColor(themeParams.bg_color);
       markUnloaded();
     }
-  }, [hideCloseModal, isOpen, markUnloaded]);
+  }, [isOpen]);
 
   function handleEvent(event: WebAppInboundEvent) {
     const { eventType, eventData } = event;
@@ -479,7 +496,7 @@ const WebAppModal: FC<OwnProps & StateProps> = ({
         onClick={onTrigger}
         ariaLabel="More actions"
       >
-        <i className="icon icon-more" />
+        <Icon name="more" />
       </Button>
     );
   }, [isMobile]);
@@ -515,7 +532,7 @@ const WebAppModal: FC<OwnProps & StateProps> = ({
         >
           <div className={backButtonClassName} />
         </Button>
-        <div className="modal-title">{bot?.firstName}</div>
+        <div className="modal-title">{attachBot?.shortName ?? bot?.firstName}</div>
         <DropdownMenu
           className="web-app-more-menu with-menu-transitions"
           trigger={MoreMenuButton}
@@ -662,6 +679,14 @@ const WebAppModal: FC<OwnProps & StateProps> = ({
         confirmHandler={closeWebApp}
         confirmIsDestructive
         confirmLabel={lang('lng_bot_close_warning_sure')}
+      />
+      <ConfirmDialog
+        isOpen={isRemoveModalOpen}
+        onClose={hideRemoveModal}
+        title={lang('BotRemoveFromMenuTitle')}
+        textParts={renderText(lang('BotRemoveFromMenu', bot?.firstName), ['simple_markdown'])}
+        confirmHandler={handleRemoveAttachBot}
+        confirmIsDestructive
       />
     </Modal>
   );

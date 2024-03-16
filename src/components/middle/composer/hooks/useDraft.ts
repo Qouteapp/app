@@ -3,6 +3,7 @@ import { getActions } from '../../../../global';
 
 import type { ApiMessage } from '../../../../api/types';
 import type { ApiDraft } from '../../../../global/types';
+import type { ThreadId } from '../../../../types';
 import type { Signal } from '../../../../util/signals';
 import { ApiMessageEntityTypes } from '../../../../api/types';
 
@@ -15,12 +16,12 @@ import parseHtmlAsFormattedText from '../../../../util/parseHtmlAsFormattedText'
 import { IS_TOUCH_ENV } from '../../../../util/windowEnvironment';
 import { getTextWithEntitiesAsHtml } from '../../../common/helpers/renderTextWithEntities';
 
-import useBackgroundMode from '../../../../hooks/useBackgroundMode';
-import useBeforeUnload from '../../../../hooks/useBeforeUnload';
 import useLastCallback from '../../../../hooks/useLastCallback';
 import useLayoutEffectWithPrevDeps from '../../../../hooks/useLayoutEffectWithPrevDeps';
 import useRunDebounced from '../../../../hooks/useRunDebounced';
 import { useStateRef } from '../../../../hooks/useStateRef';
+import useBackgroundMode from '../../../../hooks/window/useBackgroundMode';
+import useBeforeUnload from '../../../../hooks/window/useBeforeUnload';
 
 let isFrozen = false;
 
@@ -43,7 +44,7 @@ const useDraft = ({
 } : {
   draft?: ApiDraft;
   chatId: string;
-  threadId: number;
+  threadId: ThreadId;
   getHtml: Signal<string>;
   setHtml: (html: string) => void;
   editedMessage?: ApiMessage;
@@ -68,7 +69,7 @@ const useDraft = ({
 
   const isEditing = Boolean(editedMessage);
 
-  const updateDraft = useLastCallback((prevState: { chatId?: string; threadId?: number } = {}) => {
+  const updateDraft = useLastCallback((prevState: { chatId?: string; threadId?: ThreadId } = {}) => {
     if (isDisabled || isEditing || !isTouchedRef.current) return;
 
     const html = getHtml();

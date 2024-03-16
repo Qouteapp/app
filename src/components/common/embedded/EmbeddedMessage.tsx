@@ -20,6 +20,7 @@ import {
   isMessageTranslatable,
 } from '../../../global/helpers';
 import buildClassName from '../../../util/buildClassName';
+import freezeWhenClosed from '../../../util/hoc/freezeWhenClosed';
 import { getPictogramDimensions } from '../helpers/mediaDimensions';
 import { getPeerColorClass } from '../helpers/peerColor';
 import renderText from '../helpers/renderText';
@@ -54,6 +55,7 @@ type OwnProps = {
   isInComposer?: boolean;
   chatTranslations?: ChatTranslatedMessages;
   requestedChatTranslationLanguage?: string;
+  isOpen?: boolean;
   observeIntersectionForLoading?: ObserveFn;
   observeIntersectionForPlaying?: ObserveFn;
   onClick: NoneToVoidFunction;
@@ -108,10 +110,10 @@ const EmbeddedMessage: FC<OwnProps> = ({
 
   const senderTitle = sender ? getSenderTitle(lang, sender)
     : (replyForwardInfo?.hiddenUserName || message?.forwardInfo?.hiddenUserName);
-  const senderChatTitle = senderChat ? getSenderTitle(lang, senderChat) : message?.forwardInfo?.hiddenUserName;
+  const senderChatTitle = senderChat ? getSenderTitle(lang, senderChat) : undefined;
   const forwardSenderTitle = forwardSender ? getSenderTitle(lang, forwardSender)
     : message?.forwardInfo?.hiddenUserName;
-  const areSendersSame = sender?.id === forwardSender?.id;
+  const areSendersSame = sender && sender.id === forwardSender?.id;
 
   const { handleClick, handleMouseDown } = useFastClick(onClick);
 
@@ -172,7 +174,7 @@ const EmbeddedMessage: FC<OwnProps> = ({
       }
     }
 
-    const isChatSender = senderChat?.id === sender?.id;
+    const isChatSender = senderChat && senderChat.id === sender?.id;
     const isReplyToQuote = isInComposer && Boolean(replyInfo && 'quoteText' in replyInfo && replyInfo?.quoteText);
 
     return (
@@ -255,5 +257,7 @@ function renderPictogram(
     </div>
   );
 }
+
+export const ClosableEmbeddedMessage = freezeWhenClosed(EmbeddedMessage);
 
 export default EmbeddedMessage;

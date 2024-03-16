@@ -46,7 +46,8 @@ import Switcher from '../ui/Switcher';
 
 type OwnProps = {
   chatOrUserId: string;
-  forceShowSelf?: boolean;
+  isSavedDialog?: boolean;
+  isInSettings?: boolean;
 };
 
 type StateProps =
@@ -60,14 +61,16 @@ type StateProps =
     description?: string;
     chatInviteLink?: string;
     topicLink?: string;
+    hasSavedMessages?: boolean;
   };
 
 const runDebounced = debounce((cb) => cb(), 500, false);
 
 const ChatExtra: FC<OwnProps & StateProps> = ({
+  chatOrUserId,
   user,
   chat,
-  forceShowSelf,
+  isInSettings,
   canInviteUsers,
   isMuted,
   phoneCodeList,
@@ -75,6 +78,7 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
   description,
   chatInviteLink,
   topicLink,
+  hasSavedMessages,
 }) => {
   const {
     loadFullUser,
@@ -82,6 +86,7 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
     updateChatMutedState,
     updateTopicMutedState,
     loadPeerStories,
+    openSavedDialog,
   } = getActions();
 
   const {
@@ -113,6 +118,7 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
   }, [peerId, chat, user]);
 
   const isTopicInfo = Boolean(topicId && topicId !== MAIN_THREAD_ID);
+  const shouldRenderAllLinks = (chat && isChatChannel(chat)) || user?.isPremium;
 
   const activeUsernames = useMemo(() => {
     const result = usernames?.filter((u) => u.isActive);
@@ -133,6 +139,85 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
 
     return isTopicInfo ? topicLink! : getChatLink(chat) || chatInviteLink;
   }, [chat, isTopicInfo, topicLink, chatInviteLink]);
+
+  const handleNotificationChange = useLastCallback(() => {
+    setAreNotificationsEnabled((current) => {
+      const newAreNotificationsEnabled = !current;
+
+      runDebounced(() => {
+        if (isTopicInfo) {
+          updateTopicMutedState({
+            chatId: chatId!,
+            topicId: topicId!,
+            isMuted: !newAreNotificationsEnabled,
+          });
+        } else {
+          updateChatMutedState({ chatId: chatId!, isMuted: !newAreNotificationsEnabled });
+        }
+      });
+
+      return newAreNotificationsEnabled;
+    });
+  });
+
+  const handleOpenSavedDialog = useLastCallback(() => {
+    openSavedDialog({ chatId: chatOrUserId });
+  });
+
+  const userLink = useMemo(() => {
+    if (user) {
+      const handle = getMainUsername(user); // Теперь user гарантированно не undefined
+      if (handle) {
+        return `${handle}`;
+      }
+    }
+  }, [user]);
+
+  const chatLink = useMemo(() => {
+    if (chat) {
+      return getChatLink(chat); // Теперь chat гарантированно не undefined
+    }
+  }, [chat]);
+
+  const linkToCopy = useMemo(() => {
+    return userLink || (isTopicInfo ? topicLink : chatLink) || chatInviteLink;
+  }, [userLink, isTopicInfo, topicLink, chatLink, chatInviteLink]);
+
+  useEffect(() => {
+    // Функция для копирования текста
+    const copyLink = (text: string | undefined, type: string) => {
+      if (text) {
+        copyTextToClipboard(text);
+        showNotification({ message: `${type} was copied` });
+      }
+    };
+
+    // Обработчик событий клавиатуры
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyC') {
+        let type = 'Link';
+        if (linkToCopy === userLink) {
+          type = 'Username';
+        } else if (linkToCopy === topicLink) {
+          type = 'Topic Link';
+        }
+        copyLink(linkToCopy, type);
+        e.preventDefault();
+      }
+    };
+
+    // Добавление обработчика событий
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Удаление обработчика событий при размонтировании компонента
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [linkToCopy, topicLink, userLink]);
+
+  if (!chat || chat.isRestricted || (isSelf && !isInSettings)) {
+    return undefined;
+  }
 
   function copy(text: string, entity: string) {
     copyTextToClipboard(text);
@@ -195,81 +280,6 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
     );
   }
 
-  const userLink = useMemo(() => {
-    if (user) {
-      const handle = getMainUsername(user); // Теперь user гарантированно не undefined
-      if (handle) {
-        return `${handle}`;
-      }
-    }
-  }, [user]);
-
-  const chatLink = useMemo(() => {
-    if (chat) {
-      return getChatLink(chat); // Теперь chat гарантированно не undefined
-    }
-  }, [chat]);
-
-  const linkToCopy = useMemo(() => {
-    return userLink || (isTopicInfo ? topicLink : chatLink) || chatInviteLink;
-  }, [userLink, isTopicInfo, topicLink, chatLink, chatInviteLink]);
-
-  useEffect(() => {
-    // Функция для копирования текста
-    const copyLink = (text: string | undefined, type: string) => {
-      if (text) {
-        copyTextToClipboard(text);
-        showNotification({ message: `${type} was copied` });
-      }
-    };
-
-    // Обработчик событий клавиатуры
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyC') {
-        let type = 'Link';
-        if (linkToCopy === userLink) {
-          type = 'Username';
-        } else if (linkToCopy === topicLink) {
-          type = 'Topic Link';
-        }
-        copyLink(linkToCopy, type);
-        e.preventDefault();
-      }
-    };
-
-    // Добавление обработчика событий
-    document.addEventListener('keydown', handleKeyDown);
-
-    // Удаление обработчика событий при размонтировании компонента
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [linkToCopy, topicLink, userLink]);
-
-  const handleNotificationChange = useLastCallback(() => {
-    setAreNotificationsEnabled((current) => {
-      const newAreNotificationsEnabled = !current;
-
-      runDebounced(() => {
-        if (isTopicInfo) {
-          updateTopicMutedState({
-            chatId: chatId!,
-            topicId: topicId!,
-            isMuted: !newAreNotificationsEnabled,
-          });
-        } else {
-          updateChatMutedState({ chatId: chatId!, isMuted: !newAreNotificationsEnabled });
-        }
-      });
-
-      return newAreNotificationsEnabled;
-    });
-  });
-
-  if (!chat || chat.isRestricted || (isSelf && !forceShowSelf)) {
-    return undefined;
-  }
-
   return (
     <div className="ChatExtra">
       {formattedNumber && Boolean(formattedNumber.length) && (
@@ -288,7 +298,13 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
           isStatic
         >
           <span className="title word-break allow-selection" dir="auto">
-            {renderText(description, ['br', 'links', 'emoji'])}
+            {
+              renderText(description, [
+                'br',
+                shouldRenderAllLinks ? 'links' : 'tg_links',
+                'emoji',
+              ])
+            }
           </span>
           <span className="subtitle">{lang(userId ? 'UserBio' : 'Info')}</span>
         </ListItem>
@@ -307,7 +323,7 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
           <span className="subtitle">{lang('SetUrlPlaceholder')}</span>
         </ListItem>
       )}
-      {!forceShowSelf && (
+      {!isInSettings && (
         <ListItem icon="unmute" ripple onClick={handleNotificationChange}>
           <span>{lang('Notifications')}</span>
           <Switcher
@@ -318,12 +334,17 @@ const ChatExtra: FC<OwnProps & StateProps> = ({
           />
         </ListItem>
       )}
+      {hasSavedMessages && !isInSettings && (
+        <ListItem icon="saved-messages" ripple onClick={handleOpenSavedDialog}>
+          <span>{lang('SavedMessagesTab')}</span>
+        </ListItem>
+      )}
     </div>
   );
 };
 
 export default memo(withGlobal<OwnProps>(
-  (global, { chatOrUserId }): StateProps => {
+  (global, { chatOrUserId, isSavedDialog }): StateProps => {
     const { countryList: { phoneCodes: phoneCodeList } } = global;
 
     const chat = chatOrUserId ? selectChat(global, chatOrUserId) : undefined;
@@ -331,7 +352,7 @@ export default memo(withGlobal<OwnProps>(
     const isForum = chat?.isForum;
     const isMuted = chat && selectIsChatMuted(chat, selectNotifySettings(global), selectNotifyExceptions(global));
     const { threadId } = selectCurrentMessageList(global) || {};
-    const topicId = isForum ? threadId : undefined;
+    const topicId = isForum ? Number(threadId) : undefined;
     const chatInviteLink = chat ? selectChatFullInfo(global, chat.id)?.inviteLink : undefined;
     let description = user ? selectUserFullInfo(global, user.id)?.bio : undefined;
     if (!description && chat) {
@@ -345,6 +366,8 @@ export default memo(withGlobal<OwnProps>(
 
     const topicLink = topicId ? selectTopicLink(global, chatOrUserId, topicId) : undefined;
 
+    const hasSavedMessages = !isSavedDialog && global.chats.listIds.saved?.includes(chatOrUserId);
+
     return {
       phoneCodeList,
       chat,
@@ -355,6 +378,7 @@ export default memo(withGlobal<OwnProps>(
       chatInviteLink,
       description,
       topicLink,
+      hasSavedMessages,
     };
   },
 )(ChatExtra));
